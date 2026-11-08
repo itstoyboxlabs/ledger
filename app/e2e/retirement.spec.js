@@ -1439,3 +1439,93 @@ test.describe('persistence', () => {
     await expect(field(main(page), 'Need per month')).toHaveValue('750')
   })
 })
+
+test.describe('need per month from a Budget preset', () => {
+  // Sample Budget today: rows 3,029 plus live Netflix, Spotify and iCloud (15 + 12 + 3) = 3,059.
+  // The seeded "Retirement" preset: Rent 1,200 + Food 300 + the live subscriptions it has no row for,
+  // as Budget would show it (Netflix 15, Spotify 12, iCloud 3 and Crunch Fitness 39) = 1,569.
+  const PRESET = [
+    { id: 'p1', name: 'Rent', type: 'simple', amount: 1200, source: 'manual' },
+    { id: 'p2', name: 'Food', type: 'simple', amount: 300, source: 'manual' },
+  ]
+  const needBtn = (page) => main(page).getByRole('button', { name: 'Use a Budget preset' })
+
+  // like setup(), but also writes Budget presets into IndexedDB (browser mode storage)
+  async function setupWithPresets(page, { expenses = [{ name: 'Retirement', data: PRESET }], ls: extraLs = {} } = {}) {
+    await openApp(page)
+    const state = { retireCalc: BASE, retirePortfolio: FLAT, retireIncludeDebt: false, ...extraLs }
+    await page.evaluate(async ({ s, expenses }) => {
+      for (const [k, v] of Object.entries(s)) localStorage.setItem(`ledger:${k}`, JSON.stringify(v))
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open('ledger', 1)
+        req.onsuccess = () => resolve(req.result)
+        req.onerror = () => reject(req.error)
+      })
+      const store = db.transaction('kv', 'readonly').objectStore('kv')
+      const current = await new Promise((resolve) => { const r = store.get('presets'); r.onsuccess = () => resolve(r.result ?? {}) })
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('kv', 'readwrite')
+        tx.objectStore('kv').put({ ...current, expenses }, 'presets')
+        tx.oncomplete = resolve
+        tx.onerror = () => reject(tx.error)
+      })
+      db.close()
+    }, { s: state, expenses })
+    await page.reload()
+    await goTo(page, 'Retirement')
+  }
+
+  test('never picking a preset keeps the typed number and the same table', async ({ page }) => {
+    await setupWithPresets(page)
+    await expect(field(main(page), 'Need per month')).toHaveValue('1000')
+    await expect(intro(page)).toContainText('$12,000 a year')
+    await expect(main(page).getByText('Your Budget today: $3,059 a month')).toBeVisible()
+    await expect(main(page).getByText(/From the .* preset/)).toHaveCount(0)
+    await expectMatchesSim(page, sim({}))
+  })
+
+  test('picking a preset uses its expenses, shows where it came from and survives a reload', async ({ page }) => {
+    await setupWithPresets(page)
+    await needBtn(page).click()
+    await expect(page.getByRole('menuitem', { name: /Retirement/ })).toContainText('$1,569')
+    await page.getByRole('menuitem', { name: /Retirement/ }).click()
+    await expect(main(page).getByText('From the Retirement preset: $1,569 a month')).toBeVisible()
+    await expect(intro(page)).toContainText('$18,828 a year')
+    await expectRow(page, 40, { total: 250000 - 18828 })
+    expect(await ls(page, 'retireNeedPreset')).toBe('Retirement')
+    await page.reload()
+    await goTo(page, 'Retirement')
+    await expect(main(page).getByText('From the Retirement preset: $1,569 a month')).toBeVisible()
+  })
+
+  test('Type it in goes back to the typed number', async ({ page }) => {
+    await setupWithPresets(page, { ls: { retireNeedPreset: 'Retirement' } })
+    await expect(intro(page)).toContainText('$18,828 a year')
+    await needBtn(page).click()
+    await page.getByRole('menuitem', { name: 'Type it in' }).click()
+    await expect(field(main(page), 'Need per month')).toHaveValue('1000')
+    await expect(intro(page)).toContainText('$12,000 a year')
+    expect(await ls(page, 'retireNeedPreset')).toBeNull()
+  })
+
+  test('a deleted preset falls back to the typed number with a note', async ({ page }) => {
+    await setupWithPresets(page, { ls: { retireNeedPreset: 'Gone' } })
+    await expect(main(page).getByText('The Gone preset is gone, so this uses your typed number.')).toBeVisible()
+    await expect(intro(page)).toContainText('$12,000 a year')
+  })
+
+  test('a preset saved on Budget shows up here with the Budget total', async ({ page }) => {
+    await openApp(page)
+    await goTo(page, 'Budget')
+    await main(page).getByRole('button', { name: 'Presets' }).click()
+    await page.getByRole('menuitem', { name: 'Save as new preset' }).click()
+    await page.getByRole('dialog').getByRole('textbox').fill('Retired life')
+    await page.getByRole('dialog').getByRole('button', { name: /^Save/ }).click()
+    await expect(main(page).getByRole('button', { name: 'Retired life' })).toBeVisible()
+    await goTo(page, 'Retirement')
+    await needBtn(page).click()
+    await page.getByRole('menuitem', { name: /Retired life/ }).click()
+    await expect(main(page).getByText('From the Retired life preset: $3,059 a month')).toBeVisible()
+    await expect(main(page).getByText('Your Budget today: $3,059 a month')).toBeVisible()
+  })
+})
