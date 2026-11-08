@@ -23,9 +23,11 @@ type PresetBarProps<T> = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   hideTrigger?: boolean
+  // a short line at the top of the menu, like where else these presets are used
+  hint?: string
 }
 
-export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, onRename, canSave = true, scope = 'default', open: openProp, onOpenChange, hideTrigger = false }: PresetBarProps<T>) {
+export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, onRename, canSave = true, scope = 'default', open: openProp, onOpenChange, hideTrigger = false, hint }: PresetBarProps<T>) {
   // open state can be driven from outside (the phone menu opens it), with no visible button
   const [openState, setOpenState] = useState(false)
   const open = openProp ?? openState
@@ -70,6 +72,12 @@ export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, 
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[240px] rounded-xl">
+          {hint && (
+            <>
+              <p className="max-w-[260px] px-2 pt-1 pb-1.5 text-[11px] leading-snug text-[var(--text-muted)]">{hint}</p>
+              <DropdownMenuSeparator />
+            </>
+          )}
           {presets.length === 0 && (
             <div className="px-2 py-1.5 text-[12px] text-[var(--text-muted)]">No presets yet</div>
           )}

@@ -43,6 +43,7 @@ import { Kpi } from '@/shared/ui/Kpi'
 import { LeftoverBadge } from '@/screens/budget/ui/LeftoverBadge'
 import { MerchantIcon } from '@/shared/ui/MerchantIcon'
 import { PresetBar } from '@/shared/ui/PresetBar'
+import { BUDGET_PRESET_HINT } from '@/screens/budget/constants/BUDGET_PRESET_HINT'
 import { RETIRE_ROW_RE } from '@/screens/budget/constants/RETIRE_ROW_RE'
 import { RoundedAmountInput } from '@/screens/budget/ui/RoundedAmountInput'
 import { RowEditModal } from '@/screens/budget/ui/RowEditModal'
@@ -573,6 +574,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 onApply={(data) => persist(data.map(normalizeBudgetRow))}
                 onSave={(name) => saveExpensePreset(name, rows)}
                 scope="expenses"
+                hint={BUDGET_PRESET_HINT}
                 onDelete={removeExpensePreset}
                 onRename={renameExpensePreset}
               />
@@ -589,6 +591,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 onApply={(data) => persist(data.map(normalizeBudgetRow))}
                 onSave={(name) => saveExpensePreset(name, rows)}
                 scope="expenses"
+                hint={BUDGET_PRESET_HINT}
                 onDelete={removeExpensePreset}
                 onRename={renameExpensePreset}
               />
