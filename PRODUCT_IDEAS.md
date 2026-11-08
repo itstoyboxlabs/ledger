@@ -18,7 +18,7 @@ monthly need have shipped and are not listed.
 
 | # | Idea | Why | Effort |
 | --- | --- | --- | --- |
-| 1 | **About you: filing status, ages and a partner** | One shared card for birth year, single or married, tax state and an optional partner. Married filing jointly changes the brackets and the standard deduction, so for many households every tax figure is off today. Retirement, Debt payoff and every tax tool would read from it. | Medium |
+| 1 | **About you: age and filing status** | One shared card for your age, single or married, and tax state and city. No partner details: the app plans around your own income. Married filing jointly changes the brackets and the standard deduction, so for many households every tax figure is off today. Retirement, Debt payoff and every tax tool would read from it. | Medium |
 | 2 | **Inflation after you retire** | Pay keeps pace with prices while you work, but nothing raises your savings once you stop. One optional input that only touches the retired years, with returns turned into real returns. | Small |
 | 3 | **Bad-years stress test** | Every year earns the same return, so the verdict ignores sequence risk. A second "Money lasts" chip that replays the plan with a crash in the first two years of retirement shows how fragile the plan is. | Small |
 | 4 | **Healthcare and long-term care templates** | Insurance before Medicare is one of the biggest costs of retiring early. Event templates with sensible defaults make it one click. | Small |
