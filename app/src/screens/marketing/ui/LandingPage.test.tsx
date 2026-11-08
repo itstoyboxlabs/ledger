@@ -4,7 +4,7 @@ import { LandingPage } from '@/screens/marketing/ui/LandingPage'
 describe('LandingPage', () => {
   it('shows the hero and links to the app and the repo', () => {
     render(<LandingPage />)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('A private financial planning app for real life.')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Financial planning that doesn't oversimplify you.")
     expect(screen.getAllByRole('link', { name: 'Try Ledger' })[0]).toHaveAttribute('href', '/app')
     expect(screen.getAllByRole('link', { name: /GitHub/ })[0]).toHaveAttribute('href', 'https://github.com/itstoyboxlabs/ledger')
   })

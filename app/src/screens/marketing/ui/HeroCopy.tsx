@@ -8,8 +8,8 @@ export function HeroCopy() {
     <div className="reveal-kids">
       <span className="pill">Free &amp; Open Source</span>
       <h1>
-        A private financial planning app{' '}
-        <em>for real life.</em>
+        Financial planning that{' '}
+        <em>doesn't oversimplify you.</em>
       </h1>
       <p className="lead">See where your money goes, plan your budget, track spending as the month goes and project when you could retire.</p>
       <CheckList items={HERO_CHECKS} />

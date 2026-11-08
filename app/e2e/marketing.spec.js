@@ -6,7 +6,7 @@ test.describe('landing page', () => {
     const errors = []
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('A private financial planning app for real life.')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText("Financial planning that doesn't oversimplify you.")
     await expect(page.getByRole('link', { name: 'Try Ledger' }).first()).toHaveAttribute('href', '/app')
     await expect(page.getByRole('link', { name: 'View on GitHub' }).first()).toHaveAttribute('href', 'https://github.com/itstoyboxlabs/ledger')
     expect(errors.filter((e) => /hydrat|did not match/i.test(e))).toEqual([])

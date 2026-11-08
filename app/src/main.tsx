@@ -11,7 +11,8 @@ const rootEl = document.getElementById('root') as HTMLElement
 // The landing page and the tutorial are prerendered at build time, so the browser hydrates the HTML that is
 // already there instead of building it.
 async function showMarketing(route: MarketingRoute) {
-  await import('./styles/marketing.css')
+  // the build inlines marketing.css into the page; in dev the stylesheet is loaded here
+  if (import.meta.env.DEV) await import('./styles/marketing.css')
   const { MarketingPage } = await import('@/screens/marketing/ui/MarketingPage')
   const page = (
     <StrictMode>
@@ -20,6 +21,9 @@ async function showMarketing(route: MarketingRoute) {
   )
   if (rootEl.hasChildNodes()) hydrateRoot(rootEl, page)
   else createRoot(rootEl).render(page)
+  // page views for the public pages only; the app route carries no analytics
+  const { inject } = await import('@vercel/analytics')
+  inject()
 }
 
 // Pick the storage mode and load the transactions before the first render, so nothing in the app ever sees an

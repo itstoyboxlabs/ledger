@@ -1,6 +1,6 @@
 # Ledger
 
-A financial planning app that reads your bank statements. No bank connections, no accounts, and nothing leaves your computer.
+Financial planning that doesn't oversimplify you. Ledger reads your bank statements and turns them into a budget, a running log and a retirement plan that all agree with each other. No bank connections, no accounts, and nothing leaves your computer.
 
 **[Try it at ledger-alpha-azure.vercel.app](https://ledger-alpha-azure.vercel.app)** · [Video tutorial](https://ledger-alpha-azure.vercel.app/tutorial)
 

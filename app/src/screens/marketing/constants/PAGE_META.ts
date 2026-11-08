@@ -4,7 +4,7 @@ const FONTS =
 
 export const PAGE_META = {
   home: {
-    title: 'Ledger · A private financial planning app',
+    title: "Ledger · Financial planning that doesn't oversimplify you",
     description: 'See where your money goes, plan your budget, track spending as the month goes and project when you could retire. No bank logins, no accounts. Free and open source.',
     head: FONTS,
   },
