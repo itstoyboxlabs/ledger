@@ -349,9 +349,9 @@ test.describe('hourly calculator', () => {
     await expect(card).toContainText('Tax is about 26.5% in California')
   })
 
-  test('Change opens the Balances page', async ({ page }) => {
+  test('Change opens the About you page', async ({ page }) => {
     await tool(page, 'hourly').getByRole('button', { name: 'Change' }).click()
-    await expect(page.locator('h1', { hasText: 'Balances' })).toBeVisible()
+    await expect(page.locator('h1', { hasText: 'About you' })).toBeVisible()
   })
 })
 
@@ -768,9 +768,9 @@ test.describe('take-home pay', () => {
     await expect(row(tool(page, 'takehome'), 'Take-home per month')).toContainText('$11,792.09')
   })
 
-  test('Change opens the Balances page', async ({ page }) => {
+  test('Change opens the About you page', async ({ page }) => {
     await tool(page, 'takehome').getByRole('button', { name: 'Change' }).click()
-    await expect(page.locator('h1', { hasText: 'Balances' })).toBeVisible()
+    await expect(page.locator('h1', { hasText: 'About you' })).toBeVisible()
   })
 })
 

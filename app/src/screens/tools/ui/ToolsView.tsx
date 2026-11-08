@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/primitives/button'
 import { Card } from '@/shared/ui/Card'
 import { CashRangeCalc } from '@/screens/tools/features/cash-range/ui/CashRangeCalc'
 import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
+import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { DebtPayoffCalc } from '@/screens/tools/features/debt-payoff/ui/DebtPayoffCalc'
 import { HourlyCalc } from '@/screens/tools/features/hourly/ui/HourlyCalc'
 import { ListModal } from '@/screens/tools/ui/ListModal'
@@ -25,11 +26,12 @@ import { useToolCatalog } from '@/screens/tools/hooks/useToolCatalog'
 import { validToolIds } from '@/screens/tools/utils/validToolIds'
 
 type ToolsViewProps = {
-  goToBalances: () => void
+  goToAboutYou: () => void
 }
 
-export function ToolsView({ goToBalances }: ToolsViewProps) {
+export function ToolsView({ goToAboutYou }: ToolsViewProps) {
   const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [filing] = useFilingStatus()
   const [debts] = useDebts()
   const [lists, setLists] = useLists()
   const catalog = useToolCatalog()
@@ -51,14 +53,14 @@ export function ToolsView({ goToBalances }: ToolsViewProps) {
   }, [seen, idKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tools: Record<string, ReactNode> = {
-    takehome: <TakeHomeCalc goToBalances={goToBalances} />,
+    takehome: <TakeHomeCalc goToAboutYou={goToAboutYou} />,
     cash: <CashRangeCalc />,
-    rentscenarios: <RentScenarioCalc debts={debts} />,
+    rentscenarios: <RentScenarioCalc debts={debts} goToAboutYou={goToAboutYou} />,
     renttoincome: <RentToIncomeCalc />,
     rentalcost: <RentalCostCalc />,
     debt: <DebtPayoffCalc debts={debts} />,
-    hourly: <HourlyCalc goToBalances={goToBalances} />,
-    stock: <StockCalc taxState={taxState} />,
+    hourly: <HourlyCalc goToAboutYou={goToAboutYou} />,
+    stock: <StockCalc taxState={taxState} filing={filing} goToAboutYou={goToAboutYou} />,
     vacation: <VacationCalc />,
   }
   for (const l of lists) {

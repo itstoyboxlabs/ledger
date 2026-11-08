@@ -38,6 +38,8 @@ async function setup(page, { retire = {}, raw, port = FLAT, portAfter, includeDe
   if (retire !== null || raw !== undefined) state.retirePortfolio = port
   if (portAfter) state.retirePortfolioAfter = portAfter
   if (retire !== null || raw !== undefined) state.retireIncludeDebt = includeDebt
+  // the sample data has an About you age (35); seeded plans keep their own typed age
+  if (retire !== null || raw !== undefined) state.retireAgeAuto = false
   if (debts) state.debts = debts
   if (assets) state.assets = assets
   if (takeHome) state.takeHome = takeHome
@@ -238,7 +240,9 @@ test.describe('new user defaults', () => {
   })
 
   test('starting fields are 35, 60, 60, 95 and 5,000 a month', async ({ page }) => {
-    await expect(field(main(page), 'Current age')).toHaveValue('35')
+    // the sample data's About you age, behind an Auto badge
+    await expect(autoValue(main(page), 'Current age')).toHaveText('35')
+    await expect(badge(main(page), 'Current age')).toHaveAttribute('aria-pressed', 'true')
     await expect(field(main(page), 'Retire at')).toHaveValue('60')
     await expect(field(main(page), '401k access age')).toHaveValue('60')
     await expect(field(main(page), 'Plan to age')).toHaveValue('95')

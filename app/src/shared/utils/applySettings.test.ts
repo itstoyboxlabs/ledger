@@ -47,4 +47,10 @@ describe('applySettings', () => {
     expect(JSON.parse(localStorage.getItem('ledger:a') ?? 'null')).toEqual({ x: 1 })
     expect(localStorage.getItem('evil:b')).toBeNull()
   })
+  it('restores the About you keys', async () => {
+    await applySettings({ local: { 'ledger:filingStatus': 'mfj', 'ledger:age': { age: 40, asOf: 2026 }, 'ledger:taxState': 'ny' } })
+    expect(JSON.parse(localStorage.getItem('ledger:filingStatus') ?? 'null')).toBe('mfj')
+    expect(JSON.parse(localStorage.getItem('ledger:age') ?? 'null')).toEqual({ age: 40, asOf: 2026 })
+    expect(JSON.parse(localStorage.getItem('ledger:taxState') ?? 'null')).toBe('ny')
+  })
 })

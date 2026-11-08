@@ -35,6 +35,7 @@ import { AddRowModal } from '@/screens/budget/ui/AddRowModal'
 import { Card } from '@/shared/ui/Card'
 import { CoverageDot } from '@/shared/ui/CoverageDot'
 import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
+import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { INCOME_SOURCES } from '@/screens/budget/constants/INCOME_SOURCES'
@@ -123,6 +124,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const leftoverRef = useRef(leftoverAlloc)
   leftoverRef.current = leftoverAlloc
   const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => (v as string) in STATES)
+  const [filing] = useFilingStatus()
   const {
     presets: expensePresets,
     save: saveExpensePreset,
@@ -286,7 +288,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const counted = effRows.filter((r) => rowState(r) === 'visible')
   const expenses = counted.reduce((s, r) => s + (Number(r.amount) || 0), 0)
   const actualIncome = derivedMonthlyIncome()
-  const income = budgetIncomeFor(incomeOverride, takeHome, taxState)
+  const income = budgetIncomeFor(incomeOverride, takeHome, taxState, filing)
   const monthly = income - expenses
   const setIncomeSource = (source: string) =>
     setIncomeOverride({
@@ -482,6 +484,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                     </li>
                   ))}
                   <li>Taxed in {STATES[taxState]?.label}</li>
+                  {filing === 'mfj' && <li>Married filing jointly</li>}
                 </ul>
                 <Button variant="link"
                   onClick={() => goToTools('take-home-pay')}

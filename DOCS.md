@@ -15,8 +15,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **One project, three routes**: the landing page (`/`) and the tutorial (`/tutorial`) are part of the same React
   project as the app. They live in `app/src/screens/marketing` and are prerendered to HTML at build time
   (`npm run build` runs `scripts/prerender.mjs` after Vite). The app itself is a single-page app at `/app`.
-- **Code layout**: one thing per file. Each page lives in `app/src/screens/<page>` (spending, budget, log, tools,
-  retirement, balances, notes). Anything several pages use lives in `app/src/shared` (components, hooks, state,
+- **Code layout**: one thing per file. Each page lives in `app/src/screens/<page>` (spending, about-you, budget, log,
+  tools, retirement, balances, notes). Anything several pages use lives in `app/src/shared` (components, hooks, state,
   utils, constants). A feature never imports from another feature. `App.jsx` is only the shell: the sidebar, the
   page header and which page shows. Pages load lazily.
 - **Storage adapter**: pages never call `fetch('/api/...')` directly. They call the storage functions in
@@ -130,8 +130,8 @@ so `dark:` variants apply.
 - **Sidebar**: wordmark, the pages from `NAV`, accounts, Notes, then one row of icon buttons named by tooltip
   (Export data, Download, Upload file when available, Tutorial, GitHub). `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
-- **Nav names and view ids**: Spending (`actuals`), Budget (`budget`), Log (`log`), Tools (`tools`), Retirement
-  (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
+- **Nav names and view ids**: Spending (`actuals`), About you (`about`), Budget (`budget`), Log (`log`), Tools
+  (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
 - **Accounts in the sidebar**: each row toggles the `accounts` filter. Rows are grouped under a muted bank
   header (none when `bank` is empty) and show name, last four digits and a dot on the right (filled is on, hollow
   is off, colored by type). The list scrolls when long. Toggling one jumps to Spending, the only page the filter
@@ -266,6 +266,29 @@ Statement reality. Everything derives from the statements data.
   Monthly income is the average full paycheck times the pay frequency over 12. The frequency is read from the
   median gap between paydays (weekly 52, biweekly 26, semi-monthly 24 or monthly 12 a year). With fewer than two
   paydays it assumes semi-monthly.
+
+---
+
+## Page: About you (view id `about`)
+
+A sidebar page (`about`, user icon) right after Spending. It is the starting point of planning: the few facts
+about you that several pages share, set once. A short intro says what the page is for and that the other pages
+read from it. Every field has a sentence or two saying what it is for and which pages use it.
+
+- **Your age**: a typed number saved as `ledger:age` = `{ age, asOf }` (the year it was typed). The age shown is
+  `currentAge()`: `age` plus the years since `asOf`, so it goes up by one each January on its own. A birthday later
+  in the year is not modeled. "Clear my age" sets it back to `null`. Retirement reads it (see Retirement).
+- **Filing status**: `ledger:filingStatus`, `single` or `mfj` (the `FilingStatus` enum, labels in
+  `FILING_LABELS`). Only these two on purpose. Nothing saved, or anything else, reads as `single`, which is how the
+  app always worked. It changes federal brackets, the standard deduction, the long-term gains bands, the
+  investment income tax and Additional Medicare thresholds, so it moves Take-home pay, Budget income from the
+  tool, Rent scenarios, Hourly, Equity payout and the whole Retirement projection.
+- **Tax state and city**: the same `taxState` key and picker that used to be on Balances, so saved choices load
+  unchanged. Its info tip says that state tax for married filers is an estimate (see Tax engine).
+- **No partner fields.** The app plans around your own income.
+- Both keys are plain `ledger:` keys, so they travel in the settings export (`settings.local`) and come back on
+  import like every other key. The sample data sets age 35 (as of 2026) and Single.
+- Hooks: `useAboutYouAge()` (`{ entry, age, setAge, clear }`) and `useFilingStatus()`, both in `shared/hooks`.
 
 ---
 
@@ -466,16 +489,29 @@ the budget row it counts against, with month-to-date meters for the soft rows.
 
 ### Tax engine
 
-`shared/utils/taxOn.js` and its helpers implement real progressive brackets: federal, FICA (Social Security cap
-and Medicare surtax) and state brackets for several states and New York City. Single filer, standard deductions,
-labeled estimates.
+`shared/utils/taxOn.ts` and its helpers implement real progressive brackets: federal, FICA (Social Security cap
+and Medicare surtax) and state brackets for every state and New York City. Standard deductions, labeled
+estimates, 2026 figures.
 
-- `taxOn(gross, state)` is the tax on a salary. `taxOnExtra(base, extra, state)` is the marginal tax on a windfall
-  stacked on a salary.
+- `taxOn(gross, state, filing)` is the tax on a salary. `taxOnExtra(base, extra, state, filing)` is the marginal
+  tax on a windfall stacked on a salary. `incomeTaxOnExtra` is the same without FICA.
 - `ltcgOnExtra` handles long-term gains: federal 0, 15 and 20 percent plus 3.8 percent investment income tax,
   state and local as income, no FICA.
-- The state is the shared `taxState`, set on the Balances page. Tools show "Taxed in <state>. Change" and the
-  button opens Balances.
+- **Filing status** is the last argument everywhere (`taxOn`, `taxOnExtra`, `incomeTaxOnExtra`, `fica`,
+  `ltcgFederal`, `ltcgOnExtra`, `takeHomeBreakdown`, `takeHomeMonthly`, `budgetIncomeFor`, `equityPayout`,
+  `gainsTaxPct`). It defaults to `single`, and single results are exactly what they were before (unit tests check
+  this). `mfj` (married filing jointly) uses `FED_MFJ` (32,200 standard deduction, joint brackets from IRS Rev.
+  Proc. 2025-32), `LTCG_MFJ` (0 percent to 98,900, 15 percent to 613,700, investment income tax over 250,000) and
+  the 250,000 Additional Medicare threshold (`ADDL_MEDICARE_OVER`). Sources are in the constant files.
+- **State tax for married filers is an approximation.** `STATES` holds single filer tables only. With `mfj`, a
+  state whose deduction is the federal standard deduction (Arizona, Colorado, DC and others) gets the joint
+  32,200 deduction (`stateDeduction`). Every other state keeps its single deduction and brackets, which usually
+  overstates state tax a little. The About you page says so in an info tip.
+- The app plans around your own income. Married filing jointly is modeled as if your spouse has no income, so
+  it shows the most a joint return can save. There are no partner fields on purpose.
+- The state is the shared `taxState` and the status is `filingStatus`, both set on the About you page. Tools show
+  "Taxed in <state>. Change" and the button opens About you. Take-home pay, Hourly, Equity payout and Rent
+  scenarios also show "Using Married filing jointly from About you." with a Change link when it is set.
 
 ### The calculators
 
@@ -533,8 +569,11 @@ labeled estimates.
 
 ## Page: Balances
 
-A sidebar page (`balances`, landmark icon). Cards: totals owed and owned, "Taxed in" (the shared `taxState`, with
-a PresetBar), "What you owe" and "What you have".
+A sidebar page (`balances`, landmark icon). Cards: totals owed and owned, "Taxed in <state>" (a pointer, with a
+PresetBar), "What you owe" and "What you have".
+
+- **Tax state moved.** The state picker now lives on About you. Balances keeps a "Taxed in <state>" card with
+  the line "Your tax state and filing status now live on the About you tab" and an "Open About you" button.
 
 - **Debts** live in the `debts` key as `[{ id, name, balance, apr, payment, budgetRow }]`. `payment` is typed
   unless `budgetRow` links a Budget row by id, whose amount is then the payment ("Payment comes from" dropdown,
@@ -548,8 +587,9 @@ a PresetBar), "What you owe" and "What you have".
   and Roth are locked until the 401k access age, so picking a type also writes the matching `pool` (`savings` or
   `401k`). Saves without `kind` read through `assetKind`: a `401k` pool asset is pre-tax, anything else regular,
   so old data loads unchanged.
-- **Presets** use the key `planningVariables` and save `{ taxState, debts }`. Old presets with debts as an object
-  are converted on apply.
+- **Presets** use the key `planningVariables` and save `{ taxState, debts }`, unchanged, so a what-if move is
+  still one click. Applying one sets the shared tax state. Old presets with debts as an object are converted on
+  apply. Filing status is not part of the preset.
 - Debt payoff, Rent scenarios and Retirement's debt logic all read this list.
 
 ---
@@ -557,6 +597,14 @@ a PresetBar), "What you owe" and "What you have".
 ## Page: Retirement
 
 The most model-heavy page: a year-by-year projection from current age to the end age.
+
+- **Current age** has an Auto badge once About you has an age: the field shows that age (it goes up each
+  January) and the plan runs from it. Click Auto to type your own. The typed age stays saved in `retireCalc.age`
+  underneath, so turning Auto off brings it back, and Retirement presets keep saving the typed age. The switch is
+  `ledger:retireAgeAuto` (on by default, not part of presets). With no About you age the field is the plain typed
+  number, exactly as before. The logic lives in `useRetireAge` and `CurrentAgeField`.
+- **Filing status** from About you feeds the 401k withdrawal tax, the auto tax on returns (`gainsTaxPct`), the
+  Equity link and the Budget income behind the Auto savings.
 
 - **Two phases**: working (contributions in) and retired (withdrawals out). Retirement age is a knob to move.
 - **Find earliest safe age**: a button under "Retire at". It scans linearly from `age + 1` to `endAge - 1`,
@@ -587,8 +635,8 @@ The most model-heavy page: a year-by-year projection from current age to the end
     gap: the pre-tax pool, then Roth last (it grows tax free the longest). A shortfall left after both is the
     run-out, as before.
   - **Gross-up**: to spend a net amount N from the pre-tax pool you take out G with `G - tax(G) = N`. `tax` is
-    `incomeTaxOnExtra(0, G, taxState)`: federal brackets after the 16,100 standard deduction plus the state and
-    city brackets from the Balances `taxState`, no FICA. It is progressive, so a bigger year reaches higher
+    `incomeTaxOnExtra(0, G, taxState, filingStatus)`: federal brackets after the standard deduction (16,100
+    single, 32,200 married filing jointly) plus the state and city brackets from the About you `taxState`, no FICA. It is progressive, so a bigger year reaches higher
     brackets. `grossUp` solves it by bisection. The tax shows in the year table's Tax column, and each row adds
     up as `last Total + Contributions + Growth - Withdrawals - Tax = Total`.
   - **Simplified on purpose**: Social Security is not counted as taxable income (in reality up to 85% of it

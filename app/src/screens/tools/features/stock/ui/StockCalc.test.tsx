@@ -46,4 +46,15 @@ describe('StockCalc', () => {
     renderApp(<StockCalc taxState="tx" />)
     expect(screen.getByText('Net per year (over 2)')).toBeInTheDocument()
   })
+  it('uses the joint tables and says so for Married filing jointly', () => {
+    save({ type: 'nso', exit: 20, strike: 10, shares: 10000, salary: 100000, years: 1, heldOver: false })
+    localStorage.setItem('ledger:filingStatus', '"mfj"')
+    const go = vi.fn()
+    renderApp(<StockCalc taxState="tx" filing="mfj" goToAboutYou={go} />)
+    expect(screen.getByText(/Using Married filing jointly from About you/)).toBeInTheDocument()
+  })
+  it('shows no filing note for a single filer', () => {
+    renderApp(<StockCalc taxState="tx" />)
+    expect(screen.queryByText(/Married filing jointly/)).not.toBeInTheDocument()
+  })
 })

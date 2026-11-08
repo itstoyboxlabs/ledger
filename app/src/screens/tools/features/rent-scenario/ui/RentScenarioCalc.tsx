@@ -18,6 +18,7 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { MerchantIcon } from '@/shared/ui/MerchantIcon'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import { ToolField } from '@/shared/ui/ToolField'
+import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { sumBalances } from '@/shared/utils/sumBalances'
 import { useBudgetIncome } from '@/shared/hooks/useBudgetIncome'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
@@ -26,7 +27,7 @@ import { useToolState } from '@/shared/hooks/useToolState'
 
 // Rent scenario table — "if my rent were X, what's left over per month / per year?"
 // Income and non-rent expenses come live from the Budget tab.
-export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
+export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToAboutYou?: () => void }) {
   const [c, setC] = useToolState('rentScenario3', { from: 1000, to: 4000, step: 500, rentRow: '' })
   const [budget, setBudget] = useState<RentScenarioBudget | null>(null)
   // scenario-local expense overrides (by budget row id) — never touch the real budget
@@ -113,6 +114,7 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
         and expenses come from your Budget tab: {fmt0(income)} a month coming in,{' '}
         {fmt0(nonRent)} going out besides rent.
       </p>
+      <FilingNote onOpen={goToAboutYou} />
       <div className="mt-4 grid grid-cols-3 gap-3">
         <ToolField label="From" value={c.from} onChange={(v: number) => setC({ ...c, from: v })} step={250} suffix="$" />
         <ToolField label="To" value={c.to} onChange={(v: number) => setC({ ...c, to: v })} step={250} suffix="$" />

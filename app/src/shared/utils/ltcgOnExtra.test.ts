@@ -29,3 +29,14 @@ describe('ltcgOnExtra', () => {
     expect(ltcgOnExtra(250000, 100000, 'tx').niit).toBeCloseTo(3800, 5)
   })
 })
+
+describe('ltcgOnExtra by filing status', () => {
+  it('is unchanged for single filers', () => {
+    expect(ltcgOnExtra(100000, 50000, 'ny', 'single')).toEqual(ltcgOnExtra(100000, 50000, 'ny'))
+  })
+  it('uses the joint federal gains bands', () => {
+    const got = ltcgOnExtra(100000, 50000, 'tx', 'mfj')
+    expect(got.fed).toBeCloseTo(ltcgFederal(100000, 50000, 'mfj').fed, 8)
+    expect(got.state).toBe(0)
+  })
+})

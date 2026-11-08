@@ -1,5 +1,6 @@
 import type { StockType } from '@/shared/enums/StockType'
 import type { StockInputs } from '@/shared/types/StockInputs'
+import type { FilingStatus } from '@/shared/enums/FilingStatus'
 import { Label } from '@/shared/ui/primitives/label'
 import { Checkbox } from '@/shared/ui/primitives/checkbox'
 import { STATES } from '@/shared/constants/STATES'
@@ -10,15 +11,22 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { STOCK_DEFAULTS } from '@/shared/constants/STOCK_DEFAULTS'
 import { STOCK_TYPES } from '@/screens/tools/features/stock/constants/STOCK_TYPES'
 import { ToolField } from '@/shared/ui/ToolField'
+import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { equityPayout } from '@/shared/utils/equityPayout'
 import { useToolState } from '@/shared/hooks/useToolState'
 
-export function StockCalc({ taxState }: { taxState: string }) {
+type StockCalcProps = {
+  taxState: string
+  filing?: FilingStatus
+  goToAboutYou?: () => void
+}
+
+export function StockCalc({ taxState, filing = 'single', goToAboutYou }: StockCalcProps) {
   const [c, setC] = useToolState('stockCalc2', STOCK_DEFAULTS)
   const f = <K extends keyof StockInputs>(k: K) => (v: StockInputs[K]) => setC({ ...c, [k]: v })
   const rsu = c.type === 'rsu'
-  const { delta, gross, years, tax: perYearTax, net } = equityPayout(c, taxState)
+  const { delta, gross, years, tax: perYearTax, net } = equityPayout(c, taxState, filing)
   return (
     <Card className="p-5">
       <h2 className="text-[15px] font-semibold">Equity payout</h2>
@@ -57,6 +65,7 @@ export function StockCalc({ taxState }: { taxState: string }) {
           ? `The gain is taxed as a long-term capital gain: 0, 15 or 20 percent federal plus 3.8 percent on high income. ${STATES[taxState]?.label} taxes it as income. Each payout year is stacked on your salary.`
           : `Taxed per payout year as income on top of your salary, in ${STATES[taxState]?.label}.${c.type === 'iso' ? ' No Social Security or Medicare on ISO shares. Turn on the toggle if you will hold the shares over a year after exercise.' : ''}`}
       </p>
+      <FilingNote onOpen={goToAboutYou} />
       <Table className="mt-3 w-full text-[13px]">
         <TableBody>
           <ToolRow label={rsu ? 'Value per share' : 'Delta per share'} value={fmt(delta)} />

@@ -17,3 +17,14 @@ describe('incomeTaxOnExtra', () => {
   })
   it('is zero for no extra', () => expect(incomeTaxOnExtra(100000, 0, 'ny')).toEqual({ total: 0, effective: 0 }))
 })
+
+describe('incomeTaxOnExtra by filing status', () => {
+  it('is unchanged for single filers', () => {
+    expect(incomeTaxOnExtra(100000, 20000, 'ny', 'single')).toEqual(incomeTaxOnExtra(100000, 20000, 'ny'))
+  })
+  it('uses the joint brackets', () => {
+    const a = taxOn(120000, 'wy', 'mfj')
+    const b = taxOn(100000, 'wy', 'mfj')
+    expect(incomeTaxOnExtra(100000, 20000, 'wy', 'mfj').total).toBeCloseTo(a.fed - b.fed, 8)
+  })
+})

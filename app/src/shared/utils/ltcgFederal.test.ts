@@ -37,3 +37,22 @@ describe('ltcgFederal', () => {
     expect(ltcgFederal(1000000, 100000).fed).toBeCloseTo(20000, 5)
   })
 })
+
+describe('ltcgFederal by filing status', () => {
+  it('is unchanged for single filers', () => {
+    for (const [b, g] of [[0, 10000], [100000, 50000], [180000, 60000], [500000, 200000]]) expect(ltcgFederal(b, g, 'single')).toEqual(ltcgFederal(b, g))
+  })
+  it('uses the 98,900 joint zero band', () => {
+    // ordinary income after the 32,200 deduction is 67,800, so 31,100 of the gain is at 0%
+    // and the other 18,900 at 15%
+    expect(ltcgFederal(100000, 50000, 'mfj')).toEqual({ fed: 0.15 * 18900, niit: 0, total: 0.15 * 18900 })
+  })
+  it('starts the investment income tax at 250k for joint filers', () => {
+    expect(ltcgFederal(240000, 20000, 'mfj').niit).toBeCloseTo(0.038 * 10000, 8)
+    expect(ltcgFederal(240000, 20000).niit).toBeCloseTo(0.038 * 20000, 8)
+  })
+  it('uses 20% above 613,700 for joint filers', () => {
+    const r = ltcgFederal(700000, 10000, 'mfj')
+    expect(r.fed).toBeCloseTo(0.2 * 10000, 8)
+  })
+})

@@ -40,3 +40,40 @@ describe('taxOn', () => {
     expect(taxOn(100000, 'md').local).toBeGreaterThan(0)
   })
 })
+
+describe('taxOn by filing status', () => {
+  const STATE_KEYS = ['tx', 'wy', 'ca', 'ny', 'ny-nyc', 'az', 'co', 'md', 'il', 'zz']
+  const INCOMES = [0, 1, 16100, 50000, 100000, 184500, 200001, 250000, 300000, 750000, 2000000]
+  it('single results are unchanged: no filing status is the same as single', () => {
+    for (const s of STATE_KEYS) for (const g of INCOMES) expect(taxOn(g, s, 'single')).toEqual(taxOn(g, s))
+  })
+  it('keeps the single figures worked out by hand', () => {
+    // taxable 283,900 single: 1,240 + 4,560 + 12,166 + 23,058 + 17,424 + 9,686.25
+    const t = taxOn(300000, 'wy')
+    expect(t.fed).toBeCloseTo(68134.25, 5)
+    // 0.062 x 184,500 + 0.0145 x 300,000 + 0.009 x 100,000
+    expect(t.fica).toBeCloseTo(16689, 5)
+  })
+  it('uses the 2026 joint brackets and the 32,200 standard deduction', () => {
+    // taxable 67,800: 24,800 x 10% + 43,000 x 12%
+    expect(taxOn(100000, 'wy', 'mfj').fed).toBeCloseTo(7640, 5)
+    // taxable 267,800: 2,480 + 9,120 + 24,332 + 13,536
+    expect(taxOn(300000, 'wy', 'mfj').fed).toBeCloseTo(49468, 5)
+    expect(taxOn(32200, 'wy', 'mfj').fed).toBe(0)
+    expect(taxOn(32300, 'wy', 'mfj').fed).toBeCloseTo(10, 5)
+  })
+  it('moves Additional Medicare to 250k for joint filers', () => {
+    expect(taxOn(300000, 'wy', 'mfj').fica).toBeCloseTo(16239, 5)
+  })
+  it('gives joint filers the joint deduction in a state that follows the federal one', () => {
+    expect(taxOn(100000, 'az', 'mfj').state).toBeCloseTo((100000 - 32200) * 0.025, 5)
+    expect(taxOn(100000, 'az').state).toBeCloseTo((100000 - 16100) * 0.025, 5)
+  })
+  it('keeps the single state brackets everywhere else', () => {
+    expect(taxOn(100000, 'ca', 'mfj').state).toBe(taxOn(100000, 'ca').state)
+    expect(taxOn(100000, 'ny-nyc', 'mfj').local).toBe(taxOn(100000, 'ny-nyc').local)
+  })
+  it('never taxes a joint filer more than a single filer on the same income', () => {
+    for (const s of STATE_KEYS) for (const g of INCOMES) expect(taxOn(g, s, 'mfj').total).toBeLessThanOrEqual(taxOn(g, s).total + 1e-9)
+  })
+})

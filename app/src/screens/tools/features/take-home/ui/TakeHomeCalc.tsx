@@ -18,6 +18,7 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
 import { InfoTip } from '@/shared/ui/InfoTip'
 import { TAKE_HOME_DEFAULTS } from '@/shared/constants/TAKE_HOME_DEFAULTS'
+import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { TaxedInCaption } from '@/screens/tools/ui/TaxedInCaption'
 import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
@@ -27,15 +28,17 @@ import { is401kKind } from '@/shared/utils/is401kKind'
 import { normalizeTakeHome } from '@/shared/utils/normalizeTakeHome'
 import { takeHome401kMatchYearly } from '@/shared/utils/takeHome401kMatchYearly'
 import { takeHomeBreakdown } from '@/shared/utils/takeHomeBreakdown'
+import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { useToolState } from '@/shared/hooks/useToolState'
 
-export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
-  // the shared tax state, set on the Balances page; also used by the Budget income override
+export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
+  // the shared tax state and filing status, set on the About you page; also used by the Budget income override
   const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [filing] = useFilingStatus()
   const [raw, setC] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
   const c = normalizeTakeHome(raw)
-  const b = takeHomeBreakdown(c, taxState)
+  const b = takeHomeBreakdown(c, taxState, filing)
   const setDeductions = (deductions: Deduction[]) => setC({ salary: c.salary, deductions })
   const patch = (id: string, p: Partial<Deduction>) => setDeductions(c.deductions.map((d) => (d.id === id ? { ...d, ...p } : d)))
   const add = () =>
@@ -55,8 +58,9 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
       </p>
       <div className="mt-4 grid grid-cols-2 items-end gap-3">
         <ToolField label="Salary per year" value={c.salary} onChange={(v: number) => setC({ ...c, salary: v })} step={5000} suffix="$" />
-        <TaxedInCaption state={taxState} onChange={goToBalances} />
+        <TaxedInCaption state={taxState} onChange={goToAboutYou} />
       </div>
+      <FilingNote onOpen={goToAboutYou} />
 
       <div className="mt-4 text-[12px] text-[var(--text-muted)]">What comes out of your pay</div>
       <div className="mt-1.5 flex flex-col gap-2">

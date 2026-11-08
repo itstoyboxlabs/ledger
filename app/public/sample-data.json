@@ -4074,6 +4074,12 @@
   "log": {
    "entries": []
   },
-  "local": {}
+  "local": {
+   "ledger:age": {
+    "age": 35,
+    "asOf": 2026
+   },
+   "ledger:filingStatus": "single"
+  }
  }
 }
