@@ -4,6 +4,8 @@ import { renderApp } from '@/test-utils/renderApp'
 import { seedStorage } from '@/test-utils/seedStorage'
 import { loadSampleData } from '@/test-utils/loadSampleData'
 import { RetirementCalc } from './RetirementCalc'
+import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
+import { fmt0 } from '@/shared/utils/fmt0'
 import type { Debt } from '@/shared/types/Debt'
 
 const stored = (k: string) => JSON.parse(localStorage.getItem(`ledger:${k}`) as string)
@@ -192,5 +194,46 @@ describe('RetirementCalc', () => {
     seedPlan({ endAge: 90 })
     renderApp(<RetirementCalc debts={[]} />)
     expect(screen.getAllByText('Left over at 90')).toHaveLength(1)
+  })
+
+  describe('Need per month from a Budget preset', () => {
+    const PRESET_ROWS = [{ id: 'r', name: 'Rent', amount: 1500 }, { id: 'f', name: 'Food', amount: 500 }]
+    // what Budget would show for the preset, live subscriptions from the sample data included
+    const presetMonthly = () => budgetExpensesOf({ rows: PRESET_ROWS })
+    beforeEach(async () => {
+      await seedStorage({ budget: { rows: [{ id: 'r', name: 'Rent', amount: 2000 }] }, presets: { expenses: [{ name: 'Retirement', data: PRESET_ROWS }] } })
+    })
+
+    it('never picking a preset keeps the typed number and the same results', async () => {
+      seedPlan()
+      renderApp(<RetirementCalc debts={[]} />)
+      expect(screen.getByLabelText(/Need per month/)).toHaveValue(1000)
+      expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
+      // ages 40 to 59 take 12,000 a year: 250,000 at 39 leaves 238,000 at 40
+      expect(yearRow(40)[6]).toBe('$238,000')
+      expect(localStorage.getItem('ledger:retireNeedPreset')).toBe('null')
+      await screen.findByText(/Your Budget today/)
+    })
+
+    it('picking a preset uses its expenses and is saved', async () => {
+      seedPlan()
+      renderApp(<RetirementCalc debts={[]} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Use a Budget preset' }))
+      await userEvent.click(await screen.findByRole('menuitem', { name: /Retirement/ }))
+      const m = presetMonthly()
+      expect(screen.getByText(`From the Retirement preset: ${fmt0(m)} a month`)).toBeInTheDocument()
+      expect(screen.getByText(new RegExp(`then take out \\${fmt0(m * 12)} a year`))).toBeInTheDocument()
+      expect(stored('retireNeedPreset')).toBe('Retirement')
+      // the typed number is kept for later
+      expect(stored('retireCalc').withdrawMo).toBe(1000)
+    })
+
+    it('a deleted preset falls back to the typed number with a note', async () => {
+      seedPlan()
+      localStorage.setItem('ledger:retireNeedPreset', JSON.stringify('Gone'))
+      renderApp(<RetirementCalc debts={[]} />)
+      expect(await screen.findByText('The Gone preset is gone, so this uses your typed number.')).toBeInTheDocument()
+      expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
+    })
   })
 })
