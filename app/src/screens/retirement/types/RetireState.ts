@@ -19,6 +19,8 @@ export interface RetireState {
   withdrawMo: number
   taxPct: number
   autoTax: boolean
+  // tax what comes out of the pre-tax 401k as income (saves without it read as on)
+  tax401k: boolean
   ss: RetireSs
   events: RetireEvent[]
   pay: RetirePay

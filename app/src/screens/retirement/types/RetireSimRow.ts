@@ -10,4 +10,6 @@ export interface RetireSimRow {
   growth: number
   withdrawal: number
   total: number
+  // income tax on what came out of the pre-tax 401k that year
+  tax: number
 }

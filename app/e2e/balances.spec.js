@@ -1,4 +1,4 @@
-import { test, expect, openApp, goTo, ls } from './fixtures'
+import { test, expect, openApp, goTo, ls, flushSaves } from './fixtures'
 
 // The sample data starts with no debts and no assets, so every test builds what it needs.
 
@@ -112,13 +112,31 @@ test.describe('what you have', () => {
     await expect(kpi(page, 'Total owned')).toContainText('$20,000.75')
   })
 
-  test('an asset can go in the retirement pool instead', async ({ page }) => {
+  test('an asset can be a pre-tax retirement account instead', async ({ page }) => {
     await addAsset(page, { name: '401k', balance: 50000 })
-    await have(page).locator('[data-slot=dropdown-menu-trigger]').click()
-    await page.getByRole('menuitem', { name: 'Retirement account (locked)' }).click()
-    await expect(have(page)).toContainText('Retirement account (locked)')
+    await have(page).getByRole('combobox', { name: 'Account type for 401k' }).click()
+    await page.getByRole('option', { name: 'Pre-tax 401k or IRA (locked)' }).click()
+    await expect(have(page)).toContainText('Pre-tax 401k or IRA (locked)')
+    await flushSaves(page)
     await page.reload()
-    await expect(have(page)).toContainText('Retirement account (locked)')
+    await expect(have(page)).toContainText('Pre-tax 401k or IRA (locked)')
+    expect((await ls(page, 'assets'))[0]).toMatchObject({ kind: 'pretax', pool: '401k' })
+  })
+
+  test('a Roth account is its own type and stays locked', async ({ page }) => {
+    await addAsset(page, { name: 'Roth IRA', balance: 20000 })
+    await have(page).getByRole('combobox', { name: 'Account type for Roth IRA' }).click()
+    await page.getByRole('option', { name: 'Roth 401k or IRA (locked)' }).click()
+    await expect(have(page).getByRole('combobox', { name: 'Account type for Roth IRA' })).toHaveText('Roth 401k or IRA (locked)')
+    await flushSaves(page)
+    expect((await ls(page, 'assets'))[0]).toMatchObject({ kind: 'roth', pool: '401k' })
+  })
+
+  test('an old 401k asset with no type reads as pre-tax', async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('ledger:assets', JSON.stringify([{ id: 'a1', name: 'Old 401k', balance: 1000, pool: '401k' }])))
+    await page.reload()
+    await goTo(page, 'Balances')
+    await expect(have(page).getByRole('combobox', { name: 'Account type for Old 401k' })).toHaveText('Pre-tax 401k or IRA (locked)')
   })
 
   test('the as-of date is kept', async ({ page }) => {

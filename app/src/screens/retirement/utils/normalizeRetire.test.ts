@@ -30,6 +30,12 @@ describe('normalizeRetire', () => {
     expect(out.events).toHaveLength(3)
     expect(out.events[2]).toEqual({ id: 'extra-x', name: '', amount: 12, kind: 'in', age: 40, repeat: 'month', years: 20, untilRetire: true, to: '401k' })
   })
+  it('taxes 401k withdrawals unless the save turned it off', () => {
+    expect(normalizeRetire({ events: [] }).tax401k).toBe(true)
+    expect(normalizeRetire({ events: [], tax401k: false }).tax401k).toBe(false)
+    expect(normalizeRetire({ events: [], tax401k: 'no' }).tax401k).toBe(true)
+    expect(normalizeRetire({ age: 30 }).tax401k).toBe(true)
+  })
   it('keeps startFrom balances', () => {
     expect(normalizeRetire({ events: [], startFrom: 'balances' }).startFrom).toBe('balances')
   })
@@ -55,7 +61,7 @@ describe('normalizeRetire', () => {
       contrib401k: 5000, contribSavings: 9000, auto401k: false, autoSavings: true, withdrawMo: 4000, taxPct: 12, autoTax: false,
       ss: { on: true, claimAge: 68, auto: false, monthly: 1500 }, events: [],
     }
-    expect(normalizeRetire(old)).toEqual({ ...old, raisePct: 0, pay: { periods: [] } })
+    expect(normalizeRetire(old)).toEqual({ ...old, tax401k: true, raisePct: 0, pay: { periods: [] } })
     expect(normalizeRetire({ age: 30 }).pay).toEqual({ periods: [] })
   })
   it('keeps the no-plan raise and reads a bad one as 0', () => {

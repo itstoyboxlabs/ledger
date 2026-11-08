@@ -15,6 +15,7 @@ export const RETIRE_DEFAULTS: RetireState = {
   contrib401k: 0, contribSavings: 0,
   auto401k: true, autoSavings: true,
   withdrawMo: 5000, taxPct: 15, autoTax: true,
+  tax401k: true, // the pre-tax 401k is taxed as income on the way out
   ss: { on: true, claimAge: 67, auto: true, monthly: 0 },
   events: [],
   raisePct: 0, // Contributions grow a year with no plan; 0 keeps the numbers flat, as before

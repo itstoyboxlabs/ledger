@@ -26,4 +26,12 @@ export interface RetireSimInput {
   // with no plan, today's 401k and savings grow by this percent each working year
   raisePct?: number
   pay?: RetireSimPay
+  // Tax on 401k withdrawals. When set, `start401k` is pre-tax money that stays its own pool
+  // after the access age and is taxed as income on the way out (`incomeTax` is the yearly
+  // income tax on a gross amount), and `startRoth` is a Roth pool that comes out tax free.
+  // When unset, the 401k (Roth included) joins savings untaxed at the access age. 401k
+  // money from pay periods and money-in events for the retirement account goes into the
+  // pre-tax pool.
+  incomeTax?: (gross: number) => number
+  startRoth?: number
 }

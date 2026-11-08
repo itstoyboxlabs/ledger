@@ -57,12 +57,15 @@ import { SS_EXPLAIN } from '@/screens/retirement/utils/SS_EXPLAIN'
 import { STOCK_DEFAULTS } from '@/shared/constants/STOCK_DEFAULTS'
 import { TAKE_HOME_DEFAULTS } from '@/shared/constants/TAKE_HOME_DEFAULTS'
 import { ToolField } from '@/shared/ui/ToolField'
+import { assetKind } from '@/shared/utils/assetKind'
 import { assetPool } from '@/shared/utils/assetPool'
 import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { budgetIncomeFor } from '@/shared/utils/budgetIncomeFor'
 import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
 import { equityPayout } from '@/shared/utils/equityPayout'
 import { gainsTaxPct } from '@/screens/retirement/utils/gainsTaxPct'
+import { grossUp } from '@/screens/retirement/utils/grossUp'
+import { incomeTaxOnExtra } from '@/shared/utils/incomeTaxOnExtra'
 import { leftoverAmount } from '@/shared/utils/leftoverAmount'
 import { leftoverShare } from '@/shared/utils/leftoverShare'
 import { newId } from '@/shared/utils/newId'
@@ -261,7 +264,13 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const fromBalances = c.startFrom === 'balances'
   const startOff = new Set(c.startOff)
   const incAssets = fromBalances ? assets.filter((a) => !startOff.has(a.id)) : []
-  const startK = fromBalances ? incAssets.filter((a) => assetPool(a) === '401k').reduce((t, a) => t + a.balance, 0) : c.start401k
+  // tax on 401k withdrawals: pre-tax money is taxed as income on the way out, Roth is not.
+  // Typed in, the 401k box is pre-tax. With the tax off, Roth joins the 401k as before.
+  const taxed = c.tax401k
+  const incomeTax = (gross: number) => incomeTaxOnExtra(0, gross, taxState).total
+  const kindSum = (kind: string) => incAssets.filter((a) => assetPool(a) === '401k' && assetKind(a) === kind).reduce((t, a) => t + a.balance, 0)
+  const startRoth = fromBalances ? kindSum('roth') : 0
+  const startK = fromBalances ? kindSum('pretax') + (taxed ? 0 : startRoth) : c.start401k
   const startS = fromBalances ? incAssets.filter((a) => assetPool(a) === 'savings').reduce((t, a) => t + a.balance, 0) : c.startSavings
   const holeDebt = sumBalances(debts.filter((d) => !payoffByDebt[d.id] && (!fromBalances || !startOff.has(d.id))))
   const countDebt = fromBalances ? true : includeDebt
@@ -296,10 +305,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     withdrawMo: needMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
     // a debt payoff event counts only when it is the one that applies to its debt
     events: events.filter((e) => e.kind !== 'debt' || payoffByDebt[e.debtId ?? ''] === e),
+    ...(taxed ? { incomeTax, startRoth } : {}),
   }
   const simulate = (retireAge: number) => simulateRetirement(simInput, retireAge)
   // everything Find depends on; the "no safe age" note clears once any of it changes
-  const findKey = JSON.stringify({ ...simInput, plan: hasPlan ? { takeHome, takeHomePresets, budgetPresets, budgetFile, incomeOverride } : null, taxState, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
+  const findKey = JSON.stringify({ ...simInput, plan: hasPlan ? { takeHome, takeHomePresets, budgetPresets, budgetFile, incomeOverride } : null, taxIn: taxed ? taxState : null, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
   const findNotFound = findNotFoundFor === findKey
   const { rows, runOutAge, atRetirement } = simulate(c.retireAge)
   const payIssues = payPlanIssues(
@@ -359,8 +369,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   return (
     <div>
       <p className="text-[13px] text-[var(--text-secondary)]">
-        You save until you retire, then take out {fmt0(needMo * 12)} a year. Your 401k joins your
-        savings at {c.accessAge}.
+        You save until you retire, then take out {fmt0(needMo * 12)} a year.
+        {taxed
+          ? ` Your 401k opens at ${c.accessAge} and what you take out of it is taxed as income.`
+          : ` Your 401k joins your savings at ${c.accessAge}.`}{' '}
         Your funds earn {avgReturn.toFixed(2)}% a year while you work
         {portAfter.same ? '' : ` and ${avgReturnAfter.toFixed(2)}% after`}.
       </p>
@@ -427,7 +439,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <Label key={a.id} className="flex items-center gap-2.5 text-[13px] font-normal text-[var(--text-secondary)]">
                   <Checkbox checked={!startOff.has(a.id)} onCheckedChange={() => toggleStart(a.id)} />
                   <span className="min-w-0 flex-1 truncate">{a.name || 'Unnamed'}</span>
-                  <span className="text-[11px] text-[var(--text-muted)]">{assetPool(a) === '401k' ? 'Retirement account' : 'Savings'}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">{assetPool(a) === 'savings' ? 'Savings' : assetKind(a) === 'roth' ? 'Retirement account, Roth' : 'Retirement account, pre-tax'}</span>
                   <span className="w-24 text-right tnum">{fmt0(a.balance)}</span>
                 </Label>
               ))}
@@ -443,7 +455,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <span>
                   Savings start at <span className="tnum font-medium text-white">{fmt0(startS - holeDebt)}</span>
                   {holeDebt > 0 && <span className="text-[var(--text-muted)]"> ({fmt0(startS)} minus {fmt0(holeDebt)} owed)</span>}
-                  . Retirement account starts at <span className="tnum font-medium text-white">{fmt0(startK)}</span>.
+                  . Retirement account starts at <span className="tnum font-medium text-white">{fmt0(startK + (taxed ? startRoth : 0))}</span>
+                  {taxed && startRoth > 0 && <span className="text-[var(--text-muted)]"> ({fmt0(startRoth)} of it Roth)</span>}.
                 </span>
                 {goToBalances && (
                   <Button variant="link" size="xs" onClick={goToBalances} className="h-auto p-0 text-[12px] font-normal">
@@ -516,7 +529,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
 
         <FieldGroup
           label="In retirement"
-          tip="What you need each month once you stop working, and the tax on what your regular investments earn. 401k money is not taxed here."
+          tip="What you need each month once you stop working, the tax on what your regular investments earn and the income tax on what you take out of a pre-tax 401k."
           gridClass="grid-cols-2"
         >
           <NeedPerMonthField
@@ -539,6 +552,20 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
             suffix="%"
             format={(v) => `${v}%`}
           />
+          <Label className="col-span-2 flex flex-col">
+            <span className="text-[12px] text-[var(--text-muted)]">Tax on 401k withdrawals</span>
+            <Button variant="outline" aria-pressed={taxed}
+              onClick={() => setC({ ...c, tax401k: !taxed })}
+              className={cn('mt-1 h-auto justify-start whitespace-normal px-3 py-2 text-left font-normal', taxed ? 'border-[var(--good)]/40 bg-[var(--good)]/15 font-medium text-[var(--good)] hover:bg-[var(--good)]/20 hover:text-[var(--good)]' : 'text-[var(--text-muted)]')}
+            >
+              {taxed ? `Yes, taxed as income in ${STATES[taxState]?.label}` : 'No, leave the tax out'}
+            </Button>
+          </Label>
+          <p className="col-span-2 text-[11px] text-[var(--text-muted)]">
+            {taxed
+              ? `Your 401k was never taxed going in, so it is taxed on the way out. To spend ${fmt0(c.withdrawMo * 12)} a year from it you take out about ${fmt0(grossUp(c.withdrawMo * 12, incomeTax))}. Bigger withdrawals reach higher brackets. Savings are spent first and Roth money last. Set each account's type on the Balances page.`
+              : 'Your 401k is counted as if it were never taxed, so the plan shows more to spend than you will have. Turn this on to see the difference.'}
+          </p>
         </FieldGroup>
 
         <FieldGroup
@@ -823,27 +850,27 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <TableHead className="pb-2 pr-3 font-medium">
                   <HeaderTip
                     label="Phase"
-                    tip={`Working until ${c.retireAge}. Then retired, living off savings while the 401k stays locked. At ${c.accessAge} the 401k joins your savings.`}
+                    tip={`Working until ${c.retireAge}. Then retired, living off savings while the 401k stays locked. At ${c.accessAge} the 401k ${taxed ? 'opens' : 'joins your savings'}.`}
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="401k"
-                    tip={`Your retirement account. ${hasPlan ? 'Your pay plan sets what goes in each year while you work' : `${fmt0(baseContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}`}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
+                    tip={`Your retirement account. ${hasPlan ? 'Your pay plan sets what goes in each year while you work' : `${fmt0(baseContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}`}, plus any money-in events set to the retirement account. It grows tax free and stays locked until ${c.accessAge}${taxed ? '. Then it counts in your total, and new 401k money adds to it, so this column shows a dash. It is taxed as income as you take it out.' : ', when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.'}`}
                     right
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Contributions"
-                    tip={`New money in that year: 401k ${hasPlan ? 'plus savings, as your pay plan sets them' : `(${fmt0(baseContrib401k)}) plus savings (${fmt0(baseContribSavings)})`}, any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in${hasPlan ? ', and so is the first year of each pay period' : ''}. Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
+                    tip={`New money in that year: 401k ${hasPlan ? 'plus savings, as your pay plan sets them' : `(${fmt0(baseContrib401k)}) plus savings (${fmt0(baseContribSavings)})`}, any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in${hasPlan ? ', and so is the first year of each pay period' : ''}. Regular saving stops the year you retire. In the year your 401k unlocks its balance ${taxed ? 'joins the total' : 'moves into savings'} and shows here too.`}
                     right
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Growth (liquid)"
-                    tip={`What your savings earned that year: last year's balance times ${avgReturn.toFixed(2)}%, less ${taxPct}% tax, about ${(avgReturn * (1 - taxPct / 100)).toFixed(2)}% in all. A balance below zero earns nothing. The 401k grows at the full rate in its own column.`}
+                    tip={`What your savings earned that year: last year's balance times ${avgReturn.toFixed(2)}%, less ${taxPct}% tax, about ${(avgReturn * (1 - taxPct / 100)).toFixed(2)}% in all. A balance below zero earns nothing. The 401k grows at the full rate${taxed ? ', in its own column until it opens and here after' : ' in its own column'}.`}
                     right
                   />
                 </TableHead>
@@ -854,10 +881,19 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                     right
                   />
                 </TableHead>
+                <TableHead className="pb-2 pr-3 text-right font-medium">
+                  <HeaderTip
+                    label="Tax"
+                    tip={taxed
+                      ? `Income tax on what you take out of your pre-tax 401k that year, in ${STATES[taxState]?.label}. Your savings are spent first, so it starts once they run low. The more you take out in a year, the higher the bracket.`
+                      : 'Tax on 401k withdrawals is off, so this stays empty. Turn it on under In retirement.'}
+                    right
+                  />
+                </TableHead>
                 <TableHead className="pb-2 text-right font-medium">
                   <HeaderTip
                     label="Total (liquid)"
-                    tip={`Money you can spend right now, in your regular savings. The 401k only counts once it unlocks at ${c.accessAge}. It starts below zero if you turn on Start in debt. Red means the money ran out.`}
+                    tip={`Money you can spend right now, in your regular savings. The 401k only counts once it unlocks at ${c.accessAge}${taxed ? ', before the tax you pay as you take it out' : ''}. It starts below zero if you turn on Start in debt. Red means the money ran out.`}
                     right
                   />
                 </TableHead>
@@ -883,6 +919,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.contrib ? fmt0(row.contrib) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{fmt0(row.growth)}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.withdrawal ? '−' + fmt0(row.withdrawal) : '—'}</TableCell>
+                  <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{Math.round(row.tax) ? '−' + fmt0(row.tax) : '—'}</TableCell>
                   <TableCell className="py-1 text-right tnum font-medium" style={{ color: row.total >= 0 ? undefined : 'var(--bad)' }}>
                     {fmt0(row.total)}
                   </TableCell>
@@ -896,7 +933,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       <p className="mt-3 text-[12px] text-[var(--text-muted)]">
         This is a simple model. Your funds earn the same return every year, though real markets go up
         and down. Everything is in today's dollars, so there is no inflation.
-        {c.ss.on ? ' Social Security is included.' : ' Social Security is left out.'} Savings start
+        {c.ss.on ? ' Social Security is included.' : ' Social Security is left out.'}
+        {taxed && ' 401k withdrawals are taxed at today\'s brackets, and Social Security is not counted as taxable income.'} Savings start
         {countDebt ? ' below zero by the amount you owe, and your saving pays that off first' : ' at your savings balance'}.
       </p>
     </div>

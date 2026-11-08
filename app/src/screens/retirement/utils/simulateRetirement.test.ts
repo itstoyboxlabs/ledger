@@ -4,6 +4,7 @@ import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
 import { normalizeRetire } from './normalizeRetire'
 import type { SimPayPeriod } from '@/screens/retirement/types/SimPayPeriod'
 import { K401_DEFERRAL_LIMIT } from '@/shared/constants/K401_DEFERRAL_LIMIT'
+import { incomeTaxOnExtra } from '@/shared/utils/incomeTaxOnExtra'
 
 // 0% return, no tax, no Social Security, so every number can be checked by hand
 const plan = (o: Partial<RetireSimInput> = {}): RetireSimInput => ({
@@ -67,6 +68,89 @@ describe('simulateRetirement', () => {
     const res = simulateRetirement(plan({ events: [{ kind: 'in', age: 38, repeat: 'year', amount: 1000, years: 5, auto: 'equity' }] }), 40)
     expect(row(res, 39).contrib).toBe(26000)
     expect(row(res, 40).contrib).toBe(0)
+  })
+
+  describe('tax on 401k withdrawals', () => {
+    const flat20 = (g: number) => g * 0.2
+    const texas = (g: number) => incomeTaxOnExtra(0, g, 'tx').total
+
+    it('with no pre-tax money gives exactly the untaxed result', () => {
+      const cases: Partial<RetireSimInput>[] = [
+        { start401k: 0, base401k: 0 },
+        { start401k: 0, base401k: 0, r: 0.06, rAfter: 0.05, taxPct: 15, withdrawMo: 3000, ssMonthly: 1200 },
+        { start401k: 0, base401k: 0, age: 62, startSavings: -5000, events: [{ kind: 'out', age: 70, repeat: 'year', amount: 9000, years: 3 }] },
+      ]
+      for (const o of cases) {
+        for (const at of [30, 40, 55, 70]) {
+          expect(simulateRetirement(plan({ ...o, incomeTax: texas }), at)).toEqual(simulateRetirement(plan(o), at))
+        }
+      }
+    })
+
+    it('keeps the 401k its own pool after the access age and counts it in the total', () => {
+      const res = simulateRetirement(plan({ incomeTax: flat20 }), 40)
+      expect(row(res, 59)).toMatchObject({ k: 58750, total: 10000, tax: 0 })
+      // savings 10,000 pay the first 10,000 of the 12,000; 2,000 more costs 2,500 pre-tax
+      expect(row(res, 60).k).toBe(0)
+      expect(row(res, 60).s).toBe(0)
+      expect(row(res, 60).tax).toBeCloseTo(500, 1)
+      expect(row(res, 60).total).toBeCloseTo(58750 - 2500, 1)
+      // a full year from the pool: 12,000 needs 15,000 out
+      expect(row(res, 61).tax).toBeCloseTo(3000, 1)
+      expect(row(res, 61).total).toBeCloseTo(58750 - 2500 - 15000, 1)
+    })
+
+    it('spends regular savings before touching the 401k', () => {
+      const res = simulateRetirement(plan({ incomeTax: flat20, startSavings: 500000 }), 40)
+      expect(res.rows.every((x) => x.tax === 0)).toBe(true)
+    })
+
+    it('runs out sooner than the untaxed plan', () => {
+      const o = { age: 55, endAge: 90, start401k: 600000, startSavings: 0, base401k: 0, contribSavings: 0, withdrawMo: 4000 }
+      const untaxed = simulateRetirement(plan(o), 60).runOutAge!
+      const taxed = simulateRetirement(plan({ ...o, incomeTax: texas }), 60).runOutAge!
+      expect(untaxed).toBeGreaterThan(taxed)
+    })
+
+    it('a bigger yearly withdrawal pays a higher share in tax', () => {
+      const share = (need: number) => {
+        const res = simulateRetirement(plan({ age: 60, start401k: 5000000, startSavings: 0, base401k: 0, contribSavings: 0, withdrawMo: need, incomeTax: texas }), 60)
+        return row(res, 61).tax / (need * 12)
+      }
+      expect(share(10000)).toBeGreaterThan(share(4000))
+      expect(share(4000)).toBeGreaterThan(share(1500))
+    })
+
+    it('takes Roth money last and tax free', () => {
+      const res = simulateRetirement(plan({ age: 60, start401k: 0, startRoth: 100000, startSavings: 0, base401k: 0, contribSavings: 0, incomeTax: flat20 }), 60)
+      expect(row(res, 60)).toMatchObject({ tax: 0, total: 88000 })
+      const mixed = simulateRetirement(plan({ age: 60, start401k: 5000, startRoth: 100000, startSavings: 0, base401k: 0, contribSavings: 0, incomeTax: flat20 }), 60)
+      // 5,000 pre-tax nets 4,000, Roth covers the other 8,000
+      expect(row(mixed, 60)).toMatchObject({ tax: 1000, total: 92000 })
+    })
+
+    it('a Roth pool grows at the full rate while locked and shows with the 401k', () => {
+      const res = simulateRetirement(plan({ start401k: 0, base401k: 0, startRoth: 10000, r: 0.1, rAfter: 0.1, incomeTax: flat20 }), 40)
+      expect(row(res, 30).k).toBeCloseTo(11000, 6)
+    })
+
+    it('new 401k money after the access age stays pre-tax', () => {
+      const res = simulateRetirement(plan({ age: 60, start401k: 0, startSavings: 0, base401k: 10000, contribSavings: 0, withdrawMo: 0, incomeTax: flat20 }), 65)
+      expect(row(res, 64)).toMatchObject({ s: 0, total: 47500, tax: 0 })
+    })
+
+    it('every row adds up with the tax column', () => {
+      const res = simulateRetirement(plan({ r: 0.06, rAfter: 0.06, taxPct: 15, startRoth: 20000, withdrawMo: 3000, incomeTax: texas }), 45)
+      for (const x of res.rows.filter((y) => y.age >= 60)) {
+        const prev = row(res, x.age - 1)
+        expect(Math.abs(prev.total + x.contrib + x.growth - x.withdrawal - x.tax - x.total), `age ${x.age}`).toBeLessThan(0.01)
+      }
+    })
+
+    it('reports the pools as locked or liquid at retirement', () => {
+      expect(simulateRetirement(plan({ incomeTax: flat20, startRoth: 1000 }), 30).atRetirement).toEqual({ liquid: 50000, locked: 11000 })
+      expect(simulateRetirement(plan({ age: 65, incomeTax: flat20, startRoth: 1000 }), 65).atRetirement).toEqual({ liquid: 61000, locked: 0 })
+    })
   })
 })
 
@@ -229,5 +313,36 @@ describe('simulateRetirement with a pay plan', () => {
     }
     const base = earliest([period()])!
     expect(earliest([period({ toAge: 35 }), period({ fromAge: 35, saving: 5000 })])!).toBeGreaterThan(base)
+  })
+})
+
+describe('simulateRetirement pay plan and events with tax on 401k withdrawals', () => {
+  const flat20 = (g: number) => g * 0.2
+  const texas = (g: number) => incomeTaxOnExtra(0, g, 'tx').total
+  const period = (o: Partial<SimPayPeriod> = {}): SimPayPeriod => ({
+    fromAge: 30, toAge: 'retire', raisePct: 0, own: 5000, match: 2500, capOwn: true, saving: 20000, ...o,
+  })
+
+  it('retirement account events land in the pre-tax pool and are taxed on the way out', () => {
+    const events = [{ kind: 'in' as const, to: '401k' as const, age: 30, repeat: 'year' as const, amount: 2000, years: 10 }]
+    const res = simulateRetirement(plan({ events, startSavings: 0, contribSavings: 0, base401k: 0, start401k: 0, incomeTax: flat20 }), 40)
+    // 10 years of 2,000 sit locked, then open at 60
+    expect(row(res, 59)).toMatchObject({ k: 20000, total: expect.any(Number) })
+    expect(row(res, 60).k).toBe(0)
+    // the pre-tax pool pays the need grossed up for tax
+    expect(res.rows.some((x) => x.tax > 0)).toBe(true)
+  })
+
+  it('pay periods feed the pre-tax pool the same way as today\'s 401k', () => {
+    const periods = [period()]
+    const withPlan = simulateRetirement(plan({ base401k: 7500, pay: { periods, planRetireAge: 40 }, incomeTax: texas }), 40)
+    const without = simulateRetirement(plan({ base401k: 7500, incomeTax: texas }), 40)
+    expect(withPlan.rows).toEqual(without.rows)
+  })
+
+  it('with nothing pre-tax and no Roth, tax on or off gives the same rows for a plan', () => {
+    const periods = [period({ own: 0, match: 0 })]
+    const o = { start401k: 0, base401k: 0, pay: { periods, planRetireAge: 40 } }
+    expect(simulateRetirement(plan({ ...o, incomeTax: texas }), 40)).toEqual(simulateRetirement(plan(o), 40))
   })
 })

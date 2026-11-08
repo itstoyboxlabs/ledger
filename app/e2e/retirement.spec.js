@@ -13,6 +13,8 @@ import { test, expect, openApp, goTo, ls, money } from './fixtures'
 //   Age 39: 401k = 58,750, savings = 250,000 (the last working year).
 //   Ages 40 to 59 take 12,000 a year: savings = 10,000 at 59. At 60 the 401k joins:
 //   10,000 - 12,000 + 58,750 = 56,750.
+// BASE turns the tax on 401k withdrawals off, so these rules stay the untaxed ones. The
+// "tax on 401k withdrawals" tests turn it on and use simTaxed() below.
 
 const main = (page) => page.getByRole('main')
 const FLAT = [{ name: 'Cash', alloc: 100, perf: 0 }]
@@ -20,7 +22,7 @@ const BASE = {
   age: 30, retireAge: 40, accessAge: 60, endAge: 90,
   start401k: 10000, startSavings: 50000, startFrom: 'typed', startOff: [],
   contrib401k: 5000, contribSavings: 20000, auto401k: false, autoSavings: false,
-  withdrawMo: 1000, taxPct: 0, autoTax: false,
+  withdrawMo: 1000, taxPct: 0, autoTax: false, tax401k: false,
   ss: { on: false, claimAge: 67, auto: true, monthly: 0 },
   events: [],
 }
@@ -66,14 +68,20 @@ async function pick(page, scope, current, option) {
 }
 
 // ---- reading the year table ----
+// columns are found by their header, so a new column does not shift the others
 async function readTable(page) {
-  const t = await tableEl(page).evaluate((el) =>
-    [...el.querySelectorAll('tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.trim())))
+  const { head, body } = await tableEl(page).evaluate((el) => ({
+    head: [...el.querySelectorAll('thead th')].map((th) => th.innerText.trim()),
+    body: [...el.querySelectorAll('tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.trim())),
+  }))
+  const col = (label) => head.indexOf(label)
+  const [iAge, iPhase, iK, iC, iG, iW, iT, iTot] =
+    ['Age', 'Phase', '401k', 'Contributions', 'Growth (liquid)', 'Withdrawals', 'Tax', 'Total (liquid)'].map(col)
   const out = {}
-  for (const c of t) {
-    out[c[0]] = {
-      phase: c[1], k: money(c[2]), contrib: money(c[3]), growth: money(c[4]),
-      wd: Math.abs(money(c[5])), total: money(c[6]), hasK: c[2] !== '—',
+  for (const c of body) {
+    out[c[iAge]] = {
+      phase: c[iPhase], k: money(c[iK]), contrib: money(c[iC]), growth: money(c[iG]),
+      wd: Math.abs(money(c[iW])), tax: iT < 0 ? 0 : Math.abs(money(c[iT])), total: money(c[iTot]), hasK: c[iK] !== '—',
     }
   }
   return out
@@ -171,6 +179,78 @@ function sim(o) {
   }
   return { rows, runOut, atRet }
 }
+// ---- reference model with the tax on 401k withdrawals (Texas: federal income tax only) ----
+// Written apart from the page code on purpose: the gross-up is a fixed-point loop here
+// (G = need + tax(G)) where the page bisects, and the pools are plain variables.
+const FED_BRACKETS = [[12400, 0.10], [50400, 0.12], [105700, 0.22], [201775, 0.24], [256225, 0.32], [640600, 0.35], [Infinity, 0.37]]
+function fedTax(gross) {
+  const income = Math.max(0, gross - 16100)
+  let tax = 0
+  let prev = 0
+  for (const [cap, rate] of FED_BRACKETS) {
+    if (income <= prev) break
+    tax += (Math.min(income, cap) - prev) * rate
+    prev = cap
+  }
+  return tax
+}
+function grossFor(need) {
+  let g = need
+  for (let i = 0; i < 200; i++) g = need + fedTax(g)
+  return g
+}
+function simTaxed(o) {
+  const c = {
+    age: 30, retireAge: 40, accessAge: 60, endAge: 90, k0: 10000, roth0: 0, s0: 50000,
+    base401k: 5000, contribS: 20000, r: 0, tax: 0, need: 1000, events: [], ...o,
+  }
+  const rows = {}
+  let pre = c.k0
+  let roth = c.roth0
+  let s = c.s0
+  let open = c.age >= c.accessAge
+  let runOut = null
+  for (let age = c.age; age <= c.endAge; age++) {
+    const working = age < c.retireAge
+    let cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) : 0
+    let cS = working ? c.contribS : 0
+    let wd = working ? 0 : c.need * 12
+    // money in for the retirement account joins the pre-tax pool, other money in goes to
+    // savings and money out is a withdrawal
+    for (const e of c.events) {
+      const v = evAmt(e, age)
+      if (e.kind === 'in' && e.to === '401k') cK += v
+      else if (e.kind === 'in') cS += v
+      else wd += v
+    }
+    const preG = pre * c.r
+    const rothG = roth * c.r
+    const sG = s > 0 ? s * c.r * (1 - c.tax / 100) : 0
+    const growth = sG + (open ? preG + rothG : 0)
+    let moved = 0
+    if (!open && age >= c.accessAge) { open = true; moved = pre + preG + roth + rothG }
+    pre += preG + cK
+    roth += rothG
+    s += sG + cS - wd
+    let tax = 0
+    if (open && s < 0) {
+      // savings first, then pre-tax grossed up for income tax, then Roth
+      const need = -s
+      const g = grossFor(need)
+      if (g <= pre) { pre -= g; tax = g - need; s = 0 } else {
+        tax = fedTax(pre)
+        const left = need - (pre - tax)
+        pre = 0
+        const fromRoth = Math.min(roth, left)
+        roth -= fromRoth
+        s = -(left - fromRoth)
+      }
+    }
+    rows[age] = { k: open ? 0 : pre + roth, contrib: cK + cS + moved, growth, wd, tax, total: s + (open ? pre + roth : 0) }
+    if (runOut === null && !working && s < -0.01) runOut = age
+  }
+  return { rows, runOut }
+}
 async function expectMatchesSim(page, model) {
   await expect.poll(async () => {
     const t = await readTable(page)
@@ -178,8 +258,8 @@ async function expectMatchesSim(page, model) {
     for (const [age, r] of Object.entries(model.rows)) {
       const g = t[age]
       if (!g) { bad.push(`${age}: missing`); continue }
-      for (const key of ['k', 'contrib', 'growth', 'wd', 'total']) {
-        if (Math.abs(g[key] - r[key]) > 1.5) bad.push(`${age}.${key}: got ${g[key]} want ${Math.round(r[key])}`)
+      for (const key of ['k', 'contrib', 'growth', 'wd', 'tax', 'total']) {
+        if (key in r && Math.abs(g[key] - r[key]) > 1.5) bad.push(`${age}.${key}: got ${g[key]} want ${Math.round(r[key])}`)
       }
     }
     return bad.slice(0, 5)
@@ -196,7 +276,7 @@ test.describe('new user defaults', () => {
   test('intro sentence restates the plan', async ({ page }) => {
     await expect(main(page).getByRole('heading', { name: 'Retirement', level: 1 })).toBeVisible()
     await expect(intro(page)).toContainText('You save until you retire, then take out $60,000 a year.')
-    await expect(intro(page)).toContainText('Your 401k joins your savings at 60.')
+    await expect(intro(page)).toContainText('Your 401k opens at 60 and what you take out of it is taxed as income.')
     await expect(intro(page)).toContainText('Your funds earn 7.00% a year while you work.')
   })
 
@@ -254,7 +334,8 @@ test.describe('new user defaults', () => {
     const c = await retireCalc(page)
     expect(c.age).toBe(35)
     expect(c.events).toEqual([])
-    expect(c.extras).toEqual([])
+    // saving lines became events, so there is no extras list any more
+    expect(c).not.toHaveProperty('extras')
     expect(c.startFrom).toBe('balances')
     expect(c.ss.on).toBe(true)
   })
@@ -637,6 +718,14 @@ test.describe('money in for the retirement account', () => {
     const e = (await retireCalc(page)).events[0]
     expect(e).toMatchObject({ kind: 'in', to: '401k', repeat: 'year', years: 10 })
     await expectMatchesSim(page, sim({ events: [{ kind: 'in', to: '401k', amount: 2000, age: 30, repeat: 'year', years: 10 }] }))
+  })
+
+  test('with tax on 401k withdrawals, retirement account money joins the pre-tax pool', async ({ page }) => {
+    const events = [{ id: 'e1', name: 'IRA', kind: 'in', to: '401k', amount: 3000, age: 30, repeat: 'year', years: 10 }]
+    await setup(page, { retire: { tax401k: true, withdrawMo: 3000, events } })
+    // locked with the 401k: 10,000 + 3,750 + 3,000 after the first year
+    await expectRow(page, 30, { k: 16750, total: 70000 })
+    await expectMatchesSim(page, simTaxed({ need: 3000, events }))
   })
 
   test('a repeating money-in event can stop when you retire', async ({ page }) => {
@@ -1165,6 +1254,102 @@ test.describe('events: equity link', () => {
     await badge(card, 'Amount').click()
     await expect(field(card, 'Amount')).toBeVisible()
     expect((await retireCalc(page)).events[0].auto).toBeUndefined()
+  })
+})
+
+test.describe('tax on 401k withdrawals', () => {
+  // a retiree living off a big pre-tax 401k in Texas, so the brackets matter
+  const RETIREE = { tax401k: true, age: 55, retireAge: 60, endAge: 85, start401k: 600000, startSavings: 50000, contrib401k: 0, contribSavings: 0, withdrawMo: 4000 }
+  const RETIREE_SIM = { age: 55, retireAge: 60, endAge: 85, k0: 600000, s0: 50000, base401k: 0, contribS: 0, need: 4000 }
+  const taxToggle = (page) => main(page).getByRole('button', { name: 'Tax on 401k withdrawals' })
+
+  test('the whole plan matches the taxed reference model', async ({ page }) => {
+    await setup(page, { retire: RETIREE })
+    await expectMatchesSim(page, simTaxed(RETIREE_SIM))
+  })
+
+  test('savings are spent first, then each year out of the 401k owes income tax', async ({ page }) => {
+    await setup(page, { retire: RETIREE })
+    const model = simTaxed(RETIREE_SIM)
+    // 50,000 of savings cover age 60 and part of 61; no tax until they run low
+    await expectRow(page, 60, { tax: 0, total: model.rows[60].total })
+    expect(model.rows[61].tax).toBeGreaterThan(0)
+    // a full year of 48,000 from the 401k: 16,100 is free, the rest is taxed at 10 and 12%
+    expect(model.rows[62].tax).toBeGreaterThan(3000)
+    await expectRow(page, 62, { tax: model.rows[62].tax, wd: 48000 })
+  })
+
+  test('with returns, a gains tax and a Roth the plan still matches and every row adds up', async ({ page }) => {
+    await setup(page, { retire: { tax401k: true, withdrawMo: 3000, taxPct: 15 }, port: [{ name: 'Mix', alloc: 100, perf: 6 }] })
+    await expectMatchesSim(page, simTaxed({ r: 0.06, tax: 15, need: 3000 }))
+    const t = await readTable(page)
+    for (let a = 61; a <= 90; a++) {
+      expect(Math.abs(t[a - 1].total + t[a].contrib + t[a].growth - t[a].wd - t[a].tax - t[a].total), `age ${a}`).toBeLessThanOrEqual(3)
+    }
+  })
+
+  test('with no pre-tax money the numbers are the same as without the tax', async ({ page }) => {
+    await setup(page, { retire: { tax401k: true, start401k: 0, contrib401k: 0, withdrawMo: 1500 } })
+    await expectMatchesSim(page, sim({ k0: 0, base401k: 0, need: 1500 }))
+    const t = await readTable(page)
+    expect(Object.values(t).every((r) => r.tax === 0)).toBe(true)
+  })
+
+  test('the money runs out sooner than without the tax, and the toggle shows the difference', async ({ page }) => {
+    await setup(page, { retire: { ...RETIREE, withdrawMo: 5000 } })
+    const taxed = simTaxed({ ...RETIREE_SIM, need: 5000 }).runOut
+    const untaxed = sim({ age: 55, retireAge: 60, endAge: 85, k0: 600000, s0: 50000, base401k: 0, contribS: 0, need: 5000 }).runOut
+    expect(taxed).not.toBeNull()
+    expect(untaxed).toBeGreaterThan(taxed)
+    await expect(chip(page, 'Money lasts')).toContainText(`runs out at ${taxed}`)
+    await expect(taxToggle(page)).toHaveAttribute('aria-pressed', 'true')
+    await expect(taxToggle(page)).toContainText('Yes, taxed as income in Texas')
+    await taxToggle(page).click()
+    await expect(taxToggle(page)).toHaveAttribute('aria-pressed', 'false')
+    await expect(chip(page, 'Money lasts')).toContainText(`runs out at ${untaxed}`)
+    expect((await retireCalc(page)).tax401k).toBe(false)
+  })
+
+  test('Find picks a later age once the tax is counted', async ({ page }) => {
+    await setup(page, { retire: { tax401k: true, start401k: 300000, startSavings: 0, contrib401k: 30000, contribSavings: 0, withdrawMo: 6000 } })
+    let expected = null
+    for (let a = 31; a < 90; a++) {
+      if (simTaxed({ retireAge: a, k0: 300000, s0: 0, base401k: 30000, contribS: 0, need: 6000 }).runOut === null) { expected = a; break }
+    }
+    let untaxed = null
+    for (let a = 31; a < 90; a++) {
+      if (sim({ retireAge: a, k0: 300000, s0: 0, base401k: 30000, contribS: 0, need: 6000 }).runOut === null) { untaxed = a; break }
+    }
+    expect(expected).toBeGreaterThan(untaxed)
+    await badge(main(page), 'Retire at', 'Find').click()
+    await expect(field(main(page), 'Retire at')).toHaveValue(String(expected))
+  })
+
+  test('a note explains the tax with the gross amount', async ({ page }) => {
+    await setup(page, { retire: RETIREE })
+    const g = Math.round(grossFor(48000))
+    await expect(main(page).getByText(`To spend $48,000 a year from it you take out about $${g.toLocaleString('en-US')}.`, { exact: false })).toBeVisible()
+    await taxToggle(page).click()
+    await expect(main(page).getByText(/Turn this on to see the difference/)).toBeVisible()
+  })
+
+  test('a Roth account from Balances comes out tax free, after savings', async ({ page }) => {
+    await setup(page, {
+      retire: { ...RETIREE, startFrom: 'balances' },
+      assets: [
+        { id: 'a1', name: 'Checking', balance: 50000 },
+        { id: 'a2', name: 'Roth IRA', balance: 600000, pool: '401k', kind: 'roth' },
+      ],
+    })
+    await expect(main(page).locator('label', { hasText: 'Roth IRA' })).toContainText('Retirement account, Roth')
+    await expectMatchesSim(page, simTaxed({ ...RETIREE_SIM, k0: 0, roth0: 600000 }))
+    const t = await readTable(page)
+    expect(Object.values(t).every((r) => r.tax === 0)).toBe(true)
+  })
+
+  test('the Tax column header explains it', async ({ page }) => {
+    await setup(page, { retire: RETIREE })
+    await expect(tableEl(page).locator('thead')).toContainText('Tax')
   })
 })
 

@@ -1,0 +1,141 @@
+{
+ "budget": {
+  "updated": "2026-11-07",
+  "rows": [
+   {
+    "id": "b001",
+    "name": "Rent",
+    "type": "simple",
+    "amount": 1850,
+    "source": "tracked",
+    "day": 1
+   },
+   {
+    "id": "b002",
+    "name": "Crunch Fitness",
+    "type": "simple",
+    "amount": 39,
+    "source": "manual",
+    "day": 3
+   },
+   {
+    "id": "b003",
+    "name": "Electricity",
+    "type": "simple",
+    "amount": 95,
+    "source": "manual",
+    "day": 8
+   },
+   {
+    "id": "b004",
+    "name": "Phone",
+    "type": "simple",
+    "amount": 65,
+    "source": "manual",
+    "day": 12,
+    "match": {
+     "merchant": "Verizon"
+    }
+   },
+   {
+    "id": "b005",
+    "name": "Groceries",
+    "type": "breakdown",
+    "amount": 450,
+    "source": "tracked",
+    "prorate": true,
+    "items": [
+     {
+      "id": "g1",
+      "name": "Produce",
+      "mode": "month",
+      "amount": 120,
+      "perWeek": 0
+     },
+     {
+      "id": "g2",
+      "name": "Pantry",
+      "mode": "month",
+      "amount": 160,
+      "perWeek": 0
+     },
+     {
+      "id": "g3",
+      "name": "Meat and fish",
+      "mode": "month",
+      "amount": 110,
+      "perWeek": 0
+     },
+     {
+      "id": "g4",
+      "name": "Household",
+      "mode": "month",
+      "amount": 60,
+      "perWeek": 0
+     }
+    ]
+   },
+   {
+    "id": "b006",
+    "name": "Restaurants",
+    "type": "breakdown",
+    "amount": 260,
+    "source": "tracked",
+    "prorate": true,
+    "match": {
+     "cat": "Food & Dining",
+     "sub": "Restaurants & Takeout"
+    },
+    "items": [
+     {
+      "id": "r1",
+      "name": "Sit-down meals",
+      "mode": "week",
+      "amount": 35,
+      "perWeek": 1
+     },
+     {
+      "id": "r2",
+      "name": "Takeout",
+      "mode": "week",
+      "amount": 15,
+      "perWeek": 2
+     }
+    ]
+   },
+   {
+    "id": "b007",
+    "name": "Transit",
+    "type": "breakdown",
+    "amount": 120,
+    "source": "tracked",
+    "prorate": true,
+    "items": [
+     {
+      "id": "t1",
+      "name": "Subway rides",
+      "mode": "week",
+      "amount": 3,
+      "perWeek": 10
+     }
+    ]
+   },
+   {
+    "id": "b008",
+    "name": "Unexpected",
+    "type": "simple",
+    "amount": 150,
+    "source": "manual"
+   }
+  ],
+  "dismissedSubs": {}
+ },
+ "notes": {
+  "notes": []
+ },
+ "presets": {},
+ "log": {
+  "entries": []
+ },
+ "local": {}
+}

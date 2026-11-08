@@ -58,6 +58,7 @@ export function normalizeRetire(input: unknown): RetireState {
   const { downAmt, downAge, carAmt, carAge, optAmt, optAge, autoOpt, ...rest } = o
   return {
     ...rest,
+    tax401k: RETIRE_DEFAULTS.tax401k,
     ss: { ...RETIRE_DEFAULTS.ss, on: false },
     startFrom: 'typed',
     startOff: [],

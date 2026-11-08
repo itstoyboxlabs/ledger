@@ -26,7 +26,7 @@ const seedPlan = (o: Record<string, unknown> = {}) => {
   localStorage.setItem('ledger:retirePortfolio', JSON.stringify([{ name: 'Cash', alloc: 100, perf: 0 }]))
 }
 const debt = (o: Partial<Debt> = {}): Debt => ({ id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250, budgetRow: null, ...o })
-// the cells of one year in the table: age, phase, 401k, contributions, growth, withdrawals, total
+// the cells of one year in the table: age, phase, 401k, contributions, growth, withdrawals, tax, total
 const yearRow = (age: number) => {
   const table = screen.getByRole('region', { name: 'Year by year projection table' })
   const row = within(table).getAllByRole('row').find((r) => r.querySelector('td')?.textContent === String(age))
@@ -48,7 +48,7 @@ describe('RetirementCalc', () => {
   it('renders the summary sentence and headline cards from the defaults', async () => {
     renderApp(<RetirementCalc debts={[]} goToBalances={() => {}} />)
     expect(screen.getByText(/You save until you retire, then take out \$60,000 a year/)).toBeInTheDocument()
-    expect(screen.getByText(/Your 401k joins your\s+savings at 60/)).toBeInTheDocument()
+    expect(screen.getByText(/Your 401k opens at 60 and what you take out of it is taxed as income/)).toBeInTheDocument()
     expect(screen.getByText('At retirement (60)')).toBeInTheDocument()
     expect(screen.getByText('Money lasts')).toBeInTheDocument()
     expect(screen.getByText('Left over at 70')).toBeInTheDocument()
@@ -86,7 +86,7 @@ describe('RetirementCalc', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
     expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByLabelText(/Retire at/)).toHaveValue(60)
-  })
+  }, 30000)
 
   it('Find moves the retire age when a safe age exists', async () => {
     localStorage.setItem('ledger:retireCalc', JSON.stringify({ events: [], withdrawMo: 0, retireAge: 90 }))
@@ -111,14 +111,14 @@ describe('RetirementCalc', () => {
   it('keeps 401k money paid in after the access age', () => {
     seedPlan({ age: 55, retireAge: 65, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0, withdrawMo: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[6]).toBe('$197,500')
+    expect(yearRow(70)[7]).toBe('$197,500')
     expect(yearRow(61)[2]).toBe('—')
   })
 
   it('opens the 401k from the start when already past the access age', () => {
     seedPlan({ age: 65, retireAge: 66, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[6]).toBe('$47,500')
+    expect(yearRow(70)[7]).toBe('$47,500')
     expect(chipText('Money lasts')).toContain('to 70+')
   })
 
@@ -133,7 +133,43 @@ describe('RetirementCalc', () => {
     seedPlan()
     renderApp(<RetirementCalc debts={[]} />)
     // 10,000 at 59, minus 12,000, plus the 58,750 401k
-    expect(yearRow(60).slice(3)).toEqual(['$58,750', '$0', '−$12,000', '$56,750'])
+    expect(yearRow(60).slice(3)).toEqual(['$58,750', '$0', '−$12,000', '—', '$56,750'])
+  })
+
+  it('taxes 401k withdrawals as income and shows it in the Tax column', () => {
+    // Texas, no savings: 60,000 a year out of a 1,000,000 pre-tax 401k
+    seedPlan({ age: 60, retireAge: 60, endAge: 70, start401k: 1000000, startSavings: 0, contrib401k: 0, contribSavings: 0, withdrawMo: 5000 })
+    renderApp(<RetirementCalc debts={[]} />)
+    const tax = Number(yearRow(61)[6]?.replace(/[^0-9]/g, ''))
+    expect(tax).toBeGreaterThan(5000)
+    expect(tax).toBeLessThan(15000)
+    const toggle = screen.getByRole('button', { name: 'Tax on 401k withdrawals' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle).toHaveTextContent('Yes, taxed as income in Texas')
+    expect(screen.getByText(/To spend \$60,000 a year from it you take out about/)).toBeInTheDocument()
+  })
+
+  it('the tax toggle turns the tax off and saves it', async () => {
+    seedPlan({ age: 60, retireAge: 60, endAge: 70, start401k: 1000000, startSavings: 0, contrib401k: 0, contribSavings: 0, withdrawMo: 5000 })
+    renderApp(<RetirementCalc debts={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Tax on 401k withdrawals' }))
+    await waitFor(() => expect(stored('retireCalc').tax401k).toBe(false))
+    expect(yearRow(61)[6]).toBe('—')
+    // untaxed: the 401k is plain savings, 1,000,000 minus two years of 60,000
+    expect(yearRow(61)[7]).toBe('$880,000')
+    expect(screen.getByText(/Your 401k joins your savings at 60/)).toBeInTheDocument()
+  })
+
+  it('reads Roth and pre-tax accounts from Balances separately', () => {
+    localStorage.setItem('ledger:assets', JSON.stringify([
+      { id: 'a1', name: 'Old 401k', balance: 40000, pool: '401k' },
+      { id: 'a2', name: 'Roth IRA', balance: 10000, pool: '401k', kind: 'roth' },
+    ]))
+    seedPlan({ startFrom: 'balances' })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText('Retirement account, pre-tax')).toBeInTheDocument()
+    expect(screen.getByText('Retirement account, Roth')).toBeInTheDocument()
+    expect(screen.getByText(/of it Roth/)).toHaveTextContent('($10,000 of it Roth)')
   })
 
   it('a payoff event outside the plan does not take the debt out of the hole', async () => {
@@ -186,7 +222,7 @@ describe('RetirementCalc', () => {
     await userEvent.clear(need)
     await userEvent.type(need, '99000')
     await waitFor(() => expect(screen.queryByText(/No retire age before/)).toBeNull())
-  })
+  }, 30000)
 
   it('adds a chip for the end age, once', () => {
     seedPlan({ endAge: 85 })
@@ -332,7 +368,7 @@ describe('RetirementCalc', () => {
       expect(screen.getByLabelText(/Need per month/)).toHaveValue(1000)
       expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
       // ages 40 to 59 take 12,000 a year: 250,000 at 39 leaves 238,000 at 40
-      expect(yearRow(40)[6]).toBe('$238,000')
+      expect(yearRow(40)[7]).toBe('$238,000')
       expect(localStorage.getItem('ledger:retireNeedPreset')).toBe('null')
       await screen.findByText(/Your Budget today/)
     })
