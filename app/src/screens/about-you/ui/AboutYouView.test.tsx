@@ -8,7 +8,7 @@ describe('AboutYouView', () => {
   it('explains the page and shows the three cards', () => {
     renderApp(<AboutYouView />)
     expect(screen.getByText(/This is the starting point for planning/)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Your age' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Your birth date' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Filing status' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: /Tax state and city/ })).toBeInTheDocument()
   })

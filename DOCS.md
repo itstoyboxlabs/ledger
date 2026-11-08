@@ -50,7 +50,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   savings and 401k pools, planning-variables presets), the Retirement plan, portfolio, presets and the Budget preset
   it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists.
   Uploading a real file after trying the sample replaces all of it, settings included (see Import and export).
-  - **The story it tells**: a 25 year old (About you age 25, Single, Texas) with a corporate job until 40, then an
+  - **The story it tells**: a 25 year old (About you birth date 05-14-2001, which is 25 on the Balances date of 2026-10-31, Single, Texas) with a corporate job until 40, then an
     easier, lower paying job until retiring at 62. It shows the pay plan end to end: one Budget preset and one
     Take-home preset per phase of life, picked by age on Retirement.
   - **Take-home pay**: three presets (key `takeHome`, ids `th-corporate`, `th-easier`, `th-parttime`): `Corporate
@@ -341,9 +341,22 @@ A sidebar page (`about`, user icon) at the very top of the sidebar, above Spendi
 about you that several pages share, set once. A short intro says what the page is for and that the other pages
 read from it. Every field has a sentence or two saying what it is for and which pages use it.
 
-- **Your age**: a typed number saved as `ledger:age` = `{ age, asOf }` (the year it was typed). The age shown is
-  `currentAge()`: `age` plus the years since `asOf`, so it goes up by one each January on its own. A birthday later
-  in the year is not modeled. "Clear my age" sets it back to `null`. Retirement reads it (see Retirement).
+- **Your birth date**: typed as plain text in MM-DD-YYYY (placeholder `MM-DD-YYYY`, no calendar or date picker).
+  `MM/DD/YYYY` and one-digit months and days work too. It is checked as you type (once a four-digit year is in)
+  and when you leave the box, by `parseBirthDate`: a short plain error shows for text that is not a date, a day
+  that does not exist, a future date or an age over 120 (`MAX_AGE`), and the saved date stays as it was. A good
+  date is saved as `ledger:birthDate` = `YYYY-MM-DD` and shown back as MM-DD-YYYY (`formatBirthDate`). Under the
+  box it says "You are 38 today" (`ageOn`). Leaving the box empty or "Clear my birth date" sets it to `null`.
+  The card says why it asks (age drives Retirement and the payoff ages), that the date is stored only on this
+  device and in the exported file, and that Retirement uses your age on the day Balances was last updated.
+- **Old typed ages**: saves from before the birth date have `ledger:age` = `{ age, asOf }`. With no birth date it
+  is read as a fixed age (it no longer goes up each January) and the card says so. Saving a birth date sets
+  `ledger:age` to `null`, so the birth date wins.
+- **Age for planning**: `planningAge()` (hook `usePlanningAge`) is the one place every page gets the About you
+  age. With a birth date it is your age on the Balances "as of" date (`ledger:assetsAsOf`), or today when that is
+  empty. Balances are only as fresh as their date, so the plan's starting age moves forward only when Balances is
+  updated and the plan does not drift. An old typed age is used as it is. Retirement reads it (see Retirement),
+  and the debt payoff ages there follow Retirement's current age. The Debt payoff tool shows a date, not an age.
 - **Filing status**: `ledger:filingStatus`, `single` or `mfj` (the `FilingStatus` enum, labels in
   `FILING_LABELS`). Only these two on purpose. Nothing saved, or anything else, reads as `single`, which is how the
   app always worked. It changes federal brackets, the standard deduction, the long-term gains bands, the
@@ -352,10 +365,12 @@ read from it. Every field has a sentence or two saying what it is for and which 
 - **Tax state and city**: the only place the tax state is set. It is the same `taxState` key that Balances used to
   hold, so saved choices load unchanged. Other pages read it through `useTaxState`. Its info tip says that state tax for married filers is an estimate (see Tax engine).
 - **No partner fields.** The app plans around your own income.
-- Both keys are plain `ledger:` keys, so they travel in the exported `ledger-data.json` (`settings.local`) and come back on
-  import like every other key. The sample data sets age 25 (as of 2026) and Single, with
-  `retireAgeAuto: true` so its Retirement plan runs from 25. The lean e2e settings have neither key.
-- Hooks: `useAboutYouAge()` (`{ entry, age, setAge, clear }`) and `useFilingStatus()`, both in `shared/hooks`.
+- These are plain `ledger:` keys, so they travel in the exported `ledger-data.json` (`settings.local`) and come back on
+  import like every other key. The sample data sets `ledger:birthDate` to `2001-05-14` (25 on its Balances date
+  of 2026-10-31) and Single, with `retireAgeAuto: true` so its Retirement plan runs from 25. The lean e2e settings
+  have neither key.
+- Hooks: `useBirthDate()` (`{ birthDate, savedAge, setBirthDate, clear }`), `usePlanningAge()` and
+  `useFilingStatus()`, all in `shared/hooks`.
 
 ---
 
@@ -649,7 +664,8 @@ Presets menu sits in the page header row.
 - Older saves were `{ loans, card, taxes }`. `useDebts` rewrites them as three entries on first read, and
   `useDebtLinkMigration` turns an old name-based hint into a row id only when a row with that exact name exists.
   Otherwise the debt migrates unlinked with payment 0, so no number changes.
-- **Assets** live in `assets` (`[{ id, name, balance, pool?, kind? }]`) with an "as of" date in `assetsAsOf`.
+- **Assets** live in `assets` (`[{ id, name, balance, pool?, kind? }]`) with an "as of" date in `assetsAsOf`
+  (empty shows today). Retirement's Auto current age is your age on this date (see About you), and the card says so.
   `kind` is the account type, picked in an "Account type" select: `regular` (Savings, use anytime), `pretax`
   (a traditional 401k or IRA, taxed as income on the way out) or `roth` (taxed going in, tax free out). Pre-tax
   and Roth are locked until the 401k access age, so picking a type also writes the matching `pool` (`savings` or
@@ -667,8 +683,10 @@ Presets menu sits in the page header row.
 
 The most model-heavy page: a year-by-year projection from current age to the end age.
 
-- **Current age** has an Auto badge once About you has an age: the field shows that age (it goes up each
-  January) and the plan runs from it. Click Auto to type your own. The typed age stays saved in `retireCalc.age`
+- **Current age** has an Auto badge once About you has a birth date (or an old typed age): the field shows your
+  age on the day you last updated Balances (`usePlanningAge`, today if Balances has no "as of" date) and the plan
+  runs from it. Its tip says "Using your age on the day you last updated Balances (date). Update Balances to move
+  it forward." It moves only when the Balances date does, so the starting age always matches the balances. Click Auto to type your own. The typed age stays saved in `retireCalc.age`
   underneath, so turning Auto off brings it back, and Retirement presets keep saving the typed age. The switch is
   `ledger:retireAgeAuto` (on by default, not part of presets). With no About you age the field is the plain typed
   number, exactly as before. The logic lives in `useRetireAge` and `CurrentAgeField`.

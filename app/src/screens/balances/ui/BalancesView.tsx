@@ -19,6 +19,7 @@ import { useDebts } from '@/shared/hooks/useDebts'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { AssetKind } from '@/shared/enums/AssetKind'
 import { AssetPool } from '@/shared/enums/AssetPool'
+import { todayIso } from '@/shared/utils/todayIso'
 import type { Asset } from '@/shared/types/Asset'
 import type { Debt } from '@/shared/types/Debt'
 
@@ -30,8 +31,7 @@ export function BalancesView() {
   const rows = useBudgetRows()
   const owed = sumBalances(debts)
   const owned = assets.reduce((s, a) => s + a.balance, 0)
-  const now = new Date()
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const today = todayIso()
 
   const patchDebt = (id: string, p: Partial<Debt>) => setDebts(debts.map((d) => (d.id === id ? { ...d, ...p } : d)))
   const patchAsset = (id: string, p: Partial<Asset>) => setAssets(assets.map((a) => (a.id === id ? { ...a, ...p } : a)))
@@ -146,7 +146,8 @@ export function BalancesView() {
           <div>
             <h2 className="text-[15px] font-semibold">What you have</h2>
             <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-              Cash, savings and investments, typed in by hand.
+              Cash, savings and investments, typed in by hand. Change the As of date when you update
+              them. Retirement plans from your age on that day.
             </p>
           </div>
           <Label className="flex items-center gap-2">

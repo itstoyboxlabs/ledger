@@ -37,9 +37,10 @@ test.describe('rich sample data', () => {
     await expect(main(page).getByText('Farmers market')).toBeVisible()
   })
 
-  test('About you has age 25 and Single, and Retirement follows that age', async ({ page }) => {
+  test('About you has a birth date that makes you 25 on the Balances date and Single, and Retirement follows that age', async ({ page }) => {
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).toHaveValue('25')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('05-14-2001')
+    await expect(main(page)).toContainText('You are 25 today.')
     await expect(main(page).getByRole('combobox', { name: 'Filing status' })).toHaveText('Single')
     await goTo(page, 'Retirement')
     const ageField = main(page).locator('div.relative').filter({ has: page.locator('span:text-is("Current age")') }).first()

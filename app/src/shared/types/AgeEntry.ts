@@ -1,5 +1,6 @@
-// The age typed on the About you page and the year it was typed in. The current age is
-// `age` plus the years since `asOf`, so it goes up by one every January on its own.
+// An age typed on the About you page before it asked for a birth date (`ledger:age`), with the
+// year it was typed. Old saves still have it: it is read as a fixed age until a birth date is
+// entered, and `asOf` is no longer used.
 export interface AgeEntry {
   age: number
   asOf: number
