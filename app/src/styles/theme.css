@@ -1,0 +1,33 @@
+/* Maps the tokens above onto Tailwind and shadcn/ui names. */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* shadcn/ui color + radius names, pointed at this app's own tokens. The app already
+   uses --accent (brand indigo) and --ring (hairline border) for its own purposes, so
+   shadcn's "accent" (hover fill) and "ring" (focus ring) get separate --ui-* values
+   rather than sharing those variable names. */
+@theme inline {
+  --color-background: var(--surface-1);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface-1);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface-3);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--ui-hover);
+  --color-accent-foreground: var(--text-primary);
+  --color-destructive: var(--bad);
+  --color-border: var(--ring);
+  --color-input: var(--ui-input);
+  --color-ring: rgba(150, 162, 210, 0.55); /* focus rings: quiet slate, not the brand blue */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+}

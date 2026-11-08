@@ -1,0 +1,196 @@
+/* Global base styles: resets, the .card surface, buttons, number inputs, scrollbars, phone layout. */
+
+/* Tailwind v4 borders default to currentColor; shadcn components expect a quiet
+   hairline unless a color is given */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--ring);
+  }
+}
+
+html {
+  background:
+    radial-gradient(1000px 360px at 50% -80px, rgba(125, 140, 175, 0.12), transparent 70%),
+    var(--page);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* every panel: neutral slate with one soft radial highlight. The highlight sits in a
+   different spot on neighboring panels so the page doesn't read as a stamped pattern.
+   Set --gx / --gy on a single card to place its glow by hand. */
+.card {
+  --gx: 50%;
+  --gy: -5%;
+  background:
+    radial-gradient(80% 95% at var(--gx) var(--gy), rgba(112, 128, 165, 0.14), transparent 70%),
+    linear-gradient(180deg, #181d25, #14181f);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 16px 36px -22px rgba(0, 0, 0, 0.9);
+}
+.card:nth-child(3n + 1) { --gx: 16%; --gy: -12%; }
+.card:nth-child(3n + 2) { --gx: 82%; --gy: -5%; }
+.card:nth-child(3n) { --gx: 44%; --gy: 35%; }
+
+/* the selected pill: nav item, active tab, soft buttons. Muted slate indigo, a little
+   lighter toward the right */
+@utility pill-active {
+  background-image: linear-gradient(90deg, #2d3552, #393c63);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 4px 12px -6px rgba(91, 110, 245, 0.55);
+}
+
+/* primary buttons */
+@utility btn-gradient {
+  background-image: linear-gradient(135deg, #6a78e8, #4b57c9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px -6px rgba(91, 110, 245, 0.7);
+}
+
+/* every other button: the same raised feel, just much quieter. A faint light edge on
+   top and a soft shadow underneath. Keep it subtle. */
+@utility btn-raised {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* the left rail is flat until the very bottom, where an indigo glow comes up */
+aside {
+  background-image: radial-gradient(300px 240px at 50% 112%, rgba(92, 92, 190, 0.32), transparent 72%);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* hide native number-input spinner arrows everywhere — nothing in this app relies
+   on them, and their reserved width shifts right-aligned digits left of where a
+   plain span with the same value would sit, breaking alignment against non-input
+   number displays (table totals, read-only sums) in the same column */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Retirement page opts back into native spinner arrows on every number input —
+   Josh wants click-to-increment there (ages, dollar amounts, everything) even
+   though the rest of the app hides them for alignment */
+.show-spinners input[type="number"] {
+  -moz-appearance: auto;
+}
+.show-spinners input[type="number"]::-webkit-inner-spin-button,
+.show-spinners input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: auto;
+  margin: 0;
+}
+
+/* boxed shadcn number fields draw their own chevron stepper (see Stepper in App.jsx),
+   so the native spinner stays hidden on them even inside .show-spinners */
+input[type="number"].no-native-spin {
+  -moz-appearance: textfield;
+}
+.show-spinners input[type="number"].no-native-spin::-webkit-inner-spin-button,
+.show-spinners input[type="number"].no-native-spin::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+/* dark, minimal scrollbars everywhere */
+* {
+  scrollbar-width: thin; /* firefox */
+  scrollbar-color: var(--baseline) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--baseline);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Phones: the cards on a page become flat sections divided by hairlines, so the content
+   uses the full width instead of sitting inside bubbles. Applies to every page. */
+@media (max-width: 639px) {
+  /* nothing should ever pan the page sideways on a phone */
+  body { overflow-x: hidden; }
+  main { padding-inline: 1rem; }
+  main .card {
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding-inline: 0;
+    padding-block: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Spending / Income / Net share one line */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 1.25rem;
+  }
+  .kpi-row > .card {
+    min-width: 0;
+    padding-block: 0.25rem 1.25rem;
+    padding-inline: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .kpi-row > .card:first-child { padding-inline-start: 0; border-left: 0; }
+  .kpi-row .kpi-label, .kpi-budget .kpi-label { font-size: 12px; gap: 0; }
+  .kpi-row .kpi-label svg, .kpi-budget .kpi-label svg { display: none; }
+  .kpi-row .kpi-value, .kpi-budget .kpi-value { font-size: 17px; margin-top: 0.25rem; }
+  .kpi-row .kpi-sub, .kpi-budget .kpi-sub { font-size: 11px; }
+  .kpi-budget .kpi-actual { font-size: 11px; }
+
+  /* Budget: income on top, then one row each for budgeted expenses, leftover per month
+     and leftover per year. In every row the plan is on the left and the actual is on
+     the right. */
+  .kpi-budget { display: block; margin-top: 1.25rem; }
+  .kpi-budget > div { display: contents; }
+  .kpi-budget .card {
+    padding-block: 0.25rem 1.25rem;
+    padding-inline: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .kpi-budget .kpi-value { font-size: 20px; }
+  .kpi-budget .kpi-wide { padding-block: 0 1.25rem; }
+  .kpi-budget .card:not(.kpi-wide) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 0;
+  }
+  .kpi-budget .card:not(.kpi-wide) .kpi-actual {
+    margin-top: 0;
+    border-top: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0 0 0 0.75rem;
+  }
+  .kpi-budget .absolute { display: none; }
+}

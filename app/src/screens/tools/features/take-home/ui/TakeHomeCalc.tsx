@@ -1,0 +1,167 @@
+import type { DeductionKind } from '@/shared/enums/DeductionKind'
+import type { DeductionUnit } from '@/shared/enums/DeductionUnit'
+import type { Deduction } from '@/shared/types/Deduction'
+import { STATES } from '@/shared/constants/STATES'
+import { Label } from '@/shared/ui/primitives/label'
+import { Button } from '@/shared/ui/primitives/button'
+import { X } from 'lucide-react'
+import { Table, TableBody } from '@/shared/ui/primitives/table'
+import { fmt } from '@/shared/utils/fmt'
+import { Card } from '@/shared/ui/Card'
+import { DEDUCTION_KINDS } from '@/shared/constants/DEDUCTION_KINDS'
+import { DEDUCTION_TIPS } from '@/screens/tools/features/take-home/constants/DEDUCTION_TIPS'
+import { DEDUCTION_UNITS } from '@/screens/tools/features/take-home/constants/DEDUCTION_UNITS'
+import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
+import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
+import { Dropdown } from '@/shared/ui/Dropdown'
+import { Icon } from '@/shared/ui/Icon'
+import { InfoTip } from '@/shared/ui/InfoTip'
+import { TAKE_HOME_DEFAULTS } from '@/shared/constants/TAKE_HOME_DEFAULTS'
+import { TaxedInCaption } from '@/screens/tools/ui/TaxedInCaption'
+import { ToolField } from '@/shared/ui/ToolField'
+import { ToolRow } from '@/screens/tools/ui/ToolRow'
+import { deductionLabel } from '@/shared/utils/deductionLabel'
+import { deductionTax } from '@/shared/utils/deductionTax'
+import { is401kKind } from '@/shared/utils/is401kKind'
+import { normalizeTakeHome } from '@/shared/utils/normalizeTakeHome'
+import { takeHome401kMatchYearly } from '@/shared/utils/takeHome401kMatchYearly'
+import { takeHomeBreakdown } from '@/shared/utils/takeHomeBreakdown'
+import { usePersistedState } from '@/shared/hooks/usePersistedState'
+import { useToolState } from '@/shared/hooks/useToolState'
+
+export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
+  // the shared tax state, set on the Balances page; also used by the Budget income override
+  const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [raw, setC] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
+  const c = normalizeTakeHome(raw)
+  const b = takeHomeBreakdown(c, taxState)
+  const setDeductions = (deductions: Deduction[]) => setC({ salary: c.salary, deductions })
+  const patch = (id: string, p: Partial<Deduction>) => setDeductions(c.deductions.map((d) => (d.id === id ? { ...d, ...p } : d)))
+  const add = () =>
+    setDeductions([
+      ...c.deductions,
+      { id: `d${Date.now().toString(36)}`, kind: 'other-pre', unit: 'mo', amount: 0, match: 0 },
+    ])
+  const matchYearly = takeHome401kMatchYearly(c)
+  const dropdownClass = 'h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs'
+  return (
+    <Card id="take-home-pay" className="p-5 scroll-mt-4">
+      <h3 className="text-[15px] font-semibold">Take-home pay</h3>
+      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+        See what a salary actually turns into after taxes, 401k and health insurance come out,
+        per year, per month and per paycheck. A $80,000 salary isn't $6,667 a month, and this
+        shows where the rest goes.
+      </p>
+      <div className="mt-4 grid grid-cols-2 items-end gap-3">
+        <ToolField label="Salary per year" value={c.salary} onChange={(v: number) => setC({ ...c, salary: v })} step={5000} suffix="$" />
+        <TaxedInCaption state={taxState} onChange={goToBalances} />
+      </div>
+
+      <div className="mt-4 text-[12px] text-[var(--text-muted)]">What comes out of your pay</div>
+      <div className="mt-1.5 flex flex-col gap-2">
+        {c.deductions.map((d) => (
+          <div key={d.id} className="flex flex-wrap items-center gap-2">
+            <div className="min-w-[200px] flex-1">
+              <Dropdown
+                label="Kind"
+                hideLabel
+                value={d.kind}
+                onChange={(kind: string) => patch(d.id, { kind: kind as DeductionKind })}
+                className={dropdownClass}
+                options={DEDUCTION_KINDS.map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            <div className="w-[110px]">
+              <DraftNumberInput
+                boxed
+                value={d.amount}
+                step={d.unit === 'pct' ? 1 : 25}
+                suffix={d.unit === 'pct' ? '%' : '$'}
+                onChange={(v: number) => patch(d.id, { amount: Math.max(0, v) })}
+                className="tnum"
+              />
+            </div>
+            <div className="w-[130px]">
+              <Dropdown
+                label="Unit"
+                hideLabel
+                value={d.unit}
+                onChange={(unit: string) => patch(d.id, { unit: unit as DeductionUnit })}
+                className={dropdownClass}
+                options={DEDUCTION_UNITS.map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            {is401kKind(d.kind) && (
+              <Label className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px] text-[var(--text-muted)]">
+                  Employer match
+                  <InfoTip tip="What your employer adds on top of what you put in, as a percent of your contribution. 100% means they match it dollar for dollar." size={12} />
+                </span>
+                <div className="w-[96px]">
+                  <DraftNumberInput
+                    boxed
+                    value={d.match ?? 0}
+                    step={10}
+                    min={0}
+                    suffix="%"
+                    onChange={(v: number) => patch(d.id, { match: Math.max(0, v) })}
+                    className="tnum"
+                  />
+                </div>
+              </Label>
+            )}
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setDeductions(c.deductions.filter((x) => x.id !== d.id))}
+              title="Remove"
+              className="text-[var(--text-muted)] hover:bg-transparent hover:text-[var(--bad)]"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button variant="outline" size="sm" onClick={add} className="mt-3">
+        <Icon name="plus" size={13} />
+        Add something that comes out
+      </Button>
+
+      <Table className="mt-5 w-full text-[13px]">
+        <TableBody>
+          <ToolRow label="Salary" value={fmt(b.salary)} />
+          {b.lines.map((l) => (
+            <ToolRow
+              key={l.id}
+              label={`${deductionLabel(l.kind)}${l.unit === 'pct' ? ` (${l.amount}%)` : ''}`}
+              value={'−' + fmt(l.yearly)}
+              tip={DEDUCTION_TIPS[deductionTax(l.kind)]}
+            />
+          ))}
+          <ToolRow label="Federal income tax" value={'−' + fmt(b.fed)} />
+          <ToolRow label="Social Security and Medicare" value={'−' + fmt(b.fica)} />
+          <ToolRow
+            label={`State${b.local ? ' and city' : ''} tax`}
+            value={'−' + fmt(b.state + b.local)}
+          />
+          <ToolRow label="Take-home per year" value={fmt(b.net)} bold tone="var(--good)" />
+          <ToolRow label="Take-home per month" value={fmt(b.net / 12)} bold tone="var(--good)" />
+          <ToolRow
+            label="Per paycheck, paid twice a month"
+            value={fmt(b.net / 24)}
+            tip="24 checks a year. If you're paid every two weeks it's 26, so each check is a bit smaller."
+          />
+          <ToolRow
+            label="Of every dollar you earn, you keep"
+            value={(b.salary > 0 ? (b.net / b.salary) * 100 : 0).toFixed(1) + '%'}
+          />
+        </TableBody>
+      </Table>
+      {matchYearly > 0 && (
+        <p className="mt-3 text-[12px] text-[var(--text-muted)]">
+          Your employer adds <span className="tnum">{fmt(matchYearly)}</span> a year to your 401k.
+        </p>
+      )}
+    </Card>
+  )
+}

@@ -1,0 +1,32 @@
+/* Design tokens: the colors, radii and fonts every component reads with var(--name). */
+:root {
+  /* dark navy theme (2026-11 redesign) */
+  --page: #0b0e17;
+  --sidebar: #0e121a;
+  --surface-1: #141922;
+  --surface-2: #1a202b;
+  --surface-3: #1f2632; /* popovers, menus, modals */
+  --text-primary: #ffffff;
+  --text-secondary: #c6cce0;
+  --text-muted: #8690ab;
+  --grid: rgba(255, 255, 255, 0.07);
+  --baseline: rgba(255, 255, 255, 0.16);
+  --ring: rgba(255, 255, 255, 0.09);
+  --accent: #5b6ef5;
+  --accent-soft: rgba(105, 118, 190, 0.30);
+  --ui-hover: #262d45; /* shadcn "accent": hover / highlighted fill */
+  --ui-input: rgba(255, 255, 255, 0.13); /* shadcn "input": field borders */
+  --good: #34d17a;
+  --bad: #f2606c;
+
+  --cat-housing: #2f8cff;
+  --cat-food: #22b573;
+  --cat-shopping: #ffb81f;
+  --cat-transport: #8b6cf6;
+  --cat-subs: #ff5c93;
+  --cat-health: #ff4f7b;
+  --cat-taxes: #ff6a2b;
+  --cat-bills: #1fae4b;
+  --cat-entertainment: #9aa1b2;
+  --cat-other: #7d8597;
+}
