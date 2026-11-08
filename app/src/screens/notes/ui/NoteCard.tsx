@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/shared/ui/primitives/button'
 import { X } from 'lucide-react'
 import { Textarea } from '@/shared/ui/primitives/textarea'
@@ -12,12 +12,18 @@ type NoteCardProps = {
   onTogglePin: () => void
 }
 
-// A single note: pin toggle, timestamp, editable text (autosaves via onCommit),
-// delete (hover-reveal, no confirm — same as a manual budget row).
+// A single note: pin toggle, timestamp, editable text (autosaves through onChange),
+// delete (hover-reveal, no confirm, same as a manual budget row).
 export function NoteCard({ note, onChange, onDelete, onTogglePin }: NoteCardProps) {
   const [draft, setDraft] = useState(note.text)
+  // a different note starts from its own text; a new text for the same note (our own save
+  // coming back) leaves what is being typed alone
+  const [draftFor, setDraftFor] = useState(note.id)
+  if (draftFor !== note.id) {
+    setDraftFor(note.id)
+    setDraft(note.text)
+  }
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(() => setDraft(note.text), [note.id])
 
   const commit = (v: string) => {
     setDraft(v)
@@ -30,18 +36,19 @@ export function NoteCard({ note, onChange, onDelete, onTogglePin }: NoteCardProp
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
           {note.pinned && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#e8c76a]">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--warn)]">
               <path d="M12 17v5" />
               <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
             </svg>
           )}
           {noteDateLabel(note.createdAt)}
         </div>
-        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
           <Button variant="ghost" size="icon-xs"
             onClick={onTogglePin}
             title={note.pinned ? 'Unpin' : 'Pin to top'}
-            className={note.pinned ? 'text-[#e8c76a] hover:text-[#e8c76a]' : 'text-[var(--text-muted)] hover:text-[#e8c76a]'}
+            aria-label={note.pinned ? 'Unpin' : 'Pin to top'}
+            className={note.pinned ? 'text-[var(--warn)] hover:text-[var(--warn)]' : 'text-[var(--text-muted)] hover:text-[var(--warn)]'}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill={note.pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 17v5" />
@@ -51,6 +58,7 @@ export function NoteCard({ note, onChange, onDelete, onTogglePin }: NoteCardProp
           <Button variant="ghost" size="icon-xs"
             onClick={onDelete}
             title="Delete note"
+            aria-label="Delete note"
             className="text-[var(--text-muted)] hover:text-[var(--bad)]"
           >
             <X className="size-3.5" />
@@ -59,6 +67,7 @@ export function NoteCard({ note, onChange, onDelete, onTogglePin }: NoteCardProp
       </div>
       <Textarea
         value={draft}
+        aria-label="Note"
         onChange={(e) => commit(e.target.value)}
         spellCheck={false}
         rows={Math.min(8, Math.max(2, draft.split('\n').length))}

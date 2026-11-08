@@ -19,8 +19,15 @@ export function SortHead({ id, label, sort, onSort, right, className }: SortHead
   return (
     <TableHead
       onClick={() => onSort(id)}
+      // reachable by keyboard too: Tab to it, then Enter or Space sorts
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        onSort(id)
+      }}
       aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-      className={cn('cursor-pointer select-none hover:text-white', right && 'text-right', className)}
+      className={cn('cursor-pointer select-none hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring', right && 'text-right', className)}
     >
       {label} {active ? (sort.dir === 'asc' ? '\u2191' : '\u2193') : ''}
     </TableHead>
