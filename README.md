@@ -4,7 +4,7 @@ Financial planning that doesn't oversimplify you. Ledger reads your bank stateme
 
 **[Try it at ledgerfinancialplanning.com](https://ledgerfinancialplanning.com)** · [Video tutorial](https://ledgerfinancialplanning.com/tutorial)
 
-![The Spending page: totals, a category donut and every transaction from your statements](docs/spending.png)
+![The Spending page: totals, a category donut and every transaction from your statements](demo/spending.png)
 
 You download your statements, give them to an AI assistant (Claude, ChatGPT, Codex or similar), and it turns them into one file. Ledger reads that file and shows you where your money goes.
 
