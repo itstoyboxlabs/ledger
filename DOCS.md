@@ -188,9 +188,17 @@ source is set to the tool. Rent scenarios, Vacation and Debt payoff use it, so t
 
 ### Presets
 
-`usePresets(key)` and `PresetBar` store named presets through the storage adapter (`presets.json` locally).
-Used by Budget (`expenses`), Rent scenarios (`rentScenario`), Balances (`planningVariables`) and Retirement
-(`retirement`).
+`usePresets(key, { ids })` and `PresetBar` store named presets through the storage adapter (`presets.json`
+locally). Used by Budget (`expenses`), the Take-home pay tool (`takeHome`), Rent scenarios (`rentScenario`),
+Balances (`planningVariables`) and Retirement (`retirement`).
+
+- **Ids**: with `ids: true` (Budget and Take-home) every preset is `{ id, name, data }` so the Retirement pay plan
+  can point at one by id. Presets saved before that get an id made from their name on first load
+  (`withPresetIds`, `presetIdFor`), and the list is saved back. Names and data never change, so anything that
+  still looks a preset up by name keeps working. New presets get a random id. Overwriting keeps the id.
+- **Rename**: when `onRename` is given (Budget and Take-home), hovering a row also shows a pencil that opens a
+  rename dialog. The id and data stay, a name already in use is refused, and the active preset follows the
+  new name.
 
 - `PresetBar` is one `DropdownMenu`. The trigger shows the active preset name, or "Presets" when none, with a
   small amber dot when the current values differ from it.
@@ -200,7 +208,8 @@ Used by Budget (`expenses`), Rent scenarios (`rentScenario`), Balances (`plannin
   (overwrite that preset, one click, only while it has drifted) and an X (opens the delete confirm).
 - "Save as new preset" is always shown. When `canSave` is false it is disabled with the tooltip "Change something
   first". Saving under an existing name replaces it in place so the order holds.
-- Old presets are normalized when applied. Stored presets are never rewritten.
+- Old presets are normalized when applied. Stored presets are never rewritten, apart from the one-time id
+  migration above.
 
 ### Other shared pieces
 
@@ -490,7 +499,9 @@ labeled estimates.
   deferral reduces income tax but not FICA, and medical premiums reduce both. Paychecks are 24 a year. The
   employer match lives on the 401k deduction (`match`, percent of your contribution) and is not deducted from
   pay. Calibration tip, also in its tooltip: tune the medical input until the paycheck matches a real pay stub,
-  and other salaries inherit the accuracy.
+  and other salaries inherit the accuracy. Presets (key `takeHome`, with ids) save a salary and its deductions
+  under a name, like "Now" or "Easier job". The Retirement pay plan uses them. The tool's own saved values
+  (`ledger:takeHome`) are untouched by presets, so old saves load as before.
 - **Hourly calculator**: hours a week times rate gives weekly, times 52 gives annual gross. It assumes a full
   year, with no months-worked input. Taxes the annual total in the shared state as W-2 wages (employee FICA
   only), and its copy says so: it is not a 1099 or freelance calculator. Pay per hour steps by $1 and
@@ -647,28 +658,47 @@ the Auto badges) opens "Use a Budget preset": every Budget preset (key `expenses
   payment and savings rows count like any other row, because Budget counts them.
 - **With a preset picked** the field is read-only and a badge under it reads "From the <name> preset: $X a
   month". The typed number is kept in `retireCalc.withdrawMo` for later.
-- **Live by name.** Presets have no id and names are unique, so the pick is the preset name, stored in
-  `ledger:retireNeedPreset` (`string` or `null`). Overwriting the preset on Budget moves the need the next time
-  Retirement opens. A deleted or renamed preset falls back to the typed number with the note "The <name>
-  preset is gone, so this uses your typed number." Typing a new number clears the pick.
+- **Live by id.** Budget presets have ids (see Presets), so the pick is the preset id, stored in
+  `ledger:retireNeedPreset` (`string` or `null`). A rename on Budget keeps the pick. Overwriting the preset on
+  Budget moves the need the next time Retirement opens. A pick saved by name before presets had ids still
+  matches by name, and the page saves its id in its place. A deleted preset falls back to the typed number with
+  the note "The Budget preset you picked is gone, so this uses your typed number." Typing a new number clears
+  the pick.
+- **One source.** Retirement reads Budget presets once, through `usePresets('expenses', { ids: true })`, for both
+  Need per month and the pay periods. "Your Budget today" comes from the same Budget the page already loads.
 - **Old saves.** No key, or a bad value, reads as `null`: the typed number, exactly as before. Results only
   change once a preset is picked.
 - **Sanity line**: "Your Budget today: $Y a month" sits under the field whenever Budget has rows of its own.
 - The pick is not part of Retirement presets.
 
-### Saving each year
+### Pay and saving over time
 
-- **Auto contribution sources**: a small Auto toggle on each contribution field swaps the manual number for a
-  live value. Toggling off keeps the last typed number.
-  - 401k per year: the Take-home tool's 401k deduction (salary times its percent, or a flat amount) plus the
+One card holds everything you put away each year while you work, with or without a plan. There is no separate
+Saving each year card. It only deals in what goes into the 401k and savings: what you earn lives in the Take-home
+pay tool and its presets. Logic is in `utils/resolvePayPeriods.ts`, `utils/tidyPayPeriods.ts`, `utils/periodAt.ts`,
+`utils/payPlanIssues.ts` and `simulateRetirement`.
+
+- **No plan (`pay.periods` empty) is today's behavior, exactly.** The card shows one row, "Now, until you
+  retire" (`TodayPayRow`): Into 401k per year (today's Take-home or typed dollars, `auto401k` and `contrib401k`)
+  and Into savings per year (today's Budget or typed dollars, `autoSavings` and `contribSavings`). Under it:
+  "Same pay until you retire. $X a year from Take-home pay.", a short hint to set up the other life on the Budget
+  page and in the Take-home pay tool as presets, and the "Plan pay changes" button. A regression test in
+  `simulateRetirement.test.ts` pins the old numbers.
+  - Today's Take-home: the Take-home tool's 401k deduction (salary times its percent, or a flat amount) plus the
     employer match.
-  - Savings per year: the Budget `savings` leftover share, times 12. The leftover never goes below zero. With
-    no allocation at all the whole leftover counts. Once there is one, only its savings share does.
-  - These live in `retireCalc` (`auto401k`, `autoSavings`) and are captured by presets.
-- **Your own savings lines**: the plus button adds `retireCalc.extras: [{ id, name, amount, unit: 'yr'|'mo',
-  to: 'savings'|'401k' }]`. They add to the amounts above for every working year. Savings lines go into the
-  liquid pool. Retirement account lines go into the locked pool (the first-year 75% rule applies only to the
-  payroll 401k).
+  - Today's Budget: the Budget `savings` leftover share, times 12. The leftover never goes below zero. With no
+    allocation at all the whole leftover counts. Once there is one, only its savings share does.
+  - Contributions grow a year (`retireCalc.raisePct`, default 0): the same field as on a plan period. It grows today's 401k
+    and savings by that percent for each working year after the first (freed debt payments are not grown). 0
+    leaves the numbers exactly as before. "Plan pay changes" copies it into the new periods, and clearing the
+    plan ("Back to one period", or removing the last period) copies the first period's raise back.
+  - Pickers: each field has a small source badge (never "Auto"): "Take-home preset" on the 401k and "Budget
+    preset" on savings. The menu lists Today's Take-home or Today's Budget, the saved presets and Type it in.
+    Choosing a preset starts a plan with one "Now" period from today.
+- **Your own savings lines are events now.** The old `retireCalc.extras` list (`{ id, name, amount, unit, to }`)
+  is gone from the card. `normalizeRetire` turns each line into a money-in event with the same name, amount and
+  pool (`id: 'extra-<id>'`, from today's age, every year or every month for a monthly line, `untilRetire: true`),
+  so saved numbers do not move. A regression test pins them.
 - **Debt payoff to savings**: each debt has its own monthly payment and is paid off independently, ignoring
   interest and with no snowballing.
   - Months to payoff are `ceil(balance / payment)`. That decides which simulated year it lands in and how many
@@ -681,10 +711,59 @@ the Auto badges) opens "Use a Budget preset": every Budget preset (key `expenses
   - It applies only while working. A caption under the fields shows each debt's payoff age, with "no payment
     set on Budget" or "already clear" when relevant.
 
+#### The pay plan
+
+`retireCalc.pay: { periods: [{ id, label, fromAge, toAge: number | 'retire', raisePct, takeHomeFrom,
+takeHomePreset, k401, saveFrom, savePreset, savings }] }`. `takeHomeFrom` and `saveFrom` are `'today' | 'preset' |
+'typed'`, and `k401` and `savings` are typed dollars a year. Budget and Take-home are the sources of truth: each
+period points at them rather than holding numbers. A period has no pay of its own.
+
+- **Fields**: label, From age, Ends ("When I retire" or "At an age" with an Until age), Into 401k per year,
+  Into savings per year and Contributions grow a year.
+- **Plan pay changes** starts a "Now" period from today with today's sources (typed values carry over), plus a
+  second period ten years on. Each later period starts where the last one ends and copies its sources. With more
+  than one period, "Back to one period" in the card header clears the plan. Removing the last period does too.
+- **Ages**: the until age is exclusive. Until 45 means the last year in the period is 44 and the next period
+  starts at 45. A period saved with `years` and no until age reads as until from age plus years.
+- **No overlaps** (`tidyPayPeriods`, run by `normalizeRetire` on every read and edit): periods stay in list order,
+  which is age order. Each starts at the previous one's until age or later (the retire age after a "When I
+  retire" period). A lower from age is moved up to it, so moving an until age later pushes the next periods along,
+  and older saves that overlap are trimmed. The From age box has that age as its minimum and the Until age box
+  the from age plus one. Gaps are allowed and get a note.
+- **Into 401k per year** ("Take-home preset" badge): Today's Take-home, a Take-home preset, or Type it in. A
+  preset gives its 401k line plus match at its own salary. A preset with no 401k line means nothing goes in and no
+  match. Typed dollars include the match, as in the no-plan row.
+- **Into savings per year** ("Budget preset" badge): Today's Budget, a Budget preset, or Type it in. A Budget
+  source saves that Budget's leftover by the same rules as today (`budgetSavingsYearly`). The rows come from the
+  preset, the split and dismissed subscriptions from today's Budget. Income follows the Budget's income rules:
+  from statements or a typed amount it stays the same, and when the Budget uses the Take-home tool it is the
+  take-home pay of the period's Take-home source.
+- **Contributions grow a year** grows both amounts by that percent for each year into the period. Your share of the 401k stays
+  under the yearly deferral limit (`K401_DEFERRAL_LIMIT`) and the match follows it; typed dollars are not capped.
+  The first year of each period is a 75% 401k year (new job). A raise inside a period is not.
+- **Picking a source copies its numbers into the typed fields**, so a deleted preset falls back to the last
+  numbers it gave, with a red note on the period. Presets are matched by id, so a rename keeps the link.
+- **Saving after retiring**: a period whose until age is past the saved retire age keeps adding its 401k and
+  savings after you retire, while the withdrawals go on as usual. Type what part time work would add. Find
+  earliest safe age stops periods that end by the saved retire age at each age it tries, and keeps these going.
+- **Notes**: a gap between periods uses today's 401k and Budget saving; a period starting before today counts
+  from today; one that starts after you retire and ends when you retire never counts.
+- **Social Security** is not affected by the plan. On Auto it still assumes the Take-home salary for 35 years.
+
 ### Events
 
 `retireCalc.events: [{ id, name, amount, kind: 'in'|'out'|'debt', age, repeat: 'once'|'month'|'year'|'2year',
-years, auto?: 'equity', debtId?, custom? }]`. The plus button in the section header adds one.
+years, auto?: 'equity', debtId?, custom?, to?: '401k', untilRetire? }]`. The plus button in the section header adds
+one.
+
+- **Goes into** (money in only, not Equity linked): Savings (use anytime, the default) or Retirement account
+  (locked), stored as `to: '401k'`. Retirement account money joins the 401k pool that year, with no first-year
+  75% rule, stays locked until the access age and lands in savings after it, the same as 401k money. With Tax on
+  401k withdrawals on it is pre-tax money: it stays in the pre-tax pool after the access age and is taxed as
+  income on the way out, like the 401k. Pay period 401k money goes to the same pool.
+- **Until retire** (a badge on "For how many years" for repeating money in): `untilRetire: true` replaces the
+  number of years with every year you work. It follows the retire age, including the ages Find tries. Turning it
+  off sets the years to the retire age minus the start age.
 
 - Repeating events cover `years` years from `age`. Monthly ones add amount times 12 per year. Every-two-years
   pays at the start age and every second year after, inside the window.
@@ -704,7 +783,7 @@ Auto badge. Auto is `ssMonthlyBenefit()`: the Take-home salary for 35 years, cap
 90, 32 and 15 percent bend points, scaled by claim age: 62 is 70%, 67 is 100% and 70 is 124%. Claiming early
 loses 5/9 of 1% a month for the first 36 months before 67 and 5/12 of 1% a month beyond that (64 is 80%), and
 each year after 67 adds 8%.
-Figures are for 2026 and sourced in the code. From the claim age on, the benefit reduces the monthly withdrawal,
+Figures are for 2026 and sourced in the code. It ignores the pay plan, a known simplification: a career with pay changes or time off would earn a different benefit. From the claim age on, the benefit reduces the monthly withdrawal,
 never below zero. Saves without `ss` read as off so numbers do not move. New users start with it on.
 
 ### Known simplifications

@@ -18,5 +18,6 @@ export const RETIRE_DEFAULTS: RetireState = {
   tax401k: true, // the pre-tax 401k is taxed as income on the way out
   ss: { on: true, claimAge: 67, auto: true, monthly: 0 },
   events: [],
-  extras: [], // extra yearly saving lines the user pencils in: { id, name, amount, unit: 'yr'|'mo', to: 'savings'|'401k' }
+  raisePct: 0, // Contributions grow a year with no plan; 0 keeps the numbers flat, as before
+  pay: { periods: [] }, // the pay plan; no periods means today's pay every working year
 }

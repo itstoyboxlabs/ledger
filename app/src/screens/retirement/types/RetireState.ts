@@ -1,5 +1,5 @@
 import type { RetireEvent } from '@/screens/retirement/types/RetireEvent'
-import type { RetireExtra } from '@/screens/retirement/types/RetireExtra'
+import type { RetirePay } from '@/screens/retirement/types/RetirePay'
 import type { RetireSs } from '@/screens/retirement/types/RetireSs'
 
 // The saved Retirement plan (`retireCalc`).
@@ -23,5 +23,8 @@ export interface RetireState {
   tax401k: boolean
   ss: RetireSs
   events: RetireEvent[]
-  extras: RetireExtra[]
+  pay: RetirePay
+  // Contributions grow a year on the no-plan row: grows today's 401k and savings each working year.
+  // Plan pay changes copies it into the periods, Back to one period copies it back.
+  raisePct: number
 }

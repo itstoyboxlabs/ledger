@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives/dropdown-menu'
 import { Button } from '@/shared/ui/primitives/button'
-import { X, Check, ChevronDown, Plus, Save } from 'lucide-react'
+import { X, Check, ChevronDown, Plus, Save, Pencil } from 'lucide-react'
 import { cn } from '@/shared/utils/cn'
 import { Tooltip as UITooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/primitives/tooltip'
 import { Input } from '@/shared/ui/primitives/input'
@@ -16,6 +16,8 @@ type PresetBarProps<T> = {
   onApply: (data: T) => void
   onSave: (name: string) => void
   onDelete: (name: string) => void
+  // shows a rename button on each preset when given
+  onRename?: (from: string, to: string) => void
   canSave?: boolean
   scope?: string
   open?: boolean
@@ -23,7 +25,7 @@ type PresetBarProps<T> = {
   hideTrigger?: boolean
 }
 
-export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, canSave = true, scope = 'default', open: openProp, onOpenChange, hideTrigger = false }: PresetBarProps<T>) {
+export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, onRename, canSave = true, scope = 'default', open: openProp, onOpenChange, hideTrigger = false }: PresetBarProps<T>) {
   // open state can be driven from outside (the phone menu opens it), with no visible button
   const [openState, setOpenState] = useState(false)
   const open = openProp ?? openState
@@ -31,6 +33,16 @@ export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, 
   const [showSave, setShowSave] = useState(false)
   const [name, setName] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [renameTarget, setRenameTarget] = useState<string | null>(null)
+  const [newName, setNewName] = useState('')
+  const renameTaken = !!newName.trim() && newName.trim() !== renameTarget && presets.some((p) => p.name === newName.trim())
+  const commitRename = () => {
+    const to = newName.trim()
+    if (!renameTarget || !to || renameTaken) return
+    onRename?.(renameTarget, to)
+    if (lastName === renameTarget) setLastName(to)
+    setRenameTarget(null)
+  }
   const [lastName, setLastName] = usePersistedState<string | null>(`presetActive:${scope}`, null, (v) => v === null || typeof v === 'string')
   // a preset whose values equal the current ones is active; otherwise the one last
   // applied or saved stays active, and the dot says the values moved away from it
@@ -96,6 +108,19 @@ export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, 
                     {canOverwrite ? 'Overwrite with the current values' : 'Nothing changed'}
                   </TooltipContent>
                 </UITooltip>
+                {onRename && (
+                  <Button variant="ghost" size="icon-xs"
+                    onClick={() => {
+                      setOpen(false)
+                      setNewName(p.name)
+                      setRenameTarget(p.name)
+                    }}
+                    aria-label={`Rename preset "${p.name}"`}
+                    className="text-[var(--text-muted)] opacity-0 hover:text-white focus-visible:opacity-100 group-hover/preset:opacity-100"
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon-xs"
                   onClick={() => {
                     setOpen(false)
@@ -181,6 +206,32 @@ export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, 
                 {presets.some((p) => p.name === name.trim()) ? 'Replace' : 'Save'}
               </Button>
             </div>
+        </Modal>
+      )}
+
+      {renameTarget && (
+        <Modal
+          onClose={() => setRenameTarget(null)}
+          title="Rename preset"
+          description={`A new name for "${renameTarget}". Anything that uses it keeps using it.`}
+          className="max-w-[340px] p-5"
+        >
+          <Input
+            autoFocus
+            aria-label="New preset name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setRenameTarget(null)
+              if (e.key === 'Enter') commitRename()
+            }}
+            className="mt-3"
+          />
+          {renameTaken && <p className="mt-1.5 text-[11px] text-[var(--bad)]">Another preset has that name.</p>}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button>
+            <Button disabled={!newName.trim() || renameTaken} onClick={commitRename}>Rename</Button>
+          </div>
         </Modal>
       )}
 

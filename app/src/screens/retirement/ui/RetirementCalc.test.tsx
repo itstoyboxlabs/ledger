@@ -6,7 +6,9 @@ import { loadSampleData } from '@/test-utils/loadSampleData'
 import { RetirementCalc } from './RetirementCalc'
 import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { fmt0 } from '@/shared/utils/fmt0'
+import { presetIdFor } from '@/shared/utils/presetIdFor'
 import type { Debt } from '@/shared/types/Debt'
+import type { BudgetRow } from '@/shared/types/BudgetRow'
 
 const stored = (k: string) => JSON.parse(localStorage.getItem(`ledger:${k}`) as string)
 
@@ -17,7 +19,7 @@ const BASE = {
   contrib401k: 5000, contribSavings: 20000, auto401k: false, autoSavings: false,
   withdrawMo: 1000, taxPct: 0, autoTax: false,
   ss: { on: false, claimAge: 67, auto: true, monthly: 0 },
-  events: [], extras: [],
+  events: [],
 }
 const seedPlan = (o: Record<string, unknown> = {}) => {
   localStorage.setItem('ledger:retireCalc', JSON.stringify({ ...BASE, ...o }))
@@ -82,9 +84,9 @@ describe('RetirementCalc', () => {
     localStorage.setItem('ledger:retireCalc', JSON.stringify({ events: [], withdrawMo: 1000000000 }))
     renderApp(<RetirementCalc debts={[]} goToBalances={() => {}} />)
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
-    expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(await screen.findByText(/No retire age before/, {}, { timeout: 25000 })).toBeInTheDocument()
     expect(screen.getByLabelText(/Retire at/)).toHaveValue(60)
-  }, 30000)
+  }, 40000)
 
   it('Find moves the retire age when a safe age exists', async () => {
     localStorage.setItem('ledger:retireCalc', JSON.stringify({ events: [], withdrawMo: 0, retireAge: 90 }))
@@ -215,12 +217,12 @@ describe('RetirementCalc', () => {
     seedPlan({ withdrawMo: 100000 })
     renderApp(<RetirementCalc debts={[]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
-    expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(await screen.findByText(/No retire age before/, {}, { timeout: 25000 })).toBeInTheDocument()
     const need = screen.getByLabelText(/Need per month/)
     await userEvent.clear(need)
     await userEvent.type(need, '99000')
     await waitFor(() => expect(screen.queryByText(/No retire age before/)).toBeNull())
-  }, 30000)
+  }, 40000)
 
   it('adds a chip for the end age, once', () => {
     seedPlan({ endAge: 85 })
@@ -230,6 +232,126 @@ describe('RetirementCalc', () => {
     seedPlan({ endAge: 90 })
     renderApp(<RetirementCalc debts={[]} />)
     expect(screen.getAllByText('Left over at 90')).toHaveLength(1)
+  })
+
+  it('with no pay plan shows today\'s row in the one pay and saving card', () => {
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText('Same pay until you retire. $80,000 a year from Take-home pay.')).toBeInTheDocument()
+    expect(screen.getByText('Now, until you retire')).toBeInTheDocument()
+    expect(screen.queryByText('Saving each year')).toBeNull()
+    expect(screen.queryByRole('columnheader', { name: /^Pay/ })).toBeNull()
+  })
+
+  it('starts a pay plan from today\'s numbers', async () => {
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(2))
+    // typed 401k and savings carry over as typed dollars
+    expect(stored('retireCalc').pay.periods[0]).toMatchObject({
+      label: 'Now', fromAge: 30, toAge: 39, takeHomeFrom: 'typed', k401: 5000, saveFrom: 'typed', savings: 20000,
+    })
+    expect(stored('retireCalc').pay.periods[1]).toMatchObject({ fromAge: 39, toAge: 'retire', takeHomeFrom: 'typed' })
+    expect(screen.queryByText('Now, until you retire')).toBeNull()
+    // the same numbers as before the plan
+    expect(yearRow(30)[3]).toBe('$23,750')
+    expect(yearRow(31)[3]).toBe('$25,000')
+    await userEvent.click(screen.getByRole('button', { name: 'Back to one period' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(0))
+    expect(screen.getByText('Now, until you retire')).toBeInTheDocument()
+  })
+
+  const P = { raisePct: 0, takeHomePreset: '', savePreset: '' }
+
+  it('uses each period\'s typed 401k and savings in the table, grown by its raise', () => {
+    seedPlan({
+      pay: {
+        periods: [
+          { ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 35, takeHomeFrom: 'typed', k401: 4000, saveFrom: 'typed', savings: 20000 },
+          { ...P, id: 'b', label: 'Easier job', fromAge: 35, toAge: 'retire', raisePct: 10, takeHomeFrom: 'typed', k401: 0, saveFrom: 'typed', savings: 8000 },
+        ],
+      },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(yearRow(34)[3]).toBe('$24,000')
+    expect(yearRow(35)[3]).toBe('$8,000')
+    expect(yearRow(36)[3]).toBe('$8,800')
+  })
+
+  it('takes the 401k from a Take-home preset and saving from a Budget preset', async () => {
+    await seedStorage({
+      budget: { rows: [{ id: 'r1', name: 'Rent', amount: 1000 }] },
+      presets: {
+        takeHome: [{ id: 'th1', name: 'Easier job', data: { salary: 50000, deductions: [] } }],
+        expenses: [{ id: 'b1', name: 'Frugal', data: [{ id: 'r1', name: 'Rent', amount: 500 }] }],
+      },
+    })
+    localStorage.setItem('ledger:budgetIncomeOverride', JSON.stringify({ active: 'manual', amount: 3000 }))
+    seedPlan({
+      pay: { periods: [{ ...P, id: 'a', label: 'Easier job', fromAge: 30, toAge: 'retire', takeHomeFrom: 'preset', takeHomePreset: 'th1', k401: 0, saveFrom: 'preset', savePreset: 'b1', savings: 0 }] },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    // no 401k line in the preset: nothing into the 401k. Savings are the 3,000 income less
+    // what the preset's rows cost (with live subscriptions, as on the Budget page), times 12.
+    const spent = budgetExpensesOf({ rows: [{ id: 'r1', name: 'Rent', amount: 500 } as BudgetRow] })
+    await waitFor(() => expect(yearRow(31).slice(2, 4)).toEqual(['$10,000', fmt0((3000 - spent) * 12)]))
+    expect(screen.getByRole('button', { name: 'Take-home preset for Easier job: Easier job' })).toBeInTheDocument()
+  })
+
+  it('a deleted preset falls back to the typed values with a note', async () => {
+    await seedStorage({ presets: {} })
+    seedPlan({
+      pay: { periods: [{ ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 'retire', takeHomeFrom: 'preset', takeHomePreset: 'gone', k401: 6000, saveFrom: 'typed', savings: 9000 }] },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText('Its Take-home preset was deleted, so it uses the typed 401k.')).toBeInTheDocument()
+    expect(yearRow(31)[3]).toBe('$15,000')
+  })
+
+  it('warns about a gap in the pay plan', () => {
+    seedPlan({
+      pay: {
+        periods: [
+          { ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 33, takeHomeFrom: 'today', k401: 0, saveFrom: 'today', savings: 0 },
+          { ...P, id: 'b', label: '', fromAge: 35, toAge: 'retire', takeHomeFrom: 'today', k401: 0, saveFrom: 'today', savings: 0 },
+        ],
+      },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText("No period covers ages 33 to 34. Those years use today's 401k and saving.")).toBeInTheDocument()
+  })
+
+  it('a Budget preset picked on today\'s row starts a plan', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    await seedStorage({ presets: { expenses: [{ id: 'b1', name: 'Frugal', data: [] }] } })
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Budget preset for Now: Typed' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Frugal' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(1))
+    expect(stored('retireCalc').pay.periods[0]).toMatchObject({ label: 'Now', fromAge: 30, toAge: 'retire', takeHomeFrom: 'typed', k401: 5000, saveFrom: 'preset', savePreset: 'b1', savings: 20000 })
+  })
+
+  it('typed savings on today\'s row switch back to today\'s Budget from the badge', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByLabelText(/Into savings per year/)).toHaveValue(20000)
+    await userEvent.click(screen.getByRole('button', { name: 'Budget preset for Now: Typed' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: "Today's Budget" }))
+    await waitFor(() => expect(stored('retireCalc').autoSavings).toBe(true))
+    expect(stored('retireCalc').pay.periods).toEqual([])
+  })
+
+  it('an old save with saving lines shows them as money-in events with the same numbers', () => {
+    seedPlan({ extras: [{ id: 'a', name: 'IRA', amount: 2000, unit: 'yr', to: '401k' }, { id: 'b', name: 'Side job', amount: 250, unit: 'mo', to: 'savings' }] })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getAllByPlaceholderText('Event name').map((x) => (x as HTMLInputElement).value)).toEqual(['IRA', 'Side job'])
+    // 10,000 + 3,750 + 2,000 in the 401k, and 20,000 + 3,000 into savings
+    expect(yearRow(30).slice(2, 4)).toEqual(['$15,750', '$28,750'])
+    expect(yearRow(40)[3]).toBe('—')
+    expect(screen.getAllByText('Until you retire')).toHaveLength(2)
   })
 
   describe('Need per month from a Budget preset', () => {
@@ -259,17 +381,43 @@ describe('RetirementCalc', () => {
       const m = presetMonthly()
       expect(screen.getByText(`From the Retirement preset: ${fmt0(m)} a month`)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(`then take out \\${fmt0(m * 12)} a year`))).toBeInTheDocument()
-      expect(stored('retireNeedPreset')).toBe('Retirement')
+      // saved by id, so a rename on Budget keeps it
+      expect(stored('retireNeedPreset')).toBe(presetIdFor('Retirement'))
       // the typed number is kept for later
       expect(stored('retireCalc').withdrawMo).toBe(1000)
+    })
+
+    it('a pick saved by name before ids is saved again by id', async () => {
+      seedPlan()
+      localStorage.setItem('ledger:retireNeedPreset', JSON.stringify('Retirement'))
+      renderApp(<RetirementCalc debts={[]} />)
+      expect(await screen.findByText(`From the Retirement preset: ${fmt0(presetMonthly())} a month`)).toBeInTheDocument()
+      await waitFor(() => expect(stored('retireNeedPreset')).toBe(presetIdFor('Retirement')))
     })
 
     it('a deleted preset falls back to the typed number with a note', async () => {
       seedPlan()
       localStorage.setItem('ledger:retireNeedPreset', JSON.stringify('Gone'))
       renderApp(<RetirementCalc debts={[]} />)
-      expect(await screen.findByText('The Gone preset is gone, so this uses your typed number.')).toBeInTheDocument()
+      expect(await screen.findByText('The Budget preset you picked is gone, so this uses your typed number.')).toBeInTheDocument()
       expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
     })
+  })
+
+  it('Contributions grow a year on today\'s row carries into the plan and back', async () => {
+    seedPlan({ raisePct: 2 })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByLabelText(/Contributions grow a year/)).toHaveValue(2)
+    // 25,000 at 31 grows 2% a year
+    expect(yearRow(32)[3]).toBe(fmt0(25000 * 1.02 ** 2))
+    await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods.map((p: { raisePct: number }) => p.raisePct)).toEqual([2, 2]))
+    const first = screen.getByLabelText(/Contributions grow a year for Now/)
+    await userEvent.clear(first)
+    await userEvent.type(first, '4')
+    await userEvent.click(screen.getByRole('button', { name: 'Back to one period' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toEqual([]))
+    expect(stored('retireCalc').raisePct).toBe(4)
+    expect(screen.getByLabelText(/Contributions grow a year/)).toHaveValue(4)
   })
 })

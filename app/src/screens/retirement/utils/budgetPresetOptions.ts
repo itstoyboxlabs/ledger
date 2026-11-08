@@ -14,5 +14,5 @@ import type { BudgetRow } from '@/shared/types/BudgetRow'
 export function budgetPresetOptions(presets: Preset[], dismissed: DismissedSubs | undefined): BudgetPresetOption[] {
   return presets
     .filter((p) => typeof p?.name === 'string' && Array.isArray(p.data))
-    .map((p) => ({ name: p.name, monthly: budgetExpensesOf({ rows: p.data as BudgetRow[], dismissedSubs: dismissed }) }))
+    .map((p) => ({ id: p.id ?? '', name: p.name, monthly: budgetExpensesOf({ rows: p.data as BudgetRow[], dismissedSubs: dismissed }) }))
 }

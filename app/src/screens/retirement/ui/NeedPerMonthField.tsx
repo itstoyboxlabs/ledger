@@ -24,7 +24,8 @@ type NeedPerMonthFieldProps = {
   options: BudgetPresetOption[] | null
   // today's Budget expenses, null when there is no Budget to compare with
   today: number | null
-  onPick: (name: string | null) => void
+  // a preset id, or null to type the number
+  onPick: (id: string | null) => void
 }
 
 const LABEL = 'Need per month'
@@ -74,19 +75,19 @@ export function NeedPerMonthField({ value, onChange, need, options, today, onPic
               <DropdownMenuItem disabled className="text-[13px]">No Budget presets yet. Save one on Budget.</DropdownMenuItem>
             ) : (
               options.map((o) => (
-                <DropdownMenuItem key={o.name} onSelect={() => onPick(o.name)} className="justify-between gap-3 text-[13px]">
-                  <span className={need.preset === o.name ? 'font-medium' : 'text-[var(--text-secondary)]'}>{o.name}</span>
+                <DropdownMenuItem key={o.id || o.name} onSelect={() => onPick(o.id)} className="justify-between gap-3 text-[13px]">
+                  <span className={need.id === o.id ? 'font-medium' : 'text-[var(--text-secondary)]'}>{o.name}</span>
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="tnum text-[12px] text-[var(--text-muted)]">{fmt0(o.monthly)}</span>
-                    <Check size={12} aria-hidden className={need.preset === o.name ? '' : 'invisible'} />
+                    <Check size={12} aria-hidden className={need.id === o.id ? '' : 'invisible'} />
                   </span>
                 </DropdownMenuItem>
               ))
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => onPick(null)} className="justify-between gap-3 text-[13px]">
-              <span className={need.preset === null ? 'font-medium' : 'text-[var(--text-secondary)]'}>Type it in</span>
-              <Check size={12} aria-hidden className={need.preset === null ? '' : 'invisible'} />
+              <span className={need.id === null ? 'font-medium' : 'text-[var(--text-secondary)]'}>Type it in</span>
+              <Check size={12} aria-hidden className={need.id === null ? '' : 'invisible'} />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -100,7 +101,7 @@ export function NeedPerMonthField({ value, onChange, need, options, today, onPic
       )}
       {need.status === 'missing' && (
         <p className="mt-1.5 text-[11px] text-[var(--text-secondary)]">
-          The {need.preset} preset is gone, so this uses your typed number.
+          The Budget preset you picked is gone, so this uses your typed number.
         </p>
       )}
       {today !== null && (
