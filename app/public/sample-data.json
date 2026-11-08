@@ -5001,13 +5001,15 @@
      "id": "a4",
      "name": "401k (pre-tax)",
      "balance": 46800,
-     "pool": "401k"
+     "pool": "401k",
+     "kind": "pretax"
     },
     {
      "id": "a5",
      "name": "Roth IRA",
      "balance": 15200,
-     "pool": "401k"
+     "pool": "401k",
+     "kind": "roth"
     }
    ],
    "ledger:assetsAsOf": "2026-10-31",
