@@ -25,12 +25,13 @@ describe('VacationCalc', () => {
     expect(screen.getByText('$1,100.00')).toBeInTheDocument()
     expect(screen.getByText('2.2')).toBeInTheDocument()
   })
-  it('shows 0.0 months when nothing can be saved', async () => {
+  it('shows a dash for months when nothing can be saved', async () => {
     renderApp(<VacationCalc />)
     const save = screen.getByLabelText(/You can save per month/)
     await userEvent.clear(save)
     await userEvent.type(save, '0')
-    expect(screen.getByText('0.0')).toBeInTheDocument()
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.queryByText('0.0')).toBeNull()
   })
   it('persists inputs', async () => {
     renderApp(<VacationCalc />)

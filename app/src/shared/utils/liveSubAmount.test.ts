@@ -33,8 +33,12 @@ describe('liveSubAmount', () => {
     expect(liveSubAmount({ name: 'Spotify' })).toBe(12)
   })
   it('spreads annual plans to a monthly amount', () => expect(liveSubAmount({ name: 'Prime' })).toBe(10))
-  it('uses last month actual for an unknown subscription', () =>
-    expect(liveSubAmount({ name: 'Hulu', source: 'subscription', amount: 3 })).toBe(8))
+  it('keeps the typed amount for a hand-added row even when it was charged', () =>
+    expect(liveSubAmount({ name: 'Hulu', source: 'subscription', amount: 3 })).toBe(3))
+  it('converts weekly subscriptions to a monthly amount', () => {
+    load({ subscriptions: [{ name: 'Paper', account: 'cc', cadence: 'weekly', amount: 3, lastSeen: '2026-10-28' }] })
+    expect(liveSubAmount({ name: 'Paper' })).toBe(13)
+  })
   it('keeps the typed amount when nothing was charged', () => {
     expect(liveSubAmount({ name: 'Nope', source: 'subscription', amount: '9.6' as unknown as number })).toBe(10)
     expect(liveSubAmount({ name: 'Nope', source: 'subscription' })).toBe(0)

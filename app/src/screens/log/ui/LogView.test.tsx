@@ -1,10 +1,13 @@
-import { screen, within, waitFor } from '@testing-library/react'
+import { screen, within, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test-utils/renderApp'
 import { loadSampleData, SAMPLE } from '@/test-utils/loadSampleData'
 import { seedStorage } from '@/test-utils/seedStorage'
 import { getLog } from '@/shared/utils/getLog'
 import { getBudget } from '@/shared/utils/getBudget'
+import * as getLogModule from '@/shared/utils/getLog'
+import { saveLog } from '@/shared/utils/saveLog'
+import { saveBudget } from '@/shared/utils/saveBudget'
 
 const SEED_LOG = [
   { id: 'l1', date: '2026-11-05', amount: 40, note: 'big shop', rowId: 'b005', createdAt: 1 },
@@ -103,5 +106,73 @@ describe('LogView', () => {
     expect(rowsText()[0]).toContain('big shop') // amount descending first
     await user.click(screen.getByRole('columnheader', { name: /^Amount/ }))
     expect(rowsText()[0]).toContain('burrito')
+  })
+
+  it('logs a typed future date as today', async () => {
+    const user = await open()
+    await user.type(screen.getByPlaceholderText('14.50'), '7')
+    await user.type(screen.getByPlaceholderText('burrito'), 'tickets')
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+    fireEvent.change(dateInput, { target: { value: '2026-12-25' } })
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(screen.getByText('tickets')).toBeInTheDocument()
+    await waitFor(async () => expect((await getLog()).entries.find((x) => x.note === 'tickets')?.date).toBe('2026-11-08'), { timeout: 2000 })
+  })
+
+  it('keeps entries another tab saved after this page loaded', async () => {
+    const user = await open()
+    await saveLog([...SEED_LOG, { id: 'other', date: '2026-11-07', amount: 5, note: 'from other tab', rowId: 'b008', createdAt: 9 }])
+    await user.type(screen.getByPlaceholderText('14.50'), '3')
+    await user.type(screen.getByPlaceholderText('burrito'), 'gum')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await waitFor(async () => {
+      const notes = (await getLog()).entries.map((x) => x.note)
+      expect(notes).toEqual(expect.arrayContaining(['gum', 'from other tab', 'big shop']))
+    }, { timeout: 2000 })
+    expect(await screen.findByText('from other tab')).toBeInTheDocument()
+  })
+
+  it('hiding a meter keeps Budget edits made after the page loaded', async () => {
+    const user = await open()
+    const fresh = await getBudget()
+    await saveBudget({ ...fresh, rows: fresh.rows.map((r) => (r.name === 'Rent' ? { ...r, amount: 1999 } : r)) })
+    await user.click(screen.getByRole('button', { name: 'Hide the Unexpected meter' }))
+    await waitFor(async () => {
+      const rows = (await getBudget()).rows
+      expect(rows.find((r) => r.name === 'Unexpected')?.trackInLog).toBe(false)
+      expect(rows.find((r) => r.name === 'Rent')?.amount).toBe(1999)
+    }, { timeout: 3000 })
+  })
+
+  it('keeps the meter of a dated row whose entries net to zero', async () => {
+    await seedStorage({
+      log: { entries: [
+        { id: 'e1', date: '2026-11-02', amount: 10, note: 'charge', rowId: 'b003', createdAt: 1 },
+        { id: 'e2', date: '2026-11-03', amount: -10, note: 'refund', rowId: 'b003', createdAt: 2 },
+      ] },
+      budget: SAMPLE.settings.budget,
+    })
+    await open()
+    expect(screen.getByRole('button', { name: 'Hide the Electricity meter' })).toBeInTheDocument()
+  })
+
+  it('names the row of an entry on a hidden budget row', async () => {
+    const budget = structuredClone(SAMPLE.settings.budget)
+    budget.rows.push({ id: 'b099', name: 'Old gym', type: 'simple', amount: 20, source: 'manual', hidden: true })
+    await seedStorage({ log: { entries: [{ id: 'e1', date: '2026-11-02', amount: 20, note: 'last month fee', rowId: 'b099', createdAt: 1 }] }, budget })
+    await open()
+    const row = screen.getByText('last month fee').closest('tr') as HTMLElement
+    expect(within(row).getByText('Old gym')).toBeInTheDocument()
+    expect(screen.queryByText('Removed row')).not.toBeInTheDocument()
+  })
+
+  it('shows a load error with a retry', async () => {
+    const spy = vi.spyOn(getLogModule, 'getLog').mockRejectedValueOnce(new Error('offline'))
+    const user = userEvent.setup()
+    renderApp(<LogView />)
+    expect(await screen.findByText('Could not load the log.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByText('Log a purchase')).toBeInTheDocument()
+    spy.mockRestore()
   })
 })

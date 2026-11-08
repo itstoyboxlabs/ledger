@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
 import { getBudget } from '@/shared/utils/getBudget'
+import { budgetEffRows } from '@/shared/utils/budgetEffRows'
+import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
 import { fmt } from '@/shared/utils/fmt'
 import { fmt0 } from '@/shared/utils/fmt0'
 import { isBudgetRowHidden } from '@/shared/utils/isBudgetRowHidden'
@@ -15,9 +17,11 @@ import { amountInDayRange } from '@/screens/tools/features/cash-range/utils/amou
 import { parseSumExpr } from '@/shared/utils/parseSumExpr'
 import { useToolState } from '@/shared/hooks/useToolState'
 
-// "How much cash do I need between two days of the month?" — e.g. this paycheck
+// "How much cash do I need between two days of the month?", e.g. this paycheck
 // to the next. Same day/prorate/hidden-row rules as Rest of month, generalized to
 // any day-of-month range. Optional cash-on-hand input shows the leftover.
+// A To day of 31 is "end of month": it is clamped to the month's length when counted.
+const END_OF_MONTH = 31
 export function CashRangeCalc() {
   const [c, setC] = useToolState('cashRange', {
     fromDay: 1,
@@ -28,7 +32,13 @@ export function CashRangeCalc() {
   const [budgetRows, setBudgetRows] = useState<BudgetRow[] | null>(null)
   useEffect(() => {
     getBudget()
-      .then((d) => setBudgetRows(d.rows.filter((r) => !r.hidden && !isBudgetRowHidden(r))))
+      // read the rows the way the Budget page does, so live-only, dismissed and annual
+      // subscriptions and live subscription amounts match it
+      .then((d) =>
+        setBudgetRows(
+          budgetEffRows(d.rows.map(normalizeBudgetRow), d.dismissedSubs).filter((r) => !r.hidden && !isBudgetRowHidden(r)),
+        ),
+      )
       .catch(() => {})
   }, [])
 
@@ -52,12 +62,13 @@ export function CashRangeCalc() {
   const cashExpr = c.cashExpr || (c.cashOnHand ? String(c.cashOnHand) : '')
   const cash = parseSumExpr(cashExpr)
   const leftover = cash.total - total
-  const days = validRange ? Math.max(0, Math.min(c.toDay, daysInMonth) - c.fromDay + 1) : 0
+  const days = validRange ? Math.max(0, Math.min(c.toDay, daysInMonth) - Math.max(1, c.fromDay) + 1) : 0
+  const toLabel = c.toDay >= daysInMonth ? 'end of month' : c.toDay
   const ord = (n: number): string => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th')
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Cash needed between two days of the month</h3>
+      <h2 className="text-[15px] font-semibold">Cash needed between two days of the month</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         See how much of your budget comes due between two days of the month, so you know how much
         cash you need to cover it. For example, to see what's due from the 1st to the 15th, enter
@@ -71,7 +82,7 @@ export function CashRangeCalc() {
           1st → 15th
         </Button>
         <Button variant="outline" size="sm"
-          onClick={() => setC({ ...c, fromDay: 16, toDay: daysInMonth })}
+          onClick={() => setC({ ...c, fromDay: 16, toDay: END_OF_MONTH })}
         >
           16th → end of month
         </Button>
@@ -107,7 +118,7 @@ export function CashRangeCalc() {
           <div className="mt-5 flex flex-wrap gap-3">
             <div className="rounded-lg bg-[var(--surface-2)] px-4 py-2.5 ring-1 ring-[var(--ring)]">
               <div className="text-[11px] text-[var(--text-muted)]">
-                Day {c.fromDay} – {c.toDay} ({days} days)
+                Day {c.fromDay} to {toLabel} ({days} days)
               </div>
               <div className="tnum text-[15px] font-semibold">{fmt(total)}</div>
             </div>
@@ -140,7 +151,7 @@ export function CashRangeCalc() {
                   </TableCell>
                   <TableCell className="py-1.5 text-right text-[12px] text-[var(--text-muted)]">
                     {row.day != null
-                      ? `on the ${ord(row.day)}`
+                      ? `on the ${ord(Math.min(row.day, daysInMonth))}`
                       : row.prorate
                         ? `prorated, ${days} days`
                         : 'undated — assumed'}

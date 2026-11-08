@@ -11,6 +11,10 @@ function Harness(props: HarnessProps) {
 }
 
 describe('DraftNumberInput', () => {
+  it('uses ariaLabel as the accessible name', () => {
+    render(<Harness ariaLabel="Allocation" boxed />)
+    expect(screen.getByRole('spinbutton', { name: 'Allocation' })).toBeInTheDocument()
+  })
   it('shows the value', () => {
     render(<Harness />)
     expect(screen.getByRole('spinbutton')).toHaveValue(5)

@@ -11,7 +11,10 @@ import type { RawTransactionsData } from '@/shared/types/RawTransactionsData'
 import type { TransactionsData } from '@/shared/types/TransactionsData'
 
 export async function mergeData(f: RawTransactionsData): Promise<void> {
-  const txns = new Map(getAllTxns().map((t) => [t.id, t]))
+  // a re-imported (corrected) statement replaces the old copy of that statement whole,
+  // so rows whose ids changed between the two versions are not kept twice
+  const incoming = new Set((f.transactions ?? []).map((t) => t.statement).filter((s): s is string => !!s))
+  const txns = new Map(getAllTxns().filter((t) => !t.statement || !incoming.has(t.statement)).map((t) => [t.id, t]))
   for (const t of f.transactions ?? []) txns.set(t.id, t)
   const subs = new Map(getSubscriptions().map((s) => [s.name, s]))
   for (const s of f.subscriptions ?? []) subs.set(s.name, s)

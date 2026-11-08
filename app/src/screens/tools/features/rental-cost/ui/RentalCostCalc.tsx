@@ -8,10 +8,12 @@ import { useToolState } from '@/shared/hooks/useToolState'
 // "Effective Rental costs" — what a concession deal really costs per month
 export function RentalCostCalc() {
   const [c, setC] = useToolState('rentalCalc', { rent: 2500, monthsFree: 1 })
-  const effective = (c.rent * Math.max(0, 12 - c.monthsFree)) / 12
+  // a negative months free would charge more than the rent, so it counts as none
+  const monthsFree = Math.min(12, Math.max(0, c.monthsFree))
+  const effective = (c.rent * (12 - monthsFree)) / 12
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Effective rental cost</h3>
+      <h2 className="text-[15px] font-semibold">Effective rental cost</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         Figure out what you'll really pay per month when a listing offers something like
         "2 months free", spread over a 12-month lease.

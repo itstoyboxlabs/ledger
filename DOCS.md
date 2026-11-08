@@ -253,8 +253,9 @@ Statement reality. Everything derives from the statements data.
 - **Drill-down**: category, then subcategory, then merchant. Click slices or rows. A breadcrumb goes back and the
   path persists. Sub-levels use lightness shades of the parent color. Level tables show count, total and percent.
 - **Transactions table**: every row in the current drill scope, sortable by date and amount, with merchant icons
-  and the statement description under the merchant name. The income table sits below. The header has a CSV export
-  of the scoped transactions.
+  and the statement description under the merchant name. The income table sits below. The sidebar Download
+  saves a CSV of every transaction in the month scope on the switched-on accounts, transfers included at their
+  real amount.
 - **Subscriptions table**: only active subscriptions. A short footer sentence and an "N not seen recently" toggle
   list the hidden ones so nothing vanishes silently. Every column header sorts (`ledger:subsSort2`).
   - "Bills on" is the billing day of the month, taken from observed charge dates. A `~` marks a single-observation
@@ -262,7 +263,9 @@ Statement reality. Everything derives from the statements data.
   - Annual subscriptions show their amount divided by 12.
   - No horizontal scroll. Columns collapse responsively.
 - **Income model**: a paycheck flagged `partial: true` (a short first period) is excluded from income averaging.
-  Monthly income is the average full paycheck times the pay frequency (twice a month for semi-monthly pay).
+  Monthly income is the average full paycheck times the pay frequency over 12. The frequency is read from the
+  median gap between paydays (weekly 52, biweekly 26, semi-monthly 24 or monthly 12 a year). With fewer than two
+  paydays it assumes semi-monthly.
 
 ---
 
@@ -482,13 +485,15 @@ labeled estimates.
   pay. Calibration tip, also in its tooltip: tune the medical input until the paycheck matches a real pay stub,
   and other salaries inherit the accuracy.
 - **Hourly calculator**: hours a week times rate gives weekly, times 52 gives annual gross. It assumes a full
-  year, with no months-worked input. Taxes the annual total in the shared state. Pay per hour steps by $1 and
+  year, with no months-worked input. Taxes the annual total in the shared state as W-2 wages (employee FICA
+  only), and its copy says so: it is not a 1099 or freelance calculator. Pay per hour steps by $1 and
   hours by 1.
 - **Equity payout** (id `stock`): a type picker.
   - RSUs: exit price times shares, no strike.
   - Options NSO: exit minus strike, taxed as income on top of salary through `taxOnExtra`, per payout year.
   - Options ISO: with "held over a year after exercise" on, each year's spread is a long-term gain. With it
-    off, ISO uses the NSO math.
+    off, the sale is a disqualifying disposition: taxed as income like NSO but with no Social Security or
+    Medicare (IRC 3121(a)(22)), through `incomeTaxOnExtra`.
   - `equityPayout()` holds the math. Retirement's equity link calls it.
 - **Effective rental cost**: rent times (12 minus months free) over 12. What concession deals really cost.
 - **Rent-to-income**: the 40x income rule with a Swap button. Know the rent to get the multiple, or pick the
@@ -553,14 +558,16 @@ The most model-heavy page: a year-by-year projection from current age to the end
 - **Find earliest safe age**: a button under "Retire at". It scans linearly from `age + 1` to `endAge - 1`,
   rerunning the full simulation (`simulate(candidate)`) and jumping to the first age where money never runs out.
   A plain linear scan, not a binary search, because survival is not monotonic in retire age: one-time events land
-  at fixed ages. It is cheap. If no age survives, an inline red note says so.
+  at fixed ages. It is cheap. If no age survives, an inline red note says so. The note goes away as soon as any input changes.
 - **Simulation rules**, in order, per year:
   - Working years: 401k grows and gains the contribution. The savings pool gains the contribution plus after-tax
     growth. Year one's payroll 401k contribution is multiplied by 0.75, because eligibility starts about three
     months into a job.
   - Retired years: withdrawals are monthly need times 12, from the savings pool only.
-  - **401k access age (60)**: the 401k balance rolls into the savings pool and its column shows a dash. Before
-    that it compounds untouched. Early withdrawal is not modeled as available.
+  - **401k access age (60)**: at the end of that year the 401k balance rolls into the savings pool and its column
+    shows a dash. The move shows in that year's Contributions. From then on new 401k money goes straight to
+    savings, and if you are already past the access age the 401k starts in savings. Before that it compounds
+    untouched. Early withdrawal is not modeled as available.
   - **Start in debt** toggle: the pool starts at savings now minus the shared debts, and contributions dig out
     of the hole first. Negative balances earn no returns.
 - **Returns**: editable portfolio tables, each fund with an allocation percent and a lifetime performance
@@ -577,9 +584,11 @@ The most model-heavy page: a year-by-year projection from current age to the end
   while a locked 401k grows, netting a small, soothing decline. Liquid-only makes "money lasts" mean spendable
   money.
 - **The Growth column is liquid growth only**, so each row's arithmetic is self-contained:
-  `last Total + Contributions + Growth - Withdrawals = this Total`.
-- **Headline chips**: liquid at retirement (with the locked 401k shown separately), the money-lasts verdict (the
-  first liquid-negative retirement year) and the total at end age.
+  `last Total + Contributions + Growth - Withdrawals = this Total`. This holds from the access age on, the
+  move included. Before it, Contributions also counts the 401k money that goes into the locked pool.
+- **Headline chips**: liquid at retirement (with the locked 401k shown separately, and the starting balances when
+  you retire at today's age), the money-lasts verdict (the first liquid-negative retirement year) and the total
+  at 60, 70, 80, 90 and 100 plus the end age, each only once and only inside the plan.
 - **Header tooltips are dynamic.** They embed the current input values, so they restate the assumptions.
 - **Presets** (key `retirement`) capture the whole config: inputs, portfolio and debt toggle.
 
@@ -596,7 +605,8 @@ from before this existed read as `typed`, so numbers do not move. New users star
   live value. Toggling off keeps the last typed number.
   - 401k per year: the Take-home tool's 401k deduction (salary times its percent, or a flat amount) plus the
     employer match.
-  - Savings per year: the Budget `savings` leftover share, times 12.
+  - Savings per year: the Budget `savings` leftover share, times 12. The leftover never goes below zero. With
+    no allocation at all the whole leftover counts. Once there is one, only its savings share does.
   - These live in `retireCalc` (`auto401k`, `autoSavings`) and are captured by presets.
 - **Your own savings lines**: the plus button adds `retireCalc.extras: [{ id, name, amount, unit: 'yr'|'mo',
   to: 'savings'|'401k' }]`. They add to the amounts above for every working year. Savings lines go into the
@@ -609,8 +619,8 @@ from before this existed read as `typed`, so numbers do not move. New users star
   - The payoff year gets a prorated credit for the freed months only. Later years get all 12. Landing exactly on
     a 12-month boundary frees 0 months that year, which is correct.
   - The freed payment follows the Budget allocation: its `savings` share goes into savings and the rest is
-    spent. With no savings allocation, all of it goes to savings. This holds for self-cleared debts and for "Pay
-    off a debt" events.
+    spent. With no allocation at all, all of it goes to savings. This holds for self-cleared debts and for "Pay
+    off a debt" events. A debt unticked on the starting balances frees nothing.
   - It applies only while working. A caption under the fields shows each debt's payoff age, with "no payment
     set on Budget" or "already clear" when relevant.
 
@@ -625,7 +635,7 @@ years, auto?: 'equity', debtId?, custom? }]`. The plus button in the section hea
 - **Equity link**: an event's Auto badge pulls its amount and years from the Equity payout tool ("Net per
   year"), forces money in, repeating yearly. Like RSUs it pays only while you are still working.
 - **Pay off a debt** (`kind: 'debt'`): pick a debt and an age. The amount is the debt's balance (Auto badge,
-  click to type your own, `custom: true`). The debt is left out of the starting hole, its amount leaves the
+  click to type your own, `custom: true`). Only an age from today to the end age counts. The debt is then left out of the starting hole, its amount leaves the
   liquid pool at that age, and its payment flows into savings from then on.
 - **Old shape**: saves without `events` are converted by `normalizeRetire` into the equivalent events. The
   stored value is only rewritten when something is edited. Stored presets are never rewritten.
@@ -634,7 +644,9 @@ years, auto?: 'equity', debtId?, custom? }]`. The plus button in the section hea
 
 `retireCalc.ss: { on, claimAge, auto, monthly }`: a toggle, a claim age (default 67) and a monthly amount with an
 Auto badge. Auto is `ssMonthlyBenefit()`: the Take-home salary for 35 years, capped at the wage base, with
-90, 32 and 15 percent bend points, scaled by claim age (62 is 70%, 67 is 100%, 70 is 124%, linear between).
+90, 32 and 15 percent bend points, scaled by claim age: 62 is 70%, 67 is 100% and 70 is 124%. Claiming early
+loses 5/9 of 1% a month for the first 36 months before 67 and 5/12 of 1% a month beyond that (64 is 80%), and
+each year after 67 adds 8%.
 Figures are for 2026 and sourced in the code. From the claim age on, the benefit reduces the monthly withdrawal,
 never below zero. Saves without `ss` read as off so numbers do not move. New users start with it on.
 

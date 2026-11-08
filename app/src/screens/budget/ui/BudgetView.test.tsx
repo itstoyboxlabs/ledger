@@ -4,8 +4,15 @@ import { renderApp } from '@/test-utils/renderApp'
 import { loadSampleData, SAMPLE } from '@/test-utils/loadSampleData'
 import { seedStorage } from '@/test-utils/seedStorage'
 import { getBudget } from '@/shared/utils/getBudget'
+import { saveBudget } from '@/shared/utils/saveBudget'
 
 import { BudgetView } from './BudgetView'
+
+// the real save, wrapped so one test can hold a save open
+vi.mock('@/shared/utils/saveBudget', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/shared/utils/saveBudget')>()
+  return { saveBudget: vi.fn(real.saveBudget) }
+})
 
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
 globalThis.HTMLElement.prototype.scrollIntoView ??= () => {}
@@ -83,5 +90,45 @@ describe('BudgetView', () => {
     const { user } = await open()
     await user.click(screen.getByRole('button', { name: /Compare to actual/ }))
     expect(screen.getByText('Not budgeted total')).toBeInTheDocument()
+  })
+
+  it('a hidden row does not claim spending, so it shows as not budgeted', async () => {
+    const rows = SAMPLE.settings.budget.rows.map((r: { name: string }) => (r.name === 'Groceries' ? { ...r, hidden: true } : r))
+    await seedStorage({ budget: { ...SAMPLE.settings.budget, rows } })
+    const user = userEvent.setup()
+    renderApp(<BudgetView goToTools={vi.fn()} goToLog={vi.fn()} />)
+    await screen.findByDisplayValue('Rent')
+    expect(names()).not.toContain('Groceries')
+    await user.click(screen.getByRole('button', { name: /Compare to actual/ }))
+    expect(screen.getByText('Food & Dining · Groceries')).toBeInTheDocument()
+  })
+
+  it('deleting a row sends its leftover share back to savings', async () => {
+    await seedStorage({ budget: { ...SAMPLE.settings.budget, leftover: [{ id: 'l1', target: 'b008', pct: 40 }] } })
+    const { user } = await open()
+    const row = screen.getByDisplayValue('Unexpected').closest('tr')!
+    await user.click(within(row).getByRole('button', { name: 'Remove row' }))
+    await waitFor(async () => expect((await getBudget()).leftover).toEqual([{ id: 'l1', target: 'savings', pct: 40 }]), { timeout: 3000 })
+  })
+
+  it('an older save finishing does not let a focus refetch undo a newer edit', async () => {
+    const { user } = await open()
+    let finishFirst = () => {}
+    vi.mocked(saveBudget).mockImplementationOnce(() => new Promise<void>((resolve) => { finishFirst = resolve }))
+    const input = () => screen.getByRole('spinbutton', { name: 'Unexpected amount per month' })
+    await user.clear(input())
+    await user.type(input(), '200')
+    await user.tab()
+    await waitFor(() => expect(saveBudget).toHaveBeenCalled())
+    await user.clear(input())
+    await user.type(input(), '300')
+    await user.tab()
+    finishFirst()
+    await new Promise((r) => setTimeout(r, 0))
+    window.dispatchEvent(new Event('focus'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(input()).toHaveValue(300)
+    await waitFor(async () => expect((await getBudget()).rows.find((r) => r.name === 'Unexpected')?.amount).toBe(300), { timeout: 3000 })
+    expect(input()).toHaveValue(300)
   })
 })

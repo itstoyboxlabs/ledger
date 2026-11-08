@@ -245,3 +245,8 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 .tut footer{text-align:center;color:var(--dim);font-size:13px;padding:0 0 30px}
 @media (max-width:980px){.layout{grid-template-columns:1fr}.list{max-height:none;min-height:0}}
 @media (max-width:640px){.tut h1{font-size:34px}.ch{grid-template-columns:104px 1fr}}
+
+/* keyboard: the skip link and a clear focus ring on everything you can tab to */
+.skip{position:absolute;left:-9999px;top:8px;z-index:100;background:#fff;color:#0b0f1d;padding:10px 16px;border-radius:10px;font-weight:600;text-decoration:none}
+.skip:focus{left:16px}
+a:focus-visible,button:focus-visible,summary:focus-visible,video:focus-visible{outline:2px solid #a5b4fc;outline-offset:3px;border-radius:6px}

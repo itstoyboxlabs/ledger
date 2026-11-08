@@ -1,5 +1,6 @@
 import { ltcgOnExtra } from '@/shared/utils/ltcgOnExtra'
 import { taxOnExtra } from '@/shared/utils/taxOnExtra'
+import { incomeTaxOnExtra } from '@/shared/utils/incomeTaxOnExtra'
 import { equityPayout } from './equityPayout'
 import type { StockInputs } from '@/shared/types/StockInputs'
 
@@ -24,6 +25,14 @@ describe('equityPayout', () => {
     expect(r.longTerm).toBe(true)
     expect(r.tax.total).toBe(ltcgOnExtra(100000, 20000, 'wy').total)
     expect(r.tax.total).toBeLessThan(equityPayout({ ...rsu, type: 'iso' }, 'wy').tax.total)
+  })
+  it('taxes ISOs sold too soon as income with no FICA, NSOs with FICA', () => {
+    const iso = equityPayout({ ...rsu, type: 'iso' }, 'wy')
+    const nso = equityPayout({ ...rsu, type: 'nso' }, 'wy')
+    expect(iso.longTerm).toBe(false)
+    expect(iso.tax.total).toBe(incomeTaxOnExtra(100000, 20000, 'wy').total)
+    expect(nso.tax.total).toBe(taxOnExtra(100000, 20000, 'wy').total)
+    expect(iso.tax.total).toBeLessThan(nso.tax.total)
   })
   it('treats years below 1 as 1', () => expect(equityPayout({ ...rsu, years: 0 }, 'wy')).toMatchObject({ years: 1, slice: 50000 }))
 })

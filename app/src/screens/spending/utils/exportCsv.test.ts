@@ -30,6 +30,10 @@ describe('exportCsv', () => {
     expect(a).toBe('"2026-05-01","Cafe","CAFE 1","Food & Dining","Coffee","Maple Card","expense","4.50"')
     expect(b?.endsWith('"-4.50"')).toBe(true)
   })
+  it('exports transfers at their real amount', async () => {
+    const text = await run([{ date: '2026-05-03', merchant: 'Card payment', cat: 'Transfers', account: 'chk', kind: 'transfer', amount: 812.4 }])
+    expect(text.split('\n')[1]?.endsWith('"transfer","812.40"')).toBe(true)
+  })
   it('escapes quotes and blanks missing fields', async () => {
     const text = await run([{ date: '2026-05-01', merchant: 'Joe "J" Bar', cat: 'Other', account: 'chk', kind: 'expense', amount: 1 }])
     const row = text.split('\n')[1] as string

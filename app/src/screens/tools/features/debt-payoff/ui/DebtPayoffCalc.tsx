@@ -31,14 +31,15 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
   const ok = months !== null && contribution > 0
   const y = ok && months !== null ? Math.floor(months / 12) : 0
   const m = ok && months !== null ? months % 12 : 0
-  const done = new Date()
-  if (ok && months !== null) done.setMonth(done.getMonth() + months)
+  // from the 1st, so adding months from the 29th to 31st never rolls into the month after
+  const now = new Date()
+  const done = new Date(now.getFullYear(), now.getMonth() + (ok && months !== null ? months : 0), 1)
   const doneLabel = done.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   const mixed = !picked && sel.filter((d) => d.apr > 0).length > 0
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Debt payoff</h3>
+      <h2 className="text-[15px] font-semibold">Debt payoff</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         Pick a debt, or all of them, and say how much you put toward it each month. This shows how long
         it takes to pay off and the date you are debt free. Debts come from the Balances page.

@@ -9,11 +9,14 @@ export function useToolState<T extends object>(key: string, defaults: T): [T, (n
     defaults,
     isObj,
   )
-  const merged = {
+  const merge = (stored: T): T => ({
     ...defaults,
     ...Object.fromEntries(
-      Object.entries(raw).filter(([k, v]) => k in defaults && typeof v === typeof defaults[k as keyof T]),
+      Object.entries(stored).filter(([k, v]) => k in defaults && typeof v === typeof defaults[k as keyof T]),
     ),
-  } as T
-  return [merged, setRaw]
+  }) as T
+  // a functional update sees the same merged value the component renders, not the raw save
+  const set = (next: T | ((prev: T) => T)) =>
+    setRaw(typeof next === 'function' ? (prev: T) => next(merge(prev)) : next)
+  return [merge(raw), set]
 }

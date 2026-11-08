@@ -65,4 +65,11 @@ describe('BalancesView', () => {
     await userEvent.click(screen.getByTitle('Remove debt'))
     expect(screen.getByText('No debts yet.')).toBeInTheDocument()
   })
+
+  it('shows the typed payment for a debt linked to a deleted Budget row', async () => {
+    seed('debts', [{ id: 'd1', name: 'Car', balance: 9000, apr: 6, payment: 300, budgetRow: 'deleted-row' }])
+    renderApp(<BalancesView />)
+    // the same number debtPaymentOf gives Debt payoff and Retirement
+    expect(await screen.findByDisplayValue('300')).toBeInTheDocument()
+  })
 })

@@ -49,7 +49,7 @@ export function SubscriptionsTable() {
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-[15px] font-semibold">Subscriptions</h3>
+        <h2 className="text-[15px] font-semibold">Subscriptions</h2>
         <div className="text-[13px] text-[var(--text-secondary)] tnum max-sm:hidden">
           {sorted.length} active · ≈{fmt(total)}/month
         </div>
@@ -81,6 +81,7 @@ export function SubscriptionsTable() {
               <TableCell className="py-2 pr-3 text-right tnum whitespace-nowrap max-md:hidden">
                 {fmt(s.amount)}
                 {s.cadence === 'annual' && <span className="text-[var(--text-muted)]">/yr</span>}
+                {s.cadence === 'weekly' && <span className="text-[var(--text-muted)]">/wk</span>}
               </TableCell>
               <TableCell className="py-2 text-right tnum">{fmt(monthlyCost(s))}</TableCell>
             </TableRow>

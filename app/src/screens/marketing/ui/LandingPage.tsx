@@ -7,6 +7,7 @@ import { HowSection } from '@/screens/marketing/ui/HowSection'
 import { IconSprite } from '@/screens/marketing/ui/IconSprite'
 import { MarketingNav } from '@/screens/marketing/ui/MarketingNav'
 import { PlanSection } from '@/screens/marketing/ui/PlanSection'
+import { SkipLink } from '@/screens/marketing/ui/SkipLink'
 import { PrivacyStrip } from '@/screens/marketing/ui/PrivacyStrip'
 import { useScrollReveal } from '@/screens/marketing/hooks/useScrollReveal'
 import type { FeatureTabId } from '@/screens/marketing/types/FeatureTabId'
@@ -16,18 +17,23 @@ export function LandingPage() {
   useScrollReveal()
   return (
     <>
+      <SkipLink />
       <div className="glow-top"></div>
       <IconSprite />
       <div className="wrap">
         <MarketingNav />
-        <Hero />
-        <HowSection />
-        <FeaturesSection tab={tab} onSelect={setTab} />
-        <PrivacyStrip />
-        <PlanSection onExplore={() => setTab('retirement')} />
-        <FaqSection />
       </div>
-      <FinalCta />
+      <main id="main">
+        <div className="wrap">
+          <Hero />
+          <HowSection />
+          <FeaturesSection tab={tab} onSelect={setTab} />
+          <PrivacyStrip />
+          <PlanSection onExplore={() => setTab('retirement')} />
+          <FaqSection />
+        </div>
+        <FinalCta />
+      </main>
     </>
   )
 }

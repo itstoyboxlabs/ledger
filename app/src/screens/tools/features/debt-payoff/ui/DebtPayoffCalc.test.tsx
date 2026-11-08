@@ -49,4 +49,15 @@ describe('DebtPayoffCalc', () => {
     await userEvent.type(c, '500')
     expect(screen.getByText('3m')).toBeInTheDocument()
   })
+  it('dates the payoff by calendar month from the 31st', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-31T12:00:00'))
+    renderApp(<DebtPayoffCalc debts={[debt({ balance: 400 })]} />)
+    expect(screen.getByText('Feb 2027')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+  it('uses the typed payment when the linked budget row was deleted', async () => {
+    renderApp(<DebtPayoffCalc debts={[debt({ budgetRow: 'deleted', payment: 100 })]} />)
+    expect(await screen.findByText('10m')).toBeInTheDocument()
+  })
 })

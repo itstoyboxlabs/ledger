@@ -105,12 +105,15 @@ function sim(o) {
     ssMonthly: 0, claim: 67, events: [], freed: () => 0, ...o,
   }
   const rows = {}
-  let k = c.k0
-  let s = c.s0 - c.hole
+  // already past the access age: the 401k starts in savings
+  const openNow = c.age >= c.accessAge
+  let k = openNow ? 0 : c.k0
+  let s = c.s0 - c.hole + (openNow ? c.k0 : 0)
   let runOut = null
-  let atRet = null
+  let atRet = c.retireAge <= c.age ? { liquid: s, locked: k } : null
   for (let age = c.age; age <= c.endAge; age++) {
     const working = age < c.retireAge
+    const open = age >= c.accessAge
     const rate = working ? c.r : (c.rAfter ?? c.r)
     const cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) + c.x401k : 0
     const cS = working ? c.contribS + c.freed(age) : 0
@@ -121,10 +124,13 @@ function sim(o) {
     let inn = 0
     let out = 0
     for (const e of c.events) { const v = evAmt(e, age); if (e.kind === 'in') inn += v; else out += v }
-    k += kG + cK
-    s += sG + cS + inn - wd - out
-    if (age === c.accessAge && k > 0) { s += k; k = 0 }
-    rows[age] = { k: Math.max(0, k), contrib: cK + cS + inn, growth: sG, wd: wd + out, total: s }
+    // from the access age on, new 401k money goes straight to savings and whatever the
+    // 401k holds moves in at the end of the year, shown in Contributions
+    k += kG + (open ? 0 : cK)
+    s += sG + cS + (open ? cK : 0) + inn - wd - out
+    let moved = 0
+    if (open && k > 0) { moved = k; s += k; k = 0 }
+    rows[age] = { k: Math.max(0, k), contrib: cK + cS + inn + moved, growth: sG, wd: wd + out, total: s }
     if (age === c.retireAge - 1) atRet = { liquid: s, locked: k }
     if (runOut === null && !working && s < 0) runOut = age
   }
@@ -175,7 +181,8 @@ test.describe('new user defaults', () => {
   test('both saving fields and the tax start on Auto', async ({ page }) => {
     await expect(autoValue(main(page), 'Into 401k per year')).toHaveText('$3,200')
     await expect(autoValue(main(page), 'Into savings per year')).toHaveText('$33,142')
-    await expect(autoValue(main(page), 'Tax on investment gains')).toHaveText('15%')
+    // 60,000 a year less the 16,100 standard deduction stays in the 0% federal band in Texas
+    await expect(autoValue(main(page), 'Tax on investment gains')).toHaveText('0%')
     for (const l of ['Into 401k per year', 'Into savings per year', 'Tax on investment gains']) {
       await expect(badge(main(page), l)).toHaveAttribute('aria-pressed', 'true')
     }
@@ -277,10 +284,31 @@ test.describe('timeline', () => {
     await expect(chip(page, 'At retirement (35)')).toContainText('$150,000')
   })
 
+  test('the year the 401k unlocks, its balance shows in Contributions', async ({ page }) => {
+    await expectRow(page, 60, { contrib: 58750, wd: 12000, total: 56750 })
+  })
+
   test('Plan to age 100 adds a Left over at 100 chip', async ({ page }) => {
     await expect(main(page).getByText('Left over at 100')).toHaveCount(0)
     await field(main(page), 'Plan to age').fill('100')
     await expect(main(page).getByText('Left over at 100')).toBeVisible()
+  })
+})
+
+test.describe('401k after the access age', () => {
+  test('401k money paid in after the access age stays in savings', async ({ page }) => {
+    await setup(page, { retire: { age: 55, retireAge: 65, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0, withdrawMo: 0 } })
+    // 107,500 the first year, 10,000 a year after, all of it in savings by 70
+    await expectRow(page, 70, { total: 197500, hasK: false })
+    await expectMatchesSim(page, sim({ age: 55, retireAge: 65, endAge: 70, k0: 100000, s0: 0, base401k: 10000, contribS: 0, need: 0 }))
+  })
+
+  test('already past the access age, the 401k starts in savings', async ({ page }) => {
+    await setup(page, { retire: { age: 65, retireAge: 66, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0 } })
+    // 100,000 plus 7,500 saved at 65, then 12,000 a year for five years
+    await expectRow(page, 70, { total: 47500, hasK: false })
+    await expect(chip(page, 'Money lasts')).toContainText('to 70+')
+    await expectMatchesSim(page, sim({ age: 65, retireAge: 66, endAge: 70, k0: 100000, s0: 0, base401k: 10000, contribS: 0 }))
   })
 })
 
@@ -321,6 +349,14 @@ test.describe('Find earliest safe age', () => {
     await expect(main(page).getByText(/No retire age before/)).toBeVisible()
     await field(main(page), 'Need per month').fill('500')
     await badge(main(page), 'Retire at', 'Find').click()
+    await expect(main(page).getByText(/No retire age before/)).toHaveCount(0)
+  })
+
+  test('the note goes away once an input changes', async ({ page }) => {
+    await setup(page, { retire: { withdrawMo: 100000 } })
+    await badge(main(page), 'Retire at', 'Find').click()
+    await expect(main(page).getByText(/No retire age before/)).toBeVisible()
+    await field(main(page), 'Need per month').fill('90000')
     await expect(main(page).getByText(/No retire age before/)).toHaveCount(0)
   })
 
@@ -392,6 +428,16 @@ test.describe('starting balances', () => {
     await expect(main(page).getByText(/Savings start at \$50,000/)).toBeVisible()
     await expect(main(page).getByText(/minus .* owed/)).toHaveCount(0)
     await expectRow(page, 30, { total: 70000 })
+  })
+
+  test('an unticked debt frees no payment into savings', async ({ page }) => {
+    // 1,000 at 250 a month clears in 4 months: ticked, it frees 2,000 in the first year
+    const card = [{ id: 'd9', name: 'Card', balance: 1000, apr: 0, payment: 250 }]
+    await setup(page, { retire: { startFrom: 'balances' }, debts: card })
+    await expectRow(page, 30, { contrib: 23750 + 2000 })
+    await main(page).getByRole('checkbox', { name: /Card/ }).click()
+    await expectRow(page, 30, { contrib: 23750 })
+    await expectRow(page, 31, { contrib: 25000 })
   })
 
   test('the tabs switch between the two modes and the choice is saved', async ({ page }) => {
@@ -628,10 +674,11 @@ test.describe('in retirement', () => {
   })
 
   test('Auto tax follows what you need to live on', async ({ page }) => {
-    await setup(page, { retire: { autoTax: true, withdrawMo: 5000 } })
+    await setup(page, { retire: { autoTax: true, withdrawMo: 6000 } })
+    // 72,000 less the 16,100 standard deduction is 55,900, over the 49,450 0% band
     await expect(autoValue(main(page), 'Tax on investment gains')).toHaveText('15%')
     await field(main(page), 'Need per month').fill('2000')
-    // under the 0% federal bracket (49,450 a year) and no state tax in the default state
+    // under the 0% federal bracket after the standard deduction and no state tax in the default state
     await expect(autoValue(main(page), 'Tax on investment gains')).toHaveText('0%')
   })
 
@@ -997,6 +1044,16 @@ test.describe('events: paying off a debt', () => {
     await expect(main(page).locator('button', { hasText: /Yes, owing \$9,000 \(from Balances\)/ })).toBeVisible()
   })
 
+  test('a payoff age before today or after the plan leaves the debt in the hole', async ({ page }) => {
+    await setup(page, { debts, includeDebt: true })
+    const card = await addDebtEvent(page, 25)
+    await expect(main(page).locator('button', { hasText: /Yes, owing \$15,000 \(from Balances\)/ })).toBeVisible()
+    await field(card, 'Pay off at age').fill('95')
+    await expect(main(page).locator('button', { hasText: /Yes, owing \$15,000 \(from Balances\)/ })).toBeVisible()
+    await field(card, 'Pay off at age').fill('33')
+    await expect(main(page).locator('button', { hasText: /Yes, owing \$9,000 \(from Balances\)/ })).toBeVisible()
+  })
+
   test('clicking Auto lets you type your own amount, and it is used', async ({ page }) => {
     await setup(page, { debts })
     const card = await addDebtEvent(page, 33)
@@ -1085,6 +1142,13 @@ test.describe('headline results', () => {
     await expect(c).toContainText('+ $58,750 locked in 401k')
   })
 
+  test('At retirement shows the starting balances when retiring now', async ({ page }) => {
+    await setup(page, { retire: { retireAge: 30 } })
+    const c = chip(page, 'At retirement (30)')
+    await expect(c).toContainText('$50,000')
+    await expect(c).toContainText('+ $10,000 locked in 401k')
+  })
+
   test('Money lasts says to 90+ when it does and runs out at the first negative year when not', async ({ page }) => {
     await setup(page, { retire: { withdrawMo: 500 } })
     const c = chip(page, 'Money lasts')
@@ -1114,6 +1178,15 @@ test.describe('headline results', () => {
     await expect(chip(page, 'Left over at 70')).toContainText(/[−-]\$63,250/)
   })
 
+  test('the end age gets its own chip, never twice', async ({ page }) => {
+    await setup(page, { retire: { endAge: 85 } })
+    const t = await readTable(page)
+    await expect(chip(page, 'Left over at 85')).toContainText(`$${Math.abs(t[85].total).toLocaleString('en-US')}`)
+    await field(main(page), 'Plan to age').fill('90')
+    await expect(main(page).getByText('Left over at 85')).toHaveCount(0)
+    await expect(main(page).getByText('Left over at 90')).toHaveCount(1)
+  })
+
   test('only milestones after the current age are shown', async ({ page }) => {
     await setup(page, { retire: { age: 65, retireAge: 66, endAge: 85 } })
     await expect(main(page).getByText('Left over at 60')).toHaveCount(0)
@@ -1132,7 +1205,7 @@ test.describe('headline results', () => {
 test.describe('year-by-year table', () => {
   test('every row adds up: last total + contributions + growth - withdrawals = total', async ({ page }) => {
     await setup(page, {
-      retire: { ss: { on: true, auto: false, monthly: 900 }, withdrawMo: 2500, accessAge: 55, endAge: 80, start401k: 0, contrib401k: 0 },
+      retire: { ss: { on: true, auto: false, monthly: 900 }, withdrawMo: 2500, accessAge: 55, endAge: 80, start401k: 10000, contrib401k: 0 },
       port: [{ name: 'Fund', alloc: 100, perf: 6 }],
       extra: {},
     })
@@ -1140,7 +1213,6 @@ test.describe('year-by-year table', () => {
     const ages = Object.keys(t).map(Number)
     for (let i = 1; i < ages.length; i++) {
       const a = ages[i]
-      if (a === 55) continue // the 401k joins the total this year
       const want = t[a - 1].total + t[a].contrib + t[a].growth - t[a].wd
       expect(Math.abs(t[a].total - want), `age ${a}`).toBeLessThanOrEqual(2)
     }

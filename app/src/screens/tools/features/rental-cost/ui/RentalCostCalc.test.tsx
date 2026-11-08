@@ -33,4 +33,10 @@ describe('RentalCostCalc', () => {
     renderApp(<RentalCostCalc />)
     expect(screen.getByText('$36,000.00')).toBeInTheDocument()
   })
+  it('treats negative months free as none', () => {
+    localStorage.setItem('ledger:rentalCalc', JSON.stringify({ rent: 3000, monthsFree: -2 }))
+    renderApp(<RentalCostCalc />)
+    expect(screen.getByText('$3,000.00')).toBeInTheDocument()
+    expect(screen.getByText('$36,000.00')).toBeInTheDocument()
+  })
 })

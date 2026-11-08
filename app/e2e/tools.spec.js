@@ -22,7 +22,7 @@ const TITLES = {
   vacation: 'Vacation planning',
 }
 const tool = (page, id) =>
-  main(page).locator('[data-slot=card]').filter({ has: page.locator('h3', { hasText: TITLES[id] }) }).first()
+  main(page).locator('[data-slot=card]').filter({ has: page.locator('h2', { hasText: TITLES[id] }) }).first()
 // the number input inside the label that starts with this text
 const field = (card, label) =>
   card.locator('label').filter({ hasText: new RegExp('^\\s*' + escapeRe(label)) }).locator('input').first()
@@ -183,7 +183,7 @@ test.describe('lists', () => {
     await page.getByRole('button', { name: 'Done' }).click()
   }
   const listCard = (page, title) =>
-    main(page).locator('[data-slot=card]').filter({ has: page.locator('h3', { hasText: title }) })
+    main(page).locator('[data-slot=card]').filter({ has: page.locator('h2', { hasText: title }) })
 
   test('Add list is disabled until the list has a title', async ({ page }) => {
     await picker(page).click()
@@ -275,7 +275,7 @@ test.describe('lists', () => {
     })
     await openApp(p2)
     await goTo(p2, 'Tools')
-    const card = main(p2).locator('[data-slot=card]').filter({ has: p2.getByRole('heading', { name: 'Selling stuff', level: 3 }) })
+    const card = main(p2).locator('[data-slot=card]').filter({ has: p2.getByRole('heading', { name: 'Selling stuff', level: 2 }) })
     await expect(card).toContainText('$520.00')
     await expect(card).toContainText('List what you plan to sell')
     expect((await ls(p2, 'lists'))[0].id).toBe('sell')
@@ -288,21 +288,22 @@ test.describe('lists', () => {
 test.describe('hourly calculator', () => {
   test('defaults: 40 hours at $50 is $104,000 a year, taxed in Texas', async ({ page }) => {
     const card = tool(page, 'hourly')
-    await expect(row(card, 'Per week')).toHaveText(/Per week\s*\$2,000\s*−\$425\s*\$1,575/)
-    await expect(row(card, 'Per month')).toHaveText(/Per month\s*\$8,667\s*−\$1,840\s*\$6,826/)
-    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$104,000\s*−\$22,083\s*\$81,917/)
+    await expect(row(card, 'Per week')).toHaveText(/Per week\s*\$2,000\s*−\$423\s*\$1,577/)
+    await expect(row(card, 'Per month')).toHaveText(/Per month\s*\$8,667\s*−\$1,834\s*\$6,833/)
+    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$104,000\s*−\$22,006\s*\$81,994/)
     await expect(card).toContainText('Tax is about 21.2% in Texas, federal, FICA and state combined')
     await expect(card).toContainText('Taxed in Texas.')
+    await expect(card).toContainText('Assumes you are a W-2 employee')
   })
 
   test('changing hours and rate recomputes the table', async ({ page }) => {
     const card = tool(page, 'hourly')
     await type(field(card, 'Hours / week'), 20)
     await type(field(card, 'Pay / hour'), 30)
-    await expect(row(card, 'Per week')).toHaveText(/Per week\s*\$600\s*−\$77\s*\$523/)
-    await expect(row(card, 'Per month')).toHaveText(/Per month\s*\$2,600\s*−\$333\s*\$2,267/)
-    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$31,200\s*−\$3,993\s*\$27,207/)
-    await expect(card).toContainText('Tax is about 12.8%')
+    await expect(row(card, 'Per week')).toHaveText(/Per week\s*\$600\s*−\$76\s*\$524/)
+    await expect(row(card, 'Per month')).toHaveText(/Per month\s*\$2,600\s*−\$329\s*\$2,271/)
+    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$31,200\s*−\$3,951\s*\$27,249/)
+    await expect(card).toContainText('Tax is about 12.7%')
   })
 
   test('zero hours gives zeros and no tax', async ({ page }) => {
@@ -344,8 +345,8 @@ test.describe('hourly calculator', () => {
     await seed(page, { taxState: 'ca' })
     const card = tool(page, 'hourly')
     await expect(card).toContainText('Taxed in California.')
-    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$104,000\s*−\$27,678\s*\$76,322/)
-    await expect(card).toContainText('Tax is about 26.6% in California')
+    await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$104,000\s*−\$27,601\s*\$76,399/)
+    await expect(card).toContainText('Tax is about 26.5% in California')
   })
 
   test('Change opens the Balances page', async ({ page }) => {
@@ -421,11 +422,11 @@ test.describe('rent-to-income', () => {
     await expect(row(card, 'Max rent at 30×')).toContainText('$3,333.33')
   })
 
-  test('rent of zero reads 0.0x and falls short', async ({ page }) => {
+  test('rent of zero shows a dash, not a verdict', async ({ page }) => {
     const card = tool(page, 'renttoincome')
     await type(field(card, 'Monthly rent'), 0)
-    await expect(row(card, 'Your income is')).toContainText('Your income is 0.0× the rent')
-    await expect(row(card, 'Your income is')).toContainText('Short of the 40× they ask for')
+    await expect(row(card, 'Enter a rent to compare')).toContainText('—')
+    await expect(card).not.toContainText('Short of the')
   })
 
   test('asking for 0x gives a max rent of $0', async ({ page }) => {
@@ -498,10 +499,10 @@ test.describe('vacation planning', () => {
     await expect(row(card, 'Months to save')).toContainText('5.5')
   })
 
-  test('saving nothing a month shows 0.0 instead of dividing by zero', async ({ page }) => {
+  test('saving nothing a month shows a dash instead of dividing by zero', async ({ page }) => {
     const card = tool(page, 'vacation')
     await type(field(card, 'You can save per month'), 0)
-    await expect(row(card, 'Months to save')).toContainText('0.0')
+    await expect(row(card, 'Months to save')).toContainText('—')
     await expect(row(card, 'Trip total')).toContainText('$1,650.00')
   })
 
@@ -550,8 +551,8 @@ test.describe('equity payout', () => {
     await expect(row(card, 'Delta per share')).toContainText('$20.00')
     await expect(row(card, 'Gross profit')).toContainText('$100,000.00')
     await expect(row(card, 'Effective tax on the payout')).toContainText('30.8%')
-    await expect(row(card, 'Net profit')).toContainText('$69,208.00')
-    await expect(row(card, 'Net per year (over 2)')).toContainText('$34,604.00')
+    await expect(row(card, 'Net profit')).toContainText('$69,222.00')
+    await expect(row(card, 'Net per year (over 2)')).toContainText('$34,611.00')
   })
 
   test('an exit price under the strike pays nothing, never negative', async ({ page }) => {
@@ -589,19 +590,20 @@ test.describe('equity payout', () => {
     await type(field(card, 'Salary (stacked under)'), 150000)
     await type(field(card, 'Payout years'), 4)
     await expect(row(card, 'Gross profit')).toContainText('$500,000.00')
-    await expect(row(card, 'Net profit')).toContainText('$342,739.00')
-    await expect(row(card, 'Net per year (over 4)')).toContainText('$85,684.75')
+    await expect(row(card, 'Net profit')).toContainText('$342,893.00')
+    await expect(row(card, 'Net per year (over 4)')).toContainText('$85,723.25')
   })
 
-  test('ISO shows the held-over toggle; off it taxes like an NSO', async ({ page }) => {
+  test('ISO shows the held-over toggle; off it is income tax with no FICA', async ({ page }) => {
     const card = tool(page, 'stock')
     await expect(card.getByRole('checkbox')).toHaveCount(0)
     await pick(card, page, 'Options (NSO)', 'Options (ISO)')
     await expect(card.getByRole('checkbox')).toBeVisible()
     await expect(card).toContainText('Turn on the toggle if you will hold the shares over a year after exercise.')
+    await expect(card).toContainText('No Social Security or Medicare on ISO shares.')
     await type(field(card, 'Exit price'), 30)
     await type(field(card, 'Options'), 5000)
-    await expect(row(card, 'Net profit')).toContainText('$69,740.00')
+    await expect(row(card, 'Net profit')).toContainText('$76,436.00')
   })
 
   test('ISO held over a year is taxed as a long-term gain', async ({ page }) => {
@@ -624,7 +626,7 @@ test.describe('equity payout', () => {
     await type(field(card, 'Salary (stacked under)'), 150000)
     await type(field(card, 'Payout years'), 4)
     await expect(row(card, 'Effective tax on the payout (New York (NYC))')).toContainText('41.6%')
-    await expect(row(card, 'Net profit')).toContainText('$291,898.20')
+    await expect(row(card, 'Net profit')).toContainText('$292,052.20')
   })
 
   test('type and inputs persist across a reload', async ({ page }) => {
@@ -647,22 +649,22 @@ test.describe('take-home pay', () => {
     await expect(card).toContainText('Taxed in Texas.')
     await expect(row(card, '401k (4%)')).toContainText('−$3,200.00')
     await expect(row(card, 'Health insurance')).toContainText('−$1,800.00')
-    await expect(row(card, 'Federal income tax')).toContainText('−$7,747.00')
+    await expect(row(card, 'Federal income tax')).toContainText('−$7,670.00')
     await expect(row(card, 'Social Security and Medicare')).toContainText('−$5,982.30')
     await expect(row(card, 'State tax')).toContainText('−$0.00')
-    await expect(row(card, 'Take-home per year')).toContainText('$61,270.70')
-    await expect(row(card, 'Take-home per month')).toContainText('$5,105.89')
-    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$2,552.95')
-    await expect(row(card, 'Of every dollar you earn, you keep')).toContainText('76.6%')
+    await expect(row(card, 'Take-home per year')).toContainText('$61,347.70')
+    await expect(row(card, 'Take-home per month')).toContainText('$5,112.31')
+    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$2,556.15')
+    await expect(row(card, 'Of every dollar you earn, you keep')).toContainText('76.7%')
   })
 
   test('a different salary reruns the brackets', async ({ page }) => {
     const card = tool(page, 'takehome')
     await type(field(card, 'Salary per year'), 120000)
-    await expect(row(card, 'Federal income tax')).toContainText('−$16,195.00')
+    await expect(row(card, 'Federal income tax')).toContainText('−$16,118.00')
     await expect(row(card, 'Social Security and Medicare')).toContainText('−$9,042.30')
-    await expect(row(card, 'Take-home per year')).toContainText('$88,162.70')
-    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$3,673.45')
+    await expect(row(card, 'Take-home per year')).toContainText('$88,239.70')
+    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$3,676.65')
     await expect(row(card, 'Of every dollar you earn, you keep')).toContainText('73.5%')
   })
 
@@ -680,26 +682,26 @@ test.describe('take-home pay', () => {
     await card.getByRole('button', { name: 'Remove' }).last().click()
     await expect(row(card, 'Health insurance')).toHaveCount(0)
     // insurance gone, FICA is now on the full 80,000
-    await expect(row(card, 'Federal income tax')).toContainText('−$8,143.00')
+    await expect(row(card, 'Federal income tax')).toContainText('−$8,066.00')
     await expect(row(card, 'Social Security and Medicare')).toContainText('−$6,120.00')
-    await expect(row(card, 'Take-home per year')).toContainText('$62,537.00')
+    await expect(row(card, 'Take-home per year')).toContainText('$62,614.00')
   })
 
   test('removing the 401k row: insurance skips both taxes', async ({ page }) => {
     const card = tool(page, 'takehome')
     await card.getByRole('button', { name: 'Remove' }).first().click()
     await expect(row(card, '401k')).toHaveCount(0)
-    await expect(row(card, 'Federal income tax')).toContainText('−$8,451.00')
+    await expect(row(card, 'Federal income tax')).toContainText('−$8,374.00')
     await expect(row(card, 'Social Security and Medicare')).toContainText('−$5,982.30')
-    await expect(row(card, 'Take-home per year')).toContainText('$63,766.70')
+    await expect(row(card, 'Take-home per year')).toContainText('$63,843.70')
   })
 
   test('with nothing coming out the full salary is taxed', async ({ page }) => {
     const card = tool(page, 'takehome')
     await card.getByRole('button', { name: 'Remove' }).first().click()
     await card.getByRole('button', { name: 'Remove' }).first().click()
-    await expect(row(card, 'Take-home per year')).toContainText('$65,033.00')
-    await expect(row(card, 'Of every dollar you earn, you keep')).toContainText('81.3%')
+    await expect(row(card, 'Take-home per year')).toContainText('$65,110.00')
+    await expect(row(card, 'Of every dollar you earn, you keep')).toContainText('81.4%')
   })
 
   test('the 401k amount can switch to dollars a month', async ({ page }) => {
@@ -708,7 +710,7 @@ test.describe('take-home pay', () => {
     await pick(rowEl, page, '% of salary', '$ per month')
     await type(rowEl.locator('input').first(), 500)
     await expect(row(card, '401k')).toContainText('−$6,000.00')
-    await expect(row(card, 'Take-home per year')).toContainText('$59,086.70')
+    await expect(row(card, 'Take-home per year')).toContainText('$59,163.70')
   })
 
   test('a Roth 401k comes out after tax', async ({ page }) => {
@@ -718,8 +720,8 @@ test.describe('take-home pay', () => {
     await type(rowEl.locator('input').first(), 5)
     await expect(row(card, 'Roth 401k (5%)')).toContainText('−$4,000.00')
     // only the insurance lowers the taxed pay, the Roth just lowers take-home
-    await expect(row(card, 'Federal income tax')).toContainText('−$8,451.00')
-    await expect(row(card, 'Take-home per year')).toContainText('$59,766.70')
+    await expect(row(card, 'Federal income tax')).toContainText('−$8,374.00')
+    await expect(row(card, 'Take-home per year')).toContainText('$59,843.70')
   })
 
   test('adding a deduction starts as a $0 pre-tax row and changes nothing', async ({ page }) => {
@@ -727,7 +729,7 @@ test.describe('take-home pay', () => {
     await card.getByRole('button', { name: 'Add something that comes out' }).click()
     await expect(card.getByRole('button', { name: 'Remove' })).toHaveCount(3)
     await expect(row(card, 'Something else, pre-tax')).toContainText('−$0.00')
-    await expect(row(card, 'Take-home per year')).toContainText('$61,270.70')
+    await expect(row(card, 'Take-home per year')).toContainText('$61,347.70')
   })
 
   test('negative deductions are held at zero', async ({ page }) => {
@@ -746,7 +748,7 @@ test.describe('take-home pay', () => {
     // 50% of the $3,200 you put in
     await expect(card).toContainText('Your employer adds $1,600.00 a year to your 401k.')
     // the match is not taken from your pay
-    await expect(row(card, 'Take-home per year')).toContainText('$61,270.70')
+    await expect(row(card, 'Take-home per year')).toContainText('$61,347.70')
     expect((await ls(page, 'takeHome')).deductions[0].match).toBe(50)
   })
 
@@ -755,15 +757,15 @@ test.describe('take-home pay', () => {
     const card = tool(page, 'takehome')
     await expect(card).toContainText('Taxed in New York (NYC).')
     await expect(row(card, 'State and city tax')).toContainText('−$5,925.09')
-    await expect(row(card, 'Take-home per year')).toContainText('$55,345.61')
-    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$2,306.07')
+    await expect(row(card, 'Take-home per year')).toContainText('$55,422.61')
+    await expect(row(card, 'Per paycheck, paid twice a month')).toContainText('$2,309.28')
   })
 
   test('edits persist across a reload', async ({ page }) => {
     await type(field(tool(page, 'takehome'), 'Salary per year'), 200000)
     await reload(page)
     await expect(field(tool(page, 'takehome'), 'Salary per year')).toHaveValue('200000')
-    await expect(row(tool(page, 'takehome'), 'Take-home per month')).toContainText('$11,785.09')
+    await expect(row(tool(page, 'takehome'), 'Take-home per month')).toContainText('$11,792.09')
   })
 
   test('Change opens the Balances page', async ({ page }) => {
@@ -777,10 +779,12 @@ test.describe('take-home pay', () => {
 test.describe('cash between two days', () => {
   const total = (card) => card.locator('tr', { hasText: /^Total/ })
 
+  // live-only subscriptions (Netflix, Spotify, iCloud: $30 a month) count like on the Budget page,
+  // undated, so in full in every range
   test('defaults: the 1st to the 15th', async ({ page }) => {
     const card = tool(page, 'cash')
-    await expect(card).toContainText('Day 1 – 15 (15 days)')
-    await expect(total(card)).toContainText('$2,614.00')
+    await expect(card).toContainText('Day 1 to 15 (15 days)')
+    await expect(total(card)).toContainText('$2,644.00')
     await expect(row(card, 'Rent')).toContainText('on the 1st')
     await expect(row(card, 'Rent')).toContainText('$1,850.00')
     await expect(row(card, 'Electricity')).toContainText('on the 8th')
@@ -795,17 +799,18 @@ test.describe('cash between two days', () => {
   test('rows are sorted biggest first', async ({ page }) => {
     const names = await tool(page, 'cash').locator('tbody tr td:first-child').allInnerTexts()
     const clean = names.map((n) => n.replace(/^.\n/, '').trim()).filter((n) => !n.startsWith('Total'))
-    expect(clean).toEqual(['Rent', 'Groceries', 'Unexpected', 'Restaurants', 'Electricity', 'Phone', 'Transit', 'Crunch Fitness'])
+    expect(clean).toEqual(['Rent', 'Groceries', 'Unexpected', 'Restaurants', 'Electricity', 'Phone', 'Transit', 'Crunch Fitness', 'Netflix', 'Spotify', 'iCloud'])
   })
 
   test('the 16th to end of month button uses the real month length (30)', async ({ page }) => {
     const card = tool(page, 'cash')
     await card.getByRole('button', { name: '16th → end of month' }).click()
     await expect(field(card, 'From day')).toHaveValue('16')
-    await expect(field(card, 'To day')).toHaveValue('30')
-    await expect(card).toContainText('Day 16 – 30 (15 days)')
-    // no dated rows fall in 16-30: prorated rows at 15/30 plus the undated one
-    await expect(total(card)).toContainText('$565.00')
+    // stored as 31 so it stays the last day in every month
+    await expect(field(card, 'To day')).toHaveValue('31')
+    await expect(card).toContainText('Day 16 to end of month (15 days)')
+    // no dated rows fall in 16-30: prorated rows at 15/30 plus the undated ones
+    await expect(total(card)).toContainText('$595.00')
     await expect(row(card, 'Rent')).toHaveCount(0)
   })
 
@@ -813,14 +818,14 @@ test.describe('cash between two days', () => {
     const card = tool(page, 'cash')
     await card.getByRole('button', { name: '16th → end of month' }).click()
     await card.getByRole('button', { name: '1st → 15th' }).click()
-    await expect(total(card)).toContainText('$2,614.00')
+    await expect(total(card)).toContainText('$2,644.00')
   })
 
   test('a custom range counts dated rows once and prorates the rest', async ({ page }) => {
     const card = tool(page, 'cash')
     await type(field(card, 'From day'), 5)
     await type(field(card, 'To day'), 12)
-    await expect(card).toContainText('Day 5 – 12 (8 days)')
+    await expect(card).toContainText('Day 5 to 12 (8 days)')
     await expect(row(card, 'Electricity')).toContainText('$95.00')
     await expect(row(card, 'Phone')).toContainText('$65.00')
     await expect(row(card, 'Groceries')).toContainText('$120.00')
@@ -828,17 +833,17 @@ test.describe('cash between two days', () => {
     await expect(row(card, 'Transit')).toContainText('$32.00')
     await expect(row(card, 'Rent')).toHaveCount(0)
     await expect(row(card, 'Crunch Fitness')).toHaveCount(0)
-    await expect(total(card)).toContainText('$531.33')
+    await expect(total(card)).toContainText('$561.33')
   })
 
   test('a one-day range (the 3rd) catches the gym and a sliver of the prorated rows', async ({ page }) => {
     const card = tool(page, 'cash')
     await type(field(card, 'From day'), 3)
     await type(field(card, 'To day'), 3)
-    await expect(card).toContainText('Day 3 – 3 (1 days)')
+    await expect(card).toContainText('Day 3 to 3 (1 days)')
     await expect(row(card, 'Crunch Fitness')).toContainText('$39.00')
     await expect(row(card, 'Groceries')).toContainText('$15.00')
-    await expect(total(card)).toContainText('$216.67')
+    await expect(total(card)).toContainText('$246.67')
   })
 
   test('a "to" day before the "from" day shows an error and no table', async ({ page }) => {
@@ -856,7 +861,7 @@ test.describe('cash between two days', () => {
     const card = tool(page, 'cash')
     await type(field(card, 'To day'), 31)
     await expect(row(card, 'Groceries')).toContainText('$450.00')
-    await expect(total(card)).toContainText('$3,029.00')
+    await expect(total(card)).toContainText('$3,059.00')
   })
 
   test('cash on hand adds up a running total and shows the leftover', async ({ page }) => {
@@ -864,14 +869,14 @@ test.describe('cash between two days', () => {
     await card.getByPlaceholder('3000 paycheck + 400 from a sale').fill('3200 checking + 4315 paycheck + 400 monitor sale - 50 fee')
     await expect(card).toContainText('= $7,865')
     await expect(card.getByText('Leftover after cash on hand')).toBeVisible()
-    await expect(card).toContainText('$5,251.00')
+    await expect(card).toContainText('$5,221.00')
   })
 
   test('not enough cash shows a negative leftover', async ({ page }) => {
     const card = tool(page, 'cash')
     await card.getByPlaceholder('3000 paycheck + 400 from a sale').fill('1000')
     await expect(card).toContainText('= $1,000')
-    await expect(card).toContainText('−$1,614.00')
+    await expect(card).toContainText('−$1,644.00')
   })
 
   test('commas and dollar signs in cash terms are understood', async ({ page }) => {
@@ -1240,17 +1245,17 @@ test.describe('cross-tool links', () => {
   test('Rent scenarios income follows the Take-home tool when the Budget uses it', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: true, amount: 0 } })
     const card = tool(page, 'rentscenarios')
-    await expect(card).toContainText('$5,106 a month coming in')
-    // 5,105.89 - 1,179 - 1,000
-    await expect(card.locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$2,896.89')
+    await expect(card).toContainText('$5,112 a month coming in')
+    // 5,112.31 - 1,209 - 1,000
+    await expect(card.locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$2,903.31')
   })
 
   test('editing the salary updates Rent scenarios live, without a reload', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: true, amount: 0 } })
     await type(field(tool(page, 'takehome'), 'Salary per year'), 120000)
-    await expect(tool(page, 'rentscenarios')).toContainText('$7,347 a month coming in')
-    // 7,346.89 - 1,179 - 1,000
-    await expect(tool(page, 'rentscenarios').locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$5,137.89')
+    await expect(tool(page, 'rentscenarios')).toContainText('$7,353 a month coming in')
+    // 7,353.31 - 1,209 - 1,000
+    await expect(tool(page, 'rentscenarios').locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$5,144.31')
   })
 
   test('with statements as the source, the salary does not move Rent scenarios', async ({ page }) => {
@@ -1269,8 +1274,8 @@ test.describe('cross-tool links', () => {
   test('the Vacation tooltip follows the Take-home tool figure too', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: true, amount: 0 } })
     await row(tool(page, 'vacation'), 'Months to save').locator('svg').hover()
-    // 5,105.89 - 3,029
-    await expect(page.getByRole('tooltip')).toContainText('your Budget tab leaves about $2,047 a month')
+    // 5,112.31 - 3,059
+    await expect(page.getByRole('tooltip')).toContainText('your Budget tab leaves about $2,053 a month')
   })
 
   test('Budget "From the Take-home tool" shows the tool figure there and the link jumps back', async ({ page }) => {
@@ -1297,6 +1302,6 @@ test.describe('cross-tool links', () => {
     await seed(page, { taxState: 'ca' })
     for (const id of ['hourly', 'takehome']) await expect(tool(page, id)).toContainText('Taxed in California.')
     await expect(row(tool(page, 'takehome'), 'State tax')).toContainText('−$2,940.85')
-    await expect(row(tool(page, 'takehome'), 'Take-home per year')).toContainText('$58,329.85')
+    await expect(row(tool(page, 'takehome'), 'Take-home per year')).toContainText('$58,406.85')
   })
 })

@@ -12,20 +12,32 @@ type NotesModalProps = { onClose: () => void }
 
 export function NotesModal({ onClose }: NotesModalProps) {
   const [notes, setNotes] = useState<Note[] | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
+  // The latest list, so a card's delayed edit applies to what is saved now,
+  // not to the list from the render where the typing started.
+  const notesRef = useRef<Note[] | null>(null)
   const [newText, setNewText] = useState('')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     getNotes()
-      .then((d) => setNotes(d.notes || []))
-      .catch(() => setSaveState('error'))
+      .then((d) => {
+        notesRef.current = d.notes || []
+        setNotes(notesRef.current)
+      })
+      .catch(() => setLoadFailed(true))
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const persist = (next: Note[]) => {
+  // Ignores changes until the list has loaded, so a write never replaces
+  // notes.json with only the new change.
+  const persist = (update: (prev: Note[]) => Note[]) => {
+    if (notesRef.current === null) return
+    const next = update(notesRef.current)
+    notesRef.current = next
     setNotes(next)
     setSaveState('saving')
     clearTimeout(saveTimer.current)
@@ -38,15 +50,17 @@ export function NotesModal({ onClose }: NotesModalProps) {
 
   const addNote = () => {
     if (!newText.trim()) return
-    persist([
-      ...(notes || []),
-      { id: `note${Date.now().toString(36)}`, text: newText.trim(), createdAt: Date.now(), pinned: false },
+    if (notes === null) return
+    const text = newText.trim()
+    persist((prev) => [
+      ...prev,
+      { id: `note${Date.now().toString(36)}`, text, createdAt: Date.now(), pinned: false },
     ])
     setNewText('')
   }
-  const updateNote = (id: string, text: string) => persist((notes ?? []).map((n) => (n.id === id ? { ...n, text } : n)))
-  const deleteNote = (id: string) => persist((notes ?? []).filter((n) => n.id !== id))
-  const togglePin = (id: string) => persist((notes ?? []).map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)))
+  const updateNote = (id: string, text: string) => persist((prev) => prev.map((n) => (n.id === id ? { ...n, text } : n)))
+  const deleteNote = (id: string) => persist((prev) => prev.filter((n) => n.id !== id))
+  const togglePin = (id: string) => persist((prev) => prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)))
 
   // pinned notes form their own section at the top; within each section
   // (pinned, then unpinned) newest sorts first
@@ -75,14 +89,16 @@ export function NotesModal({ onClose }: NotesModalProps) {
           />
           <Button
             onClick={addNote}
-            disabled={!newText.trim()}
+            disabled={!newText.trim() || notes === null}
             className="shrink-0"
           >
             Add
           </Button>
         </div>
 
-        {notes === null ? (
+        {loadFailed ? (
+          <div className="py-10 text-center text-[13px] text-[var(--bad)]">Could not load notes. Close and try again.</div>
+        ) : notes === null ? (
           <div className="py-10 text-center text-[13px] text-[var(--text-muted)]">Loading…</div>
         ) : sorted.length === 0 ? (
           <div className="py-10 text-center text-[13px] text-[var(--text-muted)]">No notes yet.</div>

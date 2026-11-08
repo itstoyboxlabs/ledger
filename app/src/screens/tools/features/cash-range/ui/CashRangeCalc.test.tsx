@@ -36,7 +36,7 @@ describe('CashRangeCalc', () => {
     expect(screen.queryByText('Secret')).toBeNull()
     // 1000 + 30 + 600 * 15 / 30
     expect(screen.getAllByText('$1,330.00')).toHaveLength(2)
-    expect(screen.getByText('Day 1 – 15 (15 days)')).toBeInTheDocument()
+    expect(screen.getByText('Day 1 to 15 (15 days)')).toBeInTheDocument()
   })
   it('sorts rows by amount, largest first', async () => {
     renderApp(<CashRangeCalc />)
@@ -50,7 +50,8 @@ describe('CashRangeCalc', () => {
     renderApp(<CashRangeCalc />)
     await screen.findByText('Rent')
     await userEvent.click(screen.getByRole('button', { name: /16th/ }))
-    expect(screen.getByText('Day 16 – 30 (15 days)')).toBeInTheDocument()
+    expect(screen.getByText('Day 16 to end of month (15 days)')).toBeInTheDocument()
+    expect(screen.getByLabelText('To day')).toHaveValue(31)
     expect(screen.getByText('on the 20th')).toBeInTheDocument()
     expect(screen.queryByText('Rent')).toBeNull()
   })
@@ -80,5 +81,25 @@ describe('CashRangeCalc', () => {
     await screen.findByText('Rent')
     expect(screen.getByPlaceholderText(/3000 paycheck/)).toHaveValue('2000')
     expect(screen.getByText('$670.00')).toBeInTheDocument()
+  })
+  it('a row on the 31st counts at the end of a shorter month', async () => {
+    vi.setSystemTime(new Date('2026-02-10T12:00:00'))
+    await seedStorage({ budget: { rows: [{ id: 'r9', name: 'Loan', amount: 200, day: 31 }] } })
+    renderApp(<CashRangeCalc />)
+    await userEvent.click(await screen.findByRole('button', { name: /16th/ }))
+    expect(screen.getByText('Loan')).toBeInTheDocument()
+    expect(screen.getByText('on the 28th')).toBeInTheDocument()
+    expect(screen.getByText('Day 16 to end of month (13 days)')).toBeInTheDocument()
+  })
+  it('leaves out a subscription removed on the Budget page', async () => {
+    await seedStorage({
+      budget: {
+        rows: [...SEED.budget.rows, { id: 's1', name: 'Gone Sub', amount: 12, day: 5, source: 'subscription' }],
+        dismissedSubs: { 'Gone Sub': '2026-10-01' },
+      },
+    })
+    renderApp(<CashRangeCalc />)
+    await screen.findByText('Rent')
+    expect(screen.queryByText('Gone Sub')).toBeNull()
   })
 })

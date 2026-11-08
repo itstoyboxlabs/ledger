@@ -123,7 +123,7 @@ function EmptyState() {
   }
   if (isLocal()) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-5 py-10">
+      <main className="flex min-h-screen items-center justify-center px-5 py-10">
         <Card className="w-full max-w-[460px] gap-0 p-7">
           <h1 className="text-[26px] font-bold tracking-tight">No statements yet.</h1>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-[14px] leading-relaxed text-[var(--text-secondary)]">
@@ -135,11 +135,11 @@ function EmptyState() {
             <Button variant="outline" onClick={copy}>Copy import prompt</Button>
           </div>
         </Card>
-      </div>
+      </main>
     )
   }
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-10">
+    <main className="flex min-h-screen items-center justify-center px-5 py-10">
       <Card className="w-full max-w-[460px] gap-0 p-7">
         <h1 className="text-[26px] font-bold tracking-tight">There's nothing here yet.</h1>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-[14px] leading-relaxed text-[var(--text-secondary)]">
@@ -168,6 +168,6 @@ function EmptyState() {
           <Button variant="ghost" onClick={importSample}>Try it with sample data</Button>
         </div>
       </Card>
-    </div>
+    </main>
   )
 }

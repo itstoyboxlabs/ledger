@@ -13,6 +13,10 @@ describe('fmt', () => {
     expect(fmt(-5)).toBe('−$5.00')
     expect(fmt(-1234567.891)).toBe('−$1,234,567.89')
   })
+  it('never shows a minus sign on a value that rounds to zero', () => {
+    expect(fmt(-0.004)).toBe('$0.00')
+    expect(fmt(0.1 + 0.2 - 0.3 - 1e-12)).toBe('$0.00')
+  })
   it('adds thousands separators', () => {
     expect(fmt(1000000)).toBe('$1,000,000.00')
   })

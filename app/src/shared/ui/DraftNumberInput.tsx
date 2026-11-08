@@ -12,9 +12,10 @@ type DraftNumberInputProps = {
   suffix?: string
   min?: number
   max?: number
+  ariaLabel?: string
 }
 
-export function DraftNumberInput({ value, onChange, className, step, boxed, suffix, min, max }: DraftNumberInputProps) {
+export function DraftNumberInput({ value, onChange, className, step, boxed, suffix, min, max, ariaLabel }: DraftNumberInputProps) {
   const [draft, setDraft] = useState<string | null>(null) // null = not editing
   const clamp = (v: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v))
   if (boxed) {
@@ -22,6 +23,7 @@ export function DraftNumberInput({ value, onChange, className, step, boxed, suff
       <span className="group/num relative block w-full">
         <Input
           type="number"
+          aria-label={ariaLabel}
           step={step}
           value={draft !== null ? draft : value}
           onFocus={(e) => {
@@ -61,6 +63,7 @@ export function DraftNumberInput({ value, onChange, className, step, boxed, suff
     <Input
       variant="inline"
       type="number"
+      aria-label={ariaLabel}
       step={step}
       value={draft !== null ? draft : value}
       onFocus={() => setDraft(String(value))}

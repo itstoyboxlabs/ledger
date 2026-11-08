@@ -2,6 +2,7 @@ import { ChapterButton } from '@/screens/marketing/ui/ChapterButton'
 import { IconSprite } from '@/screens/marketing/ui/IconSprite'
 import { MarketingFooter } from '@/screens/marketing/ui/MarketingFooter'
 import { MarketingNav } from '@/screens/marketing/ui/MarketingNav'
+import { SkipLink } from '@/screens/marketing/ui/SkipLink'
 import { TutorialPlayer } from '@/screens/marketing/ui/TutorialPlayer'
 import { TUTORIAL_CHAPTERS } from '@/screens/marketing/constants/TUTORIAL_CHAPTERS'
 import { useTutorialPlayer } from '@/screens/marketing/hooks/useTutorialPlayer'
@@ -10,10 +11,12 @@ export function TutorialPage() {
   const { index, select, onEnded, videoRef } = useTutorialPlayer(TUTORIAL_CHAPTERS.length)
   return (
     <div className="tut">
+      <SkipLink />
       <div className="glow-top"></div>
       <IconSprite />
       <div className="wrap">
         <MarketingNav active="tutorial" />
+        <main id="main">
         <header>
           <span className="pill">Tutorial</span>
           <h1>Learn Ledger in 24 minutes.</h1>
@@ -34,6 +37,7 @@ export function TutorialPage() {
             </div>
           </div>
         </div>
+        </main>
       </div>
       <MarketingFooter />
     </div>

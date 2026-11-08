@@ -9,7 +9,7 @@ describe('ltcgFederal', () => {
     expect(ltcgFederal(0, 10000)).toEqual({ fed: 0, niit: 0, total: 0 })
   })
   it('is 15% when stacked above the zero band', () => {
-    // ordinary income after deduction is 84,250, so all 50,000 is taxed at 15%
+    // ordinary income after deduction is 83,900, so all 50,000 is taxed at 15%
     const got = ltcgFederal(100000, 50000)
     expect(got.fed).toBeCloseTo(7500, 5)
     expect(got.niit).toBe(0)
@@ -17,7 +17,13 @@ describe('ltcgFederal', () => {
   })
   it('splits a gain across the 0% and 15% bands', () => {
     // ordinary 0, gain 100,000: first 49,450 at 0%, remaining 50,550 at 15%
-    expect(ltcgFederal(15750, 100000).fed).toBeCloseTo(0.15 * 50550, 5)
+    expect(ltcgFederal(16100, 100000).fed).toBeCloseTo(0.15 * 50550, 5)
+  })
+  it('lets the unused standard deduction shelter the gain', () => {
+    expect(ltcgFederal(0, 50000)).toEqual({ fed: 0, niit: 0, total: 0 })
+    // taxable is 70,000 - 16,100 = 53,900, so 4,450 sits above the 0% band
+    expect(ltcgFederal(0, 70000).fed).toBeCloseTo(0.15 * 4450, 5)
+    expect(ltcgFederal(10000, 60000).fed).toBeCloseTo(0.15 * 4450, 5)
   })
   it('adds 3.8% NIIT on income over 200k', () => {
     const got = ltcgFederal(250000, 100000)

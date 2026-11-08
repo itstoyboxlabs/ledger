@@ -63,6 +63,15 @@ describe('TakeHomeCalc', () => {
     expect(screen.getByText(/Employer match/)).toBeInTheDocument()
     expect(screen.getByText(/Your employer adds/).textContent).toContain('$4,000.00')
   })
+  it('caps the 401k row at the yearly limit and matches only the capped amount', () => {
+    localStorage.setItem('ledger:takeHome', JSON.stringify({
+      salary: 500000,
+      deductions: [{ id: 'a', kind: '401k', unit: 'pct', amount: 10, match: 50 }],
+    }))
+    renderApp(<TakeHomeCalc goToBalances={() => {}} />)
+    expect(valueOf('401k (10%), capped')).toBe('−$24,500.00')
+    expect(screen.getByText(/Your employer adds/).textContent).toContain('$12,250.00')
+  })
   it('names the tax state and links to Balances', async () => {
     localStorage.setItem('ledger:taxState', JSON.stringify('ca'))
     const go = vi.fn()

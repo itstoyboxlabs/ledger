@@ -7,14 +7,14 @@ type MarketingNavProps = { active?: string }
 // The top bar. `active` is the id of the page you are on (see NAV_LINKS).
 export function MarketingNav({ active }: MarketingNavProps) {
   return (
-    <nav>
+    <nav aria-label="Main">
       <a className="logo" href={LINKS.home}>
         <img src="/logo-mark.png" alt="" />
         Ledger
       </a>
       <div className="links">
         {NAV_LINKS.map((link) => (
-          <a key={link.id} href={link.href} className={link.id === active ? 'on' : undefined}>
+          <a key={link.id} href={link.href} className={link.id === active ? 'on' : undefined} aria-current={link.id === active ? 'page' : undefined}>
             {link.label}
           </a>
         ))}

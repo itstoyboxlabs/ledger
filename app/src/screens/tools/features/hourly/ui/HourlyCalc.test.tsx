@@ -22,6 +22,11 @@ describe('HourlyCalc', () => {
     expect(num(cells[3].textContent)).toBeLessThan(num(cells[1].textContent))
     expect(num(cells[3].textContent) + num(cells[2].textContent)).toBeGreaterThanOrEqual(104000 - 1)
   })
+  it('says it assumes a W-2 employee, not freelance pay', () => {
+    renderApp(<HourlyCalc goToBalances={() => {}} />)
+    expect(screen.getByText(/Assumes you are a W-2 employee/)).toBeInTheDocument()
+    expect(screen.getByText(/Freelance or 1099 pay owes more/)).toBeInTheDocument()
+  })
   it('recomputes when the rate changes', async () => {
     renderApp(<HourlyCalc goToBalances={() => {}} />)
     const rate = screen.getByLabelText(/Pay \/ hour/)

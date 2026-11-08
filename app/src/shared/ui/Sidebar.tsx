@@ -81,10 +81,11 @@ export function Sidebar({ view, setView, accounts, setAccounts, onNotes, onExpor
   // `done` closes the drawer after an action (a no-op on desktop).
   const body = (done: () => void = () => {}) => (
     <>
-      <nav className="mt-8 flex flex-col gap-1.5">
+      <nav aria-label="Pages" className="mt-8 flex flex-col gap-1.5">
         {NAV.map(([v, label, icon]) => (
           <Button variant={view === v ? 'soft' : 'ghost'}
             key={v}
+            aria-current={view === v ? 'page' : undefined}
             onClick={() => { setView(v); done() }}
             className={cn('h-auto justify-start gap-4 rounded-xl px-3.5 py-2.5 text-[15px]', view === v ? 'font-semibold' : 'font-normal text-[var(--text-secondary)] hover:text-white')}
           >

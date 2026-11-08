@@ -16,7 +16,7 @@ export function ListTool({ list, onChange, onEdit, onDelete }: ListToolProps) {
   return (
     <Card className="show-spinners p-5">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] font-semibold">{list.title || 'Untitled list'}</h3>
+        <h2 className="text-[15px] font-semibold">{list.title || 'Untitled list'}</h2>
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="icon-xs" onClick={onEdit} title="Edit title and description"
             className="text-[var(--text-muted)] hover:text-white">

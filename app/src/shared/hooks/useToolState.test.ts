@@ -30,4 +30,13 @@ describe('useToolState', () => {
     localStorage.setItem('ledger:t', '[1,2]')
     expect(renderHook(() => useToolState('t', DEFAULTS)).result.current[0]).toEqual(DEFAULTS)
   })
+
+  it('gives a functional update the merged value', () => {
+    localStorage.setItem('ledger:t', JSON.stringify({ rate: 7, gone: 1 }))
+    const { result } = renderHook(() => useToolState('t', DEFAULTS))
+    let seen: typeof DEFAULTS | undefined
+    act(() => result.current[1]((prev) => { seen = prev; return { ...prev, rate: prev.rate + 1 } }))
+    expect(seen).toEqual({ rate: 7, name: 'x', on: true })
+    expect(result.current[0]).toEqual({ rate: 8, name: 'x', on: true })
+  })
 })

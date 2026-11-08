@@ -21,12 +21,14 @@ describe('RentToIncomeCalc', () => {
     expect(screen.getByText('Your income is 25.0× the rent')).toBeInTheDocument()
     expect(screen.getByText('Short of the 40× they ask for')).toBeInTheDocument()
   })
-  it('zero rent shows 0.0x without dividing by zero', async () => {
+  it('zero rent shows a dash instead of a verdict', async () => {
     renderApp(<RentToIncomeCalc />)
     const rent = screen.getByLabelText(/Monthly rent/)
     await userEvent.clear(rent)
     await userEvent.type(rent, '0')
-    expect(screen.getByText('Your income is 0.0× the rent')).toBeInTheDocument()
+    expect(screen.getByText('Enter a rent to compare')).toBeInTheDocument()
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.queryByText(/Short of/)).toBeNull()
   })
   it('swap switches to max rent mode and hides the rent field', async () => {
     renderApp(<RentToIncomeCalc />)

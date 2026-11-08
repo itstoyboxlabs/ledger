@@ -45,6 +45,7 @@ export function LogView() {
   const [entries, setEntries] = useState<LogEntry[] | null>(null)
   const [budgetFile, setBudgetFile] = useState<BudgetFile | null>(null) // the whole budget file, saved back when a meter is hidden
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved')
+  const [loadError, setLoadError] = useState(false)
   const [ym, setYm] = useState(todayYmd().slice(0, 7))
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
@@ -52,35 +53,65 @@ export function LogView() {
   const [rowId, setRowId] = usePersistedState('logRow', '', (v) => typeof v === 'string')
   const [sort, setSort] = useState<LogSort>({ key: 'date', dir: -1 })
   const amountRef = useRef<HTMLInputElement>(null)
+  // log and budget writes run one at a time, each on a fresh read, so quick clicks
+  // here and edits in another tab do not overwrite each other
+  const writeQueue = useRef<Promise<unknown>>(Promise.resolve())
+  const pendingLogWrites = useRef(0)
+  const queueWrite = (job: () => Promise<unknown>) => {
+    writeQueue.current = writeQueue.current.then(job, job)
+    return writeQueue.current
+  }
   // for the Budget page's leftover shares: a row that receives one has a bigger meter
   const income = useBudgetIncome()
 
-  useEffect(() => {
-    getLog()
-      .then((d) => setEntries(d.entries || []))
-      .catch(() => setSaveState('error'))
-    getBudget()
-      .then((d) => setBudgetFile({ ...d, rows: d.rows.map(normalizeBudgetRow) }))
-      .catch(() => {})
-  }, [])
+  const load = () => {
+    setLoadError(false)
+    Promise.all([getLog(), getBudget()])
+      .then(([log, budget]) => {
+        setEntries(log.entries || [])
+        setBudgetFile({ ...budget, rows: budget.rows.map(normalizeBudgetRow) })
+      })
+      .catch(() => setLoadError(true))
+  }
+  useEffect(load, [])
   const budgetRows = budgetFile && budgetFile.rows.filter((r) => !r.hidden && !isBudgetRowHidden(r))
 
-  const persist = (next: LogEntry[]) => {
-    setEntries(next)
+  // Applies one change (add or delete) on screen right away, then to a fresh read of
+  // the saved log, so entries added in another tab are kept. Saved right away: adding
+  // or deleting is one action, and a delay could lose it if the page closes.
+  const persist = (change: (list: LogEntry[]) => LogEntry[]) => {
+    setEntries((prev) => change(prev ?? []))
     setSaveState('saving')
-    // saved right away: adding or deleting is one action, and a delay could lose it if the page closes
-    saveLog(next)
+    pendingLogWrites.current++
+    queueWrite(async () => {
+      try {
+        const next = change((await getLog()).entries || [])
+        await saveLog(next)
+        // show the merged list once nothing newer is still waiting, so a queued add does not blink out
+        if (pendingLogWrites.current === 1) setEntries(next)
+      } finally {
+        pendingLogWrites.current--
+      }
+    })
       .then(() => setSaveState('saved'))
       .catch(() => setSaveState('error'))
   }
 
+  if (loadError) {
+    return (
+      <Card className="mt-6 flex items-center justify-between gap-3 p-5 text-[13px]">
+        <span className="text-[var(--bad)]">Could not load the log.</span>
+        <Button variant="outline" size="sm" onClick={load}>Retry</Button>
+      </Card>
+    )
+  }
   if (!entries || !budgetRows) {
     return <Card className="mt-6 p-5 text-[13px] text-[var(--text-muted)]">Loading…</Card>
   }
 
-  // rows worth metering: the undated / prorated ones are the "soft" spending
-  // (fixed bills on a day don't need watching), plus anything with an entry this month
-  const rowById = Object.fromEntries(budgetRows.map((r) => [r.id, r]))
+  // every saved row, hidden ones too, so an entry on a hidden row or a stopped
+  // subscription still shows its row's name. Only a deleted row reads "Removed row".
+  const rowById = Object.fromEntries(budgetFile.rows.map((r) => [r.id, r]))
   // anything in the Budget expenses table can be logged against (we don't know what the
   // user pays by hand). Subscriptions autopay on their own, so they're left out.
   const logRows = budgetRows
@@ -95,7 +126,12 @@ export function LogView() {
     .filter((e) => e.date.startsWith(ym))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
   const spentByRow: Record<string, number> = {}
-  for (const e of monthEntries) spentByRow[e.rowId] = (spentByRow[e.rowId] ?? 0) + e.amount
+  // counted apart from the sum: entries that net to zero still count as logged
+  const countByRow: Record<string, number> = {}
+  for (const e of monthEntries) {
+    spentByRow[e.rowId] = (spentByRow[e.rowId] ?? 0) + e.amount
+    countByRow[e.rowId] = (countByRow[e.rowId] ?? 0) + 1
+  }
   // meters: see logTracked. Subscriptions autopay, so they never get one. A row with a
   // share of the Budget leftover ("What to do with what is left") has that much more.
   const leftoverAlloc = normalizeLeftover(budgetFile.leftover)
@@ -104,7 +140,7 @@ export function LogView() {
     const extra = leftoverShare(leftoverAlloc, r.id, leftoverAmt)
     return extra > 0 ? { ...r, amount: (Number(r.amount) || 0) + extra } : r
   }
-  const shownMeters = budgetRows.filter((r) => r.source !== 'subscription' && logTracked(r, !!spentByRow[r.id]))
+  const shownMeters = budgetRows.filter((r) => r.source !== 'subscription' && logTracked(r, (countByRow[r.id] ?? 0) > 0))
   const hiddenMeters = logRows.filter((r) => r.trackInLog === false)
   const total = monthEntries.reduce((s, e) => s + e.amount, 0)
   const isThisMonth = ym === todayYmd().slice(0, 7)
@@ -132,29 +168,34 @@ export function LogView() {
     // a negative amount is a credit (a refund, something sold) that offsets the row
     const n = parseSumExpr(amount).total
     if (!(Math.abs(n) >= 0.005) || !activeRowId) return
-    persist([
-      ...entries,
-      {
-        id: `log${Date.now().toString(36)}`,
-        date,
-        amount: Math.round(n * 100) / 100,
-        note: note.trim(),
-        rowId: activeRowId,
-        createdAt: Date.now(),
-      },
-    ])
+    // a typed date past today would sit in a month the arrows never reach, so it becomes today
+    const today = todayYmd()
+    const entry: LogEntry = {
+      id: `log${Date.now().toString(36)}`,
+      date: date > today ? today : date,
+      amount: Math.round(n * 100) / 100,
+      note: note.trim(),
+      rowId: activeRowId,
+      createdAt: Date.now(),
+    }
+    persist((list) => [...list, entry])
     setAmount('')
     setNote('')
     setDate(todayYmd())
     amountRef.current?.focus()
   }
-  const deleteEntry = (id: string) => persist(entries.filter((e) => e.id !== id))
-  // hide or restore a meter: `trackInLog` is saved on the budget row itself
+  const deleteEntry = (id: string) => persist((list) => list.filter((e) => e.id !== id))
+  // hide or restore a meter: `trackInLog` is saved on the budget row itself. The budget is
+  // read again first and only that field changes, so newer edits from Budget are kept.
   const setTracked = (id: string, trackInLog: boolean) => {
-    if (!budgetFile) return
-    const next: BudgetFile = { ...budgetFile, updated: todayYmd(), rows: budgetFile.rows.map((r) => (r.id === id ? { ...r, trackInLog } : r)) }
-    setBudgetFile(next)
-    saveBudget(next).catch(() => setSaveState('error'))
+    const patch = (rows: BudgetRow[]) => rows.map((r) => (r.id === id ? { ...r, trackInLog } : r))
+    setBudgetFile((prev) => prev && { ...prev, rows: patch(prev.rows) })
+    queueWrite(async () => {
+      const fresh = await getBudget()
+      const next: BudgetFile = { ...fresh, updated: todayYmd(), rows: patch(fresh.rows) }
+      await saveBudget(next)
+      setBudgetFile({ ...next, rows: next.rows.map(normalizeBudgetRow) })
+    }).catch(() => setSaveState('error'))
   }
 
   const onEnter = (e: KeyboardEvent) => e.key === 'Enter' && addEntry()
@@ -164,7 +205,7 @@ export function LogView() {
       <Card className="mt-6 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-[15px] font-semibold">Log a purchase</h3>
+            <h2 className="text-[15px] font-semibold">Log a purchase</h2>
             <p className="mt-1 text-[12px] text-[var(--text-muted)]">
               Statements lag by weeks, so log what you spend on the rows you pay toward during the
               month, like groceries, restaurants or transit, to see if you're on track. Enter them by
@@ -255,10 +296,10 @@ export function LogView() {
             >
               ‹
             </Button>
-            <h3 className="text-[15px] font-semibold">
+            <h2 className="text-[15px] font-semibold">
               {monthLabel(ym)}
               {isThisMonth && <span className="ml-2 text-[12px] font-normal text-[var(--text-muted)]">so far</span>}
-            </h3>
+            </h2>
             <Button variant="outline" size="sm"
               onClick={() => setYm(shiftMonth(ym, 1))}
               disabled={isThisMonth}

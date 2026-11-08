@@ -77,7 +77,7 @@ export function BalancesView() {
 
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-[15px] font-semibold">Taxed in</h3>
+          <h2 className="text-[15px] font-semibold">Taxed in</h2>
           <PresetBar
             presets={presets}
             currentData={presetData}
@@ -102,9 +102,9 @@ export function BalancesView() {
       </Card>
 
       <Card className="p-5">
-        <h3 className="flex items-center gap-1.5 text-[15px] font-semibold">
+        <h2 className="flex items-center gap-1.5 text-[15px] font-semibold">
           What you owe
-        </h3>
+        </h2>
         <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
           The Debt payoff calculator on the Tools page uses the balance, APR and payment to show when
           you will be debt free. The Retirement page uses the payment: once a debt is paid off, its
@@ -185,7 +185,7 @@ export function BalancesView() {
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-[15px] font-semibold">What you have</h3>
+            <h2 className="text-[15px] font-semibold">What you have</h2>
             <p className="mt-1 text-[12px] text-[var(--text-muted)]">
               Cash, savings and investments, typed in by hand.
             </p>

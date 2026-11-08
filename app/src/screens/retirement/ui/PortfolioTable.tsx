@@ -37,28 +37,29 @@ export function PortfolioTable({ heading, rows, setRows, action }: PortfolioTabl
                 <InfoTip size={12} tip="What you expect each fund to earn a year, on average. This drives the whole projection, so lower it if you move to something more careful." />
               </span>
             </TableHead>
-            <TableHead className="w-8"></TableHead>
+            <TableHead className="w-8"><span className="sr-only">Remove</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((p, i) => (
             <TableRow key={i} className="border-t border-[var(--grid)] hover:bg-[var(--surface-2)] transition-colors group">
               <TableCell className="py-1 pr-2">
-                <Input variant="inline" value={p.name} onChange={(e) => patch(i, { name: e.target.value })} className="-ml-1.5 w-24" />
+                <Input variant="inline" aria-label={`Fund ${i + 1} name`} value={p.name} onChange={(e) => patch(i, { name: e.target.value })} className="-ml-1.5 w-24" />
               </TableCell>
               <TableCell className="py-1 text-right">
                 <div className="ml-auto w-[104px]">
-                  <DraftNumberInput boxed suffix="%" step={5} value={p.alloc} onChange={(v) => patch(i, { alloc: v })} className="tnum" />
+                  <DraftNumberInput boxed ariaLabel={`${p.name || `Fund ${i + 1}`} allocation`} suffix="%" step={5} value={p.alloc} onChange={(v) => patch(i, { alloc: v })} className="tnum" />
                 </div>
               </TableCell>
               <TableCell className="py-1 text-right">
                 <div className="ml-auto w-[104px]">
-                  <DraftNumberInput boxed suffix="%" step={0.1} value={p.perf} onChange={(v) => patch(i, { perf: v })} className="tnum" />
+                  <DraftNumberInput boxed ariaLabel={`${p.name || `Fund ${i + 1}`} expected return`} suffix="%" step={0.1} value={p.perf} onChange={(v) => patch(i, { perf: v })} className="tnum" />
                 </div>
               </TableCell>
               <TableCell className="py-1 text-right">
                 <Button variant="ghost" size="icon-xs"
                   onClick={() => setRows(rows.filter((_, j) => j !== i))}
+                  aria-label={`Remove ${p.name || `fund ${i + 1}`}`}
                   className="text-[var(--text-muted)] opacity-0 hover:text-[var(--bad)] group-hover:opacity-100"
                 ><X className="size-3.5" /></Button>
               </TableCell>

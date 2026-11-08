@@ -11,6 +11,7 @@ const SEED_NOTES = [
 
 import { NotesModal } from './NotesModal'
 import { getNotes } from '@/shared/utils/getNotes'
+import * as getNotesModule from '@/shared/utils/getNotes'
 
 beforeEach(() => seedStorage({ notes: { notes: SEED_NOTES } }))
 
@@ -50,5 +51,39 @@ describe('NotesModal', () => {
     onClose.mockClear()
     await userEvent.keyboard('{Escape}')
     expect(onClose).toHaveBeenCalled()
+  })
+  it('keeps both edits when two cards are edited inside the save delay', async () => {
+    renderApp(<NotesModal onClose={() => {}} />)
+    const a = await screen.findByDisplayValue('Older note')
+    const b = screen.getByDisplayValue('Newer note')
+    await userEvent.type(a, ' A')
+    await new Promise((r) => setTimeout(r, 200))
+    await userEvent.type(b, ' B')
+    await waitFor(async () => {
+      const saved = (await getNotes()).notes
+      expect(saved.find((n) => n.id === 'a')?.text).toBe('Older note A')
+      expect(saved.find((n) => n.id === 'b')?.text).toBe('Newer note B')
+    }, { timeout: 3000 })
+  })
+  it('keeps a pin made while an edit is waiting to save', async () => {
+    renderApp(<NotesModal onClose={() => {}} />)
+    const a = await screen.findByDisplayValue('Older note')
+    await userEvent.type(a, '!')
+    const card = screen.getByDisplayValue('Newer note').closest('.group') as HTMLElement
+    await userEvent.click(within(card).getByTitle('Pin to top'))
+    await waitFor(async () => {
+      const saved = (await getNotes()).notes
+      expect(saved.find((n) => n.id === 'a')?.text).toBe('Older note!')
+      expect(saved.find((n) => n.id === 'b')?.pinned).toBe(true)
+    }, { timeout: 3000 })
+  })
+  it('shows an error and blocks Add when notes fail to load', async () => {
+    const spy = vi.spyOn(getNotesModule, 'getNotes').mockRejectedValueOnce(new Error('offline'))
+    renderApp(<NotesModal onClose={() => {}} />)
+    expect(await screen.findByText(/Could not load notes/)).toBeInTheDocument()
+    await userEvent.type(screen.getByPlaceholderText(/New note/), 'Pay rent')
+    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled()
+    spy.mockRestore()
+    expect((await getNotes()).notes).toHaveLength(3)
   })
 })

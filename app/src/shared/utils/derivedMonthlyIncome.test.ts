@@ -27,9 +27,22 @@ const load = (over: Partial<TransactionsData> = {}) => applyData({ accounts: {},
 import { derivedMonthlyIncome } from './derivedMonthlyIncome'
 
 describe('derivedMonthlyIncome', () => {
-  it('doubles the average full paycheck and skips partial and non-payroll income', () => {
+  it('doubles the average full semi-monthly paycheck and skips partial and non-payroll income', () => {
     load()
     expect(derivedMonthlyIncome()).toBe(8200)
+  })
+  it('multiplies by the pay frequency read from the paydays', () => {
+    const pay = (id: string, date: string) => tx(id, date, 'income', 2000, 'Employer', 'Income', 'Payroll')
+    load({ transactions: [pay('a', '2026-09-04'), pay('b', '2026-09-18'), pay('c', '2026-10-02')] })
+    expect(derivedMonthlyIncome()).toBeCloseTo((2000 * 26) / 12, 6)
+    load({ transactions: [pay('a', '2026-09-04'), pay('b', '2026-09-11'), pay('c', '2026-09-18')] })
+    expect(derivedMonthlyIncome()).toBeCloseTo((2000 * 52) / 12, 6)
+    load({ transactions: [pay('a', '2026-08-28'), pay('b', '2026-09-28'), pay('c', '2026-10-28')] })
+    expect(derivedMonthlyIncome()).toBe(2000)
+  })
+  it('falls back to twice a month with a single full paycheck', () => {
+    load({ transactions: [tx('a', '2026-10-15', 'income', 3000, 'Employer', 'Income', 'Payroll')] })
+    expect(derivedMonthlyIncome()).toBe(6000)
   })
   it('is 0 with no paychecks', () => {
     load({ transactions: TXNS.filter((t) => t.sub !== 'Payroll') })

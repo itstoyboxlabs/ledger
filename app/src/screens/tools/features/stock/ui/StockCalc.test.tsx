@@ -37,6 +37,7 @@ describe('StockCalc', () => {
     save({ type: 'iso', exit: 20, strike: 10, shares: 1000, salary: 100000, years: 1, heldOver: false })
     renderApp(<StockCalc taxState="tx" />)
     expect(screen.getByText(/Turn on the toggle/)).toBeInTheDocument()
+    expect(screen.getByText(/No Social Security or Medicare on ISO shares/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('checkbox', { name: /Held over a year/ }))
     expect(screen.getByText(/long-term capital gain/)).toBeInTheDocument()
   })

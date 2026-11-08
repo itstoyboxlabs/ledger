@@ -13,6 +13,16 @@ describe('takeHome401kYearly', () => {
     } as RawTakeHome
     expect(takeHome401kYearly(th)).toBe(5000 + 1200)
   })
+  it('stops at the yearly 401k limit', () => {
+    const th = {
+      salary: 400000,
+      deductions: [
+        { id: 'a', kind: '401k', unit: 'pct', amount: 5 },
+        { id: 'b', kind: 'roth401k', unit: 'pct', amount: 5 },
+      ],
+    } as RawTakeHome
+    expect(takeHome401kYearly(th)).toBe(24500)
+  })
   it('is zero without any 401k line', () => {
     expect(takeHome401kYearly({ salary: 50000, deductions: [{ id: 'c', kind: 'insurance', unit: 'yr', amount: 900 }] })).toBe(0)
   })

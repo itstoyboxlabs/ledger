@@ -35,6 +35,22 @@ describe('mergeData', () => {
     expect(getAllTxns()).toHaveLength(2)
     expect(getAllTxns().find((t) => t.id === 'a')?.amount).toBe(99)
   })
+  it('replaces every row of a statement that is imported again', async () => {
+    await mergeData({ transactions: [
+      tx('cc-10-001', '2026-10-01', { statement: 'cc-2026-10' }),
+      tx('cc-10-002', '2026-10-02', { statement: 'cc-2026-10' }),
+      tx('cc-09-001', '2026-09-01', { statement: 'cc-2026-09' }),
+      tx('loose', '2026-10-03'),
+    ] })
+    // the corrected statement numbers its rows differently
+    await mergeData({ transactions: [tx('cc-2026-10-001', '2026-10-02', { statement: 'cc-2026-10', amount: 12 })] })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['cc-09-001', 'cc-2026-10-001', 'loose'])
+  })
+  it('keeps existing rows when the incoming rows have no statement', async () => {
+    await mergeData({ transactions: [tx('a', '2026-10-01', { statement: 'cc-2026-10' })] })
+    await mergeData({ transactions: [tx('b', '2026-10-02')] })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['a', 'b'])
+  })
   it('merges subscriptions by name and periods and merchants by key', async () => {
     await mergeData({ transactions: [], subscriptions: [subscription('Net', 1)], merchants: { m1: 'x' }, periods: { p1: period } })
     await mergeData({ transactions: [], subscriptions: [subscription('Net', 2), subscription('Gym', 3)], merchants: { m2: 'y' }, periods: { p2: period } })

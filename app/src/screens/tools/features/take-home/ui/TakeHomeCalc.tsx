@@ -11,6 +11,7 @@ import { Card } from '@/shared/ui/Card'
 import { DEDUCTION_KINDS } from '@/shared/constants/DEDUCTION_KINDS'
 import { DEDUCTION_TIPS } from '@/screens/tools/features/take-home/constants/DEDUCTION_TIPS'
 import { DEDUCTION_UNITS } from '@/screens/tools/features/take-home/constants/DEDUCTION_UNITS'
+import { K401_CAPPED_TIP } from '@/screens/tools/features/take-home/constants/K401_CAPPED_TIP'
 import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
@@ -46,7 +47,7 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
   const dropdownClass = 'h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs'
   return (
     <Card id="take-home-pay" className="p-5 scroll-mt-4">
-      <h3 className="text-[15px] font-semibold">Take-home pay</h3>
+      <h2 className="text-[15px] font-semibold">Take-home pay</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         See what a salary actually turns into after taxes, 401k and health insurance come out,
         per year, per month and per paycheck. A $80,000 salary isn't $6,667 a month, and this
@@ -74,6 +75,7 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
             <div className="w-[110px]">
               <DraftNumberInput
                 boxed
+                ariaLabel={`${deductionLabel(d.kind)} amount`}
                 value={d.amount}
                 step={d.unit === 'pct' ? 1 : 25}
                 suffix={d.unit === 'pct' ? '%' : '$'}
@@ -100,6 +102,7 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
                 <div className="w-[96px]">
                   <DraftNumberInput
                     boxed
+                    ariaLabel={`${deductionLabel(d.kind)} employer match`}
                     value={d.match ?? 0}
                     step={10}
                     min={0}
@@ -115,6 +118,7 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
               size="icon-xs"
               onClick={() => setDeductions(c.deductions.filter((x) => x.id !== d.id))}
               title="Remove"
+              aria-label={`Remove ${deductionLabel(d.kind)}`}
               className="text-[var(--text-muted)] hover:bg-transparent hover:text-[var(--bad)]"
             >
               <X className="size-3.5" />
@@ -133,9 +137,9 @@ export function TakeHomeCalc({ goToBalances }: { goToBalances: () => void }) {
           {b.lines.map((l) => (
             <ToolRow
               key={l.id}
-              label={`${deductionLabel(l.kind)}${l.unit === 'pct' ? ` (${l.amount}%)` : ''}`}
+              label={`${deductionLabel(l.kind)}${l.unit === 'pct' ? ` (${l.amount}%)` : ''}${l.capped ? ', capped' : ''}`}
               value={'−' + fmt(l.yearly)}
-              tip={DEDUCTION_TIPS[deductionTax(l.kind)]}
+              tip={l.capped ? K401_CAPPED_TIP : DEDUCTION_TIPS[deductionTax(l.kind)]}
             />
           ))}
           <ToolRow label="Federal income tax" value={'−' + fmt(b.fed)} />

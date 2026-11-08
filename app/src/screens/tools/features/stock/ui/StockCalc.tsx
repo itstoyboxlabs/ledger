@@ -21,7 +21,7 @@ export function StockCalc({ taxState }: { taxState: string }) {
   const { delta, gross, years, tax: perYearTax, net } = equityPayout(c, taxState)
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Equity payout</h3>
+      <h2 className="text-[15px] font-semibold">Equity payout</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         If your company's stock pays out, see what you would actually keep after tax. Pick what you have
         and it handles the tax rules for you.
@@ -55,7 +55,7 @@ export function StockCalc({ taxState }: { taxState: string }) {
       <p className="mt-3 text-[12px] text-[var(--text-muted)]">
         {c.type === 'iso' && c.heldOver
           ? `The gain is taxed as a long-term capital gain: 0, 15 or 20 percent federal plus 3.8 percent on high income. ${STATES[taxState]?.label} taxes it as income. Each payout year is stacked on your salary.`
-          : `Taxed per payout year as income on top of your salary, in ${STATES[taxState]?.label}.${c.type === 'iso' ? ' Turn on the toggle if you will hold the shares over a year after exercise.' : ''}`}
+          : `Taxed per payout year as income on top of your salary, in ${STATES[taxState]?.label}.${c.type === 'iso' ? ' No Social Security or Medicare on ISO shares. Turn on the toggle if you will hold the shares over a year after exercise.' : ''}`}
       </p>
       <Table className="mt-3 w-full text-[13px]">
         <TableBody>

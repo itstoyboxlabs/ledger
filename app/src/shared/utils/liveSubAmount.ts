@@ -1,7 +1,5 @@
-import { getLastCompleteMonth } from '@/shared/utils/getLastCompleteMonth'
 import { getSubscriptions } from '@/shared/utils/getSubscriptions'
 import { monthlyCost } from '@/shared/utils/monthlyCost'
-import { actualForBudgetRow } from '@/shared/utils/actualForBudgetRow'
 import type { BudgetRowLike } from '@/shared/types/BudgetRowLike'
 
 // The rows the Budget page shows, from a budget file's rows and `dismissedSubs`.
@@ -25,7 +23,6 @@ import type { BudgetRowLike } from '@/shared/types/BudgetRowLike'
 export const liveSubAmount = (row: BudgetRowLike): number => {
   const sub = getSubscriptions().find((s) => s.name === row.name)
   if (sub) return Math.round(monthlyCost(sub))
-  // one added by hand that the statements haven't seen yet keeps the amount typed in
-  const actual = actualForBudgetRow(row, getLastCompleteMonth()) ?? 0
-  return Math.round(actual > 0 ? actual : Number(row.amount) || 0)
+  // a row added by hand (no subscription in the statements data) keeps the amount typed in
+  return Math.round(Number(row.amount) || 0)
 }

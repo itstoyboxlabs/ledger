@@ -10,8 +10,7 @@ import { ToolField } from '@/shared/ui/ToolField'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { useToolState } from '@/shared/hooks/useToolState'
 
-// Hourly / freelance calculator with real tax math from the shared engine
-// state options this calc cares about — a local override, independent of the
+// Hourly calculator for a W-2 employee (employee-side FICA only), with tax math from the shared engine
 export function HourlyCalc({ goToBalances }: { goToBalances: () => void }) {
   // `state` stays in the saved data but is no longer read: the shared taxState is used
   const [c, setC] = useToolState('hourlyCalc', { hoursPerWeek: 40, rate: 50, state: DEFAULT_STATE })
@@ -27,10 +26,11 @@ export function HourlyCalc({ goToBalances }: { goToBalances: () => void }) {
   const net = gross - tax.total
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Hourly calculator</h3>
+      <h2 className="text-[15px] font-semibold">Hourly calculator</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         See what an hourly rate adds up to per week and per year, and what you'd keep after tax.
-        Handy for freelance or contract work. Assumes you work all 52 weeks.
+        Assumes you are a W-2 employee and work all 52 weeks. Freelance or 1099 pay owes more,
+        since you pay both halves of Social Security and Medicare.
       </p>
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <ToolField label="Hours / week" value={c.hoursPerWeek} onChange={f('hoursPerWeek')} />
@@ -40,7 +40,7 @@ export function HourlyCalc({ goToBalances }: { goToBalances: () => void }) {
       <Table className="mt-5 w-full text-[13px]">
         <TableHeader>
           <TableRow className="text-[12px] text-[var(--text-muted)]">
-            <TableHead className="pb-2 font-medium" />
+            <TableHead className="pb-2 font-medium"><span className="sr-only">Item</span></TableHead>
             <TableHead className="pb-2 text-right font-medium">Before tax</TableHead>
             <TableHead className="pb-2 text-right font-medium">Tax</TableHead>
             <TableHead className="pb-2 text-right font-medium">After tax</TableHead>

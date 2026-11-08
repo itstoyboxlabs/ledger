@@ -30,6 +30,7 @@ import { NAV } from '@/shared/constants/NAV'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { RANGE_OPTIONS } from '@/shared/constants/RANGE_OPTIONS'
 import { Sidebar } from '@/shared/ui/Sidebar'
+import { SkipLink } from '@/shared/ui/SkipLink'
 import { SubscriptionsTable } from '@/screens/spending/ui/SubscriptionsTable'
 import { ToolPicker } from '@/screens/tools/ui/ToolPicker'
 import { TxnTable } from '@/screens/spending/ui/TxnTable'
@@ -37,6 +38,9 @@ import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { exportCsv } from '@/screens/spending/utils/exportCsv'
 import { scopeLabel } from '@/screens/spending/utils/scopeLabel'
 import { scopeMonthsFor } from '@/screens/spending/utils/scopeMonthsFor'
+import { scopedTxns } from '@/screens/spending/utils/scopedTxns'
+import { inDrillPath } from '@/screens/spending/utils/inDrillPath'
+import { roundCents } from '@/shared/utils/roundCents'
 import { useDebtLinkMigration } from '@/shared/hooks/useDebtLinkMigration'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { migrateEmployerMatch } from '@/shared/utils/migrateEmployerMatch'
@@ -82,25 +86,19 @@ export default function App() {
   const uploadRef = useRef<HTMLInputElement>(null)
 
   const scopeMonths = useMemo(() => scopeMonthsFor(month), [month])
-  const scoped = useMemo(
-    () => {
-      const inScopeMonths = new Set(scopeMonths)
-      return getAllTxns().filter((t) => inScopeMonths.has(monthOf(t)) && accounts.includes(t.account))
-    },
-    [scopeMonths, accounts],
-  )
+  // every kind (transfers too) in the month scope and on the switched-on accounts
+  const scoped = useMemo(() => scopedTxns(getAllTxns(), scopeMonths, accounts), [scopeMonths, accounts])
 
   const spendTxns = scoped.filter((t) => t.kind === 'expense' || t.kind === 'refund')
   const incomeTxns = scoped.filter((t) => t.kind === 'income')
 
   const spending = spendTxns.reduce((s, t) => s + spendAmount(t), 0)
   const income = incomeTxns.reduce((s, t) => s + t.amount, 0)
-  const net = income - spending
+  // rounded to cents so float noise never shows as a negative zero
+  const net = roundCents(income - spending)
 
   // drill scope
-  const inScope = spendTxns.filter(
-    (t) => (path.length < 1 || t.cat === path[0]) && (path.length < 2 || t.sub === path[1]),
-  )
+  const inScope = spendTxns.filter((t) => inDrillPath(t, path))
   const level = path.length // 0 cat, 1 sub, 2 merchant
   const keyFn = level === 0 ? (t: Transaction) => t.cat ?? '' : level === 1 ? (t: Transaction) => t.sub ?? '' : (t: Transaction) => t.merchant ?? ''
   const baseHex = level === 0 ? '#7d8597' : CATEGORY_HEX[path[0]] ?? '#7d8597'
@@ -186,7 +184,7 @@ export default function App() {
   const firstIdx = getMonths().indexOf(scopeMonths[0] ?? '')
   const prevWindow = month === 'all' || firstIdx - nMonths < 0 ? null : monthly.slice(firstIdx - nMonths, firstIdx)
   const prevRow = prevWindow && nMonths === 1 ? prevWindow[0] : null
-  const vsPrev = prevWindow ? net - prevWindow.reduce((t, r) => t + r.net, 0) : null
+  const vsPrev = prevWindow ? roundCents(net - prevWindow.reduce((t, r) => t + r.net, 0)) : null
   const prevName = nMonths === 1 ? monthLabel(prevWindow?.[0]?.m ?? getMonths()[0]).slice(0, 3) : `previous ${nMonths} months`
   const allAccounts = accounts.length === Object.keys(getAccounts()).length
   const vsBudget = month !== 'all' && allAccounts && budgetTotal != null ? spending - budgetTotal * nMonths : null
@@ -195,6 +193,7 @@ export default function App() {
   return (
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen max-lg:flex-col">
+      <SkipLink />
       <Sidebar
         view={view}
         setView={setView}
@@ -202,13 +201,11 @@ export default function App() {
         setAccounts={setAccounts}
         onNotes={() => setShowNotes(true)}
         onExport={() => setShowExport(true)}
-        onCsv={() =>
-          exportCsv(
-            month === 'all' ? getAllTxns() : getAllTxns().filter((t) => scopeMonths.includes(monthOf(t))),
-            `ledger-${month}.csv`,
-          )
+        onCsv={() => exportCsv(scoped, `ledger-${month}.csv`)}
+        csvLabel={
+          (month === 'all' ? 'All transactions' : `Transactions for ${scopeLabel(month)}`) +
+          (allAccounts ? '' : ' on the selected accounts')
         }
-        csvLabel={month === 'all' ? 'All transactions' : `Transactions for ${scopeLabel(month)}`}
         onUpload={isLocal() ? null : () => uploadRef.current?.click()}
       />
       {!isLocal() && (
@@ -226,7 +223,7 @@ export default function App() {
         />
       )}
       <Suspense fallback={null}>
-      <main data-view={view} className="min-w-0 flex-1 px-5 py-6 lg:px-11 lg:py-8">
+      <main id="main" tabIndex={-1} data-view={view} className="min-w-0 flex-1 px-5 py-6 outline-none lg:px-11 lg:py-8">
       <div className="mx-auto max-w-[1320px]">
       <PageHeader title={pageTitle} subtitle={pageSubtitle}>
         {view === 'actuals' && (

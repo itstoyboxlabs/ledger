@@ -11,5 +11,9 @@ describe('takeHome401kMatchYearly', () => {
     const th = { salary: 100000, deductions: [ded({ kind: 'hsa', match: 100 }), ded({ kind: '401k' })] }
     expect(takeHome401kMatchYearly(th)).toBe(0)
   })
+  it('matches only what fits under the yearly 401k limit', () => {
+    const th = { salary: 400000, deductions: [ded({ kind: '401k', amount: 10, match: 100 })] }
+    expect(takeHome401kMatchYearly(th)).toBe(24500)
+  })
   it('is 0 with no salary', () => expect(takeHome401kMatchYearly({ salary: 0, deductions: [ded({ kind: '401k', match: 100 })] })).toBe(0))
 })

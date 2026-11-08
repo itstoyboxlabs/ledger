@@ -7,13 +7,13 @@ describe('taxOn', () => {
     expect(taxOn(-100, 'ny')).toEqual(zero)
   })
   it('matches a hand computed federal and FICA figure in a no-tax state', () => {
-    // taxable 84,250: 12,400*10% + 38,000*12% + 33,850*22% = 13,247
+    // taxable 83,900: 12,400*10% + 38,000*12% + 33,500*22% = 13,170
     const t = taxOn(100000, 'wy')
-    expect(t.fed).toBeCloseTo(13247, 5)
+    expect(t.fed).toBeCloseTo(13170, 5)
     expect(t.fica).toBeCloseTo(7650, 5)
     expect(t.state).toBe(0)
     expect(t.local).toBe(0)
-    expect(t.total).toBeCloseTo(13247 + 7650, 5)
+    expect(t.total).toBeCloseTo(13170 + 7650, 5)
     expect(t.effective).toBeCloseTo(t.total / 100000, 10)
   })
   it('has no state portion for tx and wy', () => {
@@ -33,7 +33,8 @@ describe('taxOn', () => {
     expect(taxOn(100000, 'zz')).toEqual(taxOn(100000, 'tn'))
   })
   it('only charges federal tax over the standard deduction', () => {
-    expect(taxOn(15000, 'wy').fed).toBe(0)
+    expect(taxOn(16100, 'wy').fed).toBe(0)
+    expect(taxOn(16200, 'wy').fed).toBeCloseTo(10, 5)
   })
   it('adds local tax for Maryland', () => {
     expect(taxOn(100000, 'md').local).toBeGreaterThan(0)

@@ -49,10 +49,15 @@ test.describe('editing amounts', () => {
     await expect(kpi(page, 'Left over / month')).toContainText('$2,712')
   })
 
-  test('amounts are whole dollars, rounded up', async ({ page }) => {
+  test('amounts show as whole dollars, rounded up, but keep the exact value', async ({ page }) => {
     await setAmount(page, 'Rent', 1850.4)
     await expect(amountIn(page, 'Rent')).toHaveValue('1851')
-    await expect(totalRow(page).last()).toContainText('$3,060')
+    await expect(totalRow(page).last()).toContainText('$3,059')
+    await amountIn(page, 'Rent').focus()
+    await expect(amountIn(page, 'Rent')).toHaveValue('1850.4')
+    await amountIn(page, 'Rent').blur()
+    await expect(amountIn(page, 'Rent')).toHaveValue('1851')
+    await expect(totalRow(page).last()).toContainText('$3,059')
   })
 
   test('clearing a field lets you type a fresh number', async ({ page }) => {

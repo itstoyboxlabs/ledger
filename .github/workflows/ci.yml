@@ -71,5 +71,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npx --yes vercel@65.12.1 deploy --prod --yes --token "$VERCEL_TOKEN"
+      - name: Check the token shape
+        run: |
+          t=$(printf %s "$VERCEL_TOKEN" | tr -d '[:space:]')
+          echo "length: ${#t}"
+          [[ "$t" =~ ^[A-Za-z0-9]+$ ]] && echo "shape: ok" || { echo "shape: not a plain token"; exit 1; }
+      - run: npx --yes vercel@65.12.1 deploy --prod --yes --token "$(printf %s "$VERCEL_TOKEN" | tr -d '[:space:]')"
       - run: node scripts/indexnow.mjs

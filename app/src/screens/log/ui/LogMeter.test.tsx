@@ -16,6 +16,12 @@ describe('LogMeter', () => {
     expect(screen.getByText(/of \$260/)).toBeInTheDocument()
     expect(screen.getByText('$200 left')).toBeInTheDocument()
   })
+  it('exposes the meter as a named progressbar', () => {
+    renderApp(<LogMeter row={row} spent={60} onHide={() => {}} />)
+    const bar = screen.getByRole('progressbar', { name: 'Restaurants spent' })
+    expect(bar).toHaveAttribute('aria-valuetext', '$60 of $260')
+    expect(bar).toHaveAttribute('aria-valuenow')
+  })
   it('shows how far over when spent exceeds the budget', () => {
     renderApp(<LogMeter row={row} spent={300} onHide={() => {}} />)
     expect(screen.getByText('$40 over')).toBeInTheDocument()

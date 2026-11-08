@@ -46,13 +46,13 @@ export function TxnTable({ txns, title }: TxnTableProps) {
   return (
     <Card className="p-5 [--gx:10%] [--gy:-8%]">
       <div className="mb-4 flex items-baseline justify-between gap-3">
-        <h3 className="text-[17px] font-semibold tracking-tight">{title}</h3>
+        <h2 className="text-[17px] font-semibold tracking-tight">{title}</h2>
         <div className="text-right tnum">
           <div className="text-[17px] font-semibold tracking-tight">{fmt(total)}</div>
           <div className="text-[12px] text-[var(--text-muted)]">{txns.length} transactions</div>
         </div>
       </div>
-      <div className="max-h-[480px] overflow-y-auto overflow-x-auto overscroll-contain">
+      <div tabIndex={0} role="region" aria-label={`${title} table`} className="max-h-[480px] overflow-y-auto overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Table className="w-full text-[13px]">
           <TableHeader className="sticky top-0 z-10 bg-transparent backdrop-blur-xl [&_th]:border-b [&_th]:border-[var(--grid)]">
             <TableRow className="text-[13px] text-[var(--text-secondary)]">

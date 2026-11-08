@@ -5,6 +5,6 @@ describe('Hero', () => {
   it('has the headline and the app preview', () => {
     render(<Hero />)
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
-    expect(screen.getByLabelText("Ledger's Spending page")).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Ledger's Spending page/ })).toBeInTheDocument()
   })
 })

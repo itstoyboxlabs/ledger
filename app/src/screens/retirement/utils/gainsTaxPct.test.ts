@@ -8,6 +8,12 @@ describe('gainsTaxPct', () => {
   it('uses 0% federal under the threshold in a no-income-tax state', () => {
     expect(gainsTaxPct(40000, 'wy')).toBe(0)
   })
+  it('takes the standard deduction off before picking the federal band', () => {
+    expect(gainsTaxPct(60000, 'tx')).toBe(0)
+    expect(gainsTaxPct(65000, 'tx')).toBe(0)
+    expect(gainsTaxPct(66000, 'tx')).toBe(15)
+    expect(gainsTaxPct(560000, 'tx')).toBe(15)
+  })
   it('uses 15% federal in the middle band in a no-income-tax state', () => {
     expect(gainsTaxPct(100000, 'wy')).toBe(15)
   })

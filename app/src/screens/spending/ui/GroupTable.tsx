@@ -17,7 +17,7 @@ type GroupTableProps = {
 
 export function GroupTable({ groups, total, onSelect, drillable, icons, heading = 'Category' }: GroupTableProps) {
   return (
-    <div className="overflow-x-auto overscroll-contain">
+    <div tabIndex={0} role="region" aria-label={`${heading} table`} className="overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
     <Table className="w-full text-[13px]">
       <TableHeader>
         <TableRow className="text-left text-[12px] text-[var(--text-secondary)]">

@@ -17,7 +17,8 @@ export function VacationCalc() {
   })
   const f = (k: keyof typeof c) => (v: number) => setC({ ...c, [k]: v })
   const total = c.hotel * c.nights + c.food * c.nights + c.flight + c.ubers + c.spending + c.buffer
-  const months = c.saveMo > 0 ? total / c.saveMo : 0
+  // nothing saved per month means it never gets saved: a dash, not 0 months
+  const months = c.saveMo > 0 ? total / c.saveMo : null
 
   // real leftover from the Budget tab, for the months-to-save tooltip
   const [leftover, setLeftover] = useState<number | null>(null)
@@ -36,7 +37,7 @@ export function VacationCalc() {
       : '')
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Vacation planning</h3>
+      <h2 className="text-[15px] font-semibold">Vacation planning</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         Add up what a trip will cost and how long it takes to save for it. Hotel and food are per
         night, everything else is for the whole trip.
@@ -61,7 +62,7 @@ export function VacationCalc() {
       <Table className="mt-5 w-full text-[13px]">
         <TableBody>
           <ToolRow label="Trip total" value={fmt(total)} bold tone="var(--good)" />
-          <ToolRow label="Months to save" value={months.toFixed(1)} tip={tip} />
+          <ToolRow label="Months to save" value={months === null ? '—' : months.toFixed(1)} tip={tip} />
         </TableBody>
       </Table>
     </Card>

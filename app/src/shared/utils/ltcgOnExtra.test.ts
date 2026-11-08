@@ -23,6 +23,8 @@ describe('ltcgOnExtra', () => {
     const got = ltcgOnExtra(100000, 50000, 'ny')
     expect(got.effective).toBeCloseTo(got.total / 50000, 10)
   })
+  it('uses the unused standard deduction against the gain', () =>
+    expect(ltcgOnExtra(0, 50000, 'tx').fed).toBe(0))
   it('includes NIIT for high earners', () => {
     expect(ltcgOnExtra(250000, 100000, 'tx').niit).toBeCloseTo(3800, 5)
   })

@@ -30,7 +30,7 @@ You are helping me import my bank and credit card statements into Ledger, a priv
   ],
   "transactions": [
     {
-      "id": "cc-maple-10-001",
+      "id": "cc-maple-2026-10-001",
       "date": "2026-10-04",
       "account": "cc-maple",
       "statement": "cc-maple-2026-10",
@@ -72,7 +72,7 @@ You are helping me import my bank and credit card statements into Ledger, a priv
 - `date` is `YYYY-MM-DD`, the date printed on the statement line.
 - `desc` is the raw text from the statement, unchanged.
 - `merchant` is a short human name that is spelled the same way every month. "WHOLEFDS NYC 10021" and "WHOLE FOODS MKT 123" are both "Whole Foods". Merchant names are how the app matches transactions to budget rows, so keep them stable.
-- `id` is `<account id>-<two digit statement month>-<three digit number>`, numbered in order within the statement.
+- `id` is `<account id>-<four digit year>-<two digit month>-<three digit number>`, using the year and month the statement closes, numbered in order within the statement. Older files may use ids without the year. Keep those as they are.
 - Paychecks use `cat` "Income" and `sub` "Payroll". If a paycheck is a partial one, like a first or last check, add `"partial": true`.
 - Add a short `note` only when something is unusual.
 

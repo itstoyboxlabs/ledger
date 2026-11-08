@@ -31,6 +31,18 @@ describe('takeHomeBreakdown', () => {
     const r = takeHomeBreakdown({ salary: '' as unknown as number, deductions: [] }, 'wy')
     expect(r).toMatchObject({ salary: 0, taxes: 0, net: 0 })
   })
+  it('caps 401k and Roth 401k together at the yearly limit', () => {
+    const r = takeHomeBreakdown({
+      salary: 300000,
+      deductions: [
+        { id: 'a', kind: '401k', unit: 'pct', amount: 6 },
+        { id: 'b', kind: 'roth401k', unit: 'pct', amount: 6 },
+      ],
+    }, 'wy')
+    expect(r.lines.map((l) => l.yearly)).toEqual([18000, 6500])
+    expect(r.fed).toBe(taxOn(300000 - 18000, 'wy').fed)
+    expect(r.net).toBeCloseTo(300000 - 24500 - r.taxes, 5)
+  })
   it('reads old saves with fixed fields', () => {
     const r = takeHomeBreakdown({ salary: 100000, k401Pct: 5, medicalMo: 100 }, 'wy')
     expect(r.lines.map((l) => l.yearly)).toEqual([5000, 1200])

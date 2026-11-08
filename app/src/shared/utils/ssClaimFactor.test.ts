@@ -6,8 +6,13 @@ describe('ssClaimFactor', () => {
     expect(ssClaimFactor(67)).toBeCloseTo(1, 10)
     expect(ssClaimFactor(70)).toBeCloseTo(1.24, 10)
   })
-  it('is linear in between', () => {
-    expect(ssClaimFactor(64.5)).toBeCloseTo(0.85, 10)
+  it('cuts 5/9 of 1% a month for the first 36 months early, 5/12 of 1% beyond', () => {
+    expect(ssClaimFactor(64)).toBeCloseTo(0.8, 10)
+    expect(ssClaimFactor(65)).toBeCloseTo(0.8667, 4)
+    expect(ssClaimFactor(66)).toBeCloseTo(0.9333, 4)
+    expect(ssClaimFactor(63)).toBeCloseTo(0.75, 10)
+  })
+  it('adds 8% a year after 67', () => {
     expect(ssClaimFactor(68.5)).toBeCloseTo(1.12, 10)
   })
   it('clamps outside 62 to 70', () => {
@@ -20,6 +25,6 @@ describe('ssClaimFactor', () => {
     expect(ssClaimFactor(0)).toBe(1)
   })
   it('accepts numeric strings', () => {
-    expect(ssClaimFactor('65')).toBeCloseTo(0.88, 10)
+    expect(ssClaimFactor('65')).toBeCloseTo(0.8667, 4)
   })
 })

@@ -55,6 +55,8 @@ import { budgetIncomeFor } from '@/shared/utils/budgetIncomeFor'
 import { deductionLabel } from '@/shared/utils/deductionLabel'
 import { derivedMonthlyIncome } from '@/shared/utils/derivedMonthlyIncome'
 import { ghostRowsForMonth } from '@/screens/budget/utils/ghostRowsForMonth'
+import { budgetDiff } from '@/screens/budget/utils/budgetDiff'
+import { diffLabel } from '@/screens/budget/utils/diffLabel'
 import { incomeSourceOf } from '@/shared/utils/incomeSourceOf'
 import { isDismissedSub } from '@/shared/utils/isDismissedSub'
 import { leftoverAmount } from '@/shared/utils/leftoverAmount'
@@ -127,6 +129,10 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     remove: removeExpensePreset,
   } = usePresets<BudgetRow[]>('expenses')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // counts edits: only the newest save may settle the state, so an older POST that
+  // resolves while a newer edit is pending can't mark it saved (and let a focus
+  // refetch overwrite it)
+  const saveSeq = useRef(0)
 
   // subscription rows have three states:
   //  visible     — charging per statements, not hidden by Josh -> counted in totals
@@ -214,6 +220,12 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
       leftoverRef.current = nextLeftover
     }
     setSaveState('saving')
+    const seq = ++saveSeq.current
+    const settle = (state: BudgetSaveState) => {
+      if (seq !== saveSeq.current) return
+      saveStateRef.current = state
+      setSaveState(state)
+    }
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       saveBudget({
@@ -222,8 +234,8 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
         dismissedSubs: dismissedRef.current,
         ...(leftoverRef.current.length ? { leftover: leftoverRef.current } : {}),
       })
-        .then(() => setSaveState('saved'))
-        .catch(() => setSaveState('error'))
+        .then(() => settle('saved'))
+        .catch(() => settle('error'))
     }, 500)
   }
 
@@ -283,7 +295,8 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     })
   // what is left and where it goes (see normalizeLeftover)
   const leftoverAmt = leftoverAmount(income, expenses)
-  const extraOf = (r: BudgetRowLike & { id?: string }) => leftoverShare(leftoverAlloc, r.id ?? '', leftoverAmt)
+  const extraOf = (r: BudgetRowLike & { id?: string }) =>
+    leftoverShare(leftoverAlloc, r.id ?? '', leftoverAmt, rows.map((x) => x.id))
   const allocPct = leftoverAlloc.reduce((s, a) => s + a.pct, 0)
   const allocTargets = [
     { value: 'savings', label: 'Savings' },
@@ -344,7 +357,9 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   // vs-Actual: every dollar spent in the cycle is accounted for — matched rows
   // plus ghost rows for whatever no budget row claims — so the Actual column's
   // grand total is real total spend, not just the part we could line up.
-  const ghostRows = compareMode ? ghostRowsForMonth(compareMonth, effRows) : []
+  // only rows that are shown claim spending; a hidden row's spend lands in a ghost row
+  // so shown rows plus ghost rows add up to totalActual
+  const ghostRows = compareMode ? ghostRowsForMonth(compareMonth, counted) : []
   const ghostTotal = ghostRows.reduce((s, r) => s + r.amount, 0)
   const subActual = counted
     .filter((r) => r.source === 'subscription')
@@ -353,8 +368,8 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   // KPI "actual" half — the same five figures measured from the statements for the
   // month the vs-Actual selector is on (defaults to the last fully covered month, so
   // these are meaningful even with the comparison view switched off).
-  // Income is deliberately held at the planned figure (avg full paycheck x 2, or the
-  // override) rather than the month's real deposits. Real deposits swing wildly on
+  // Income is deliberately held at the planned figure (avg full paycheck times the pay
+  // frequency, or the override) rather than the month's real deposits. Real deposits swing wildly on
   // things that aren't earnings — July 2026 read $11,524 only because of $2,800 of
   // Venmo cashouts — which made "actual left over" look positive in a month that
   // overspent by thousands. Holding income fixed makes these lines answer the
@@ -364,7 +379,15 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
 
   const update = (id: string, patch: Partial<BudgetRow>) =>
     persist(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)))
-  const remove = (id: string) => persist(rows.filter((r) => r.id !== id))
+  // a leftover share aimed at the deleted row goes back to savings rather than vanishing
+  const remove = (id: string) =>
+    persist(
+      rows.filter((r) => r.id !== id),
+      undefined,
+      leftoverAlloc.some((a) => a.target === id)
+        ? leftoverAlloc.map((a) => (a.target === id ? { ...a, target: 'savings' } : a))
+        : undefined,
+    )
   const addRow = ({ name, amount, source, type, items }: Omit<BudgetRow, 'id'>) => {
     const id = `m${Date.now().toString(36)}`
     if (type === 'breakdown') {
@@ -523,14 +546,14 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
       {/* editable expenses table */}
       <Card className="mt-6 p-5">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="text-[15px] font-semibold">
+          <h2 className="text-[15px] font-semibold">
             Expenses
             {restMode && (
               <span className="ml-2 text-[12px] font-normal text-[#e8c76a]">
                 remaining this month · {daysLeft} days left
               </span>
             )}
-          </h3>
+          </h2>
           {/* phones: one menu button instead of a row of buttons */}
           <div className="relative flex items-center gap-2 sm:hidden">
             <DropdownMenu open={optsOpen} onOpenChange={setOptsOpen}>
@@ -690,7 +713,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                   <SortHead id="diff" label="Diff" sort={sortState} onSort={(k) => setSort(nextSort(sortState, k))} right className="pb-2 pr-2 font-medium" />
                 </>
               )}
-              <TableHead className="pb-2 w-8 max-sm:w-5"></TableHead>
+              <TableHead className="pb-2 w-8 max-sm:w-5"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -725,8 +748,8 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                     </TableCell>
                     <TableCell className="py-1 pr-2 text-right tnum text-[var(--text-muted)]">—</TableCell>
                     <TableCell className="py-1 text-right tnum">{fmt0(r.amount)}</TableCell>
-                    <TableCell className="py-1 text-right tnum" style={{ color: 'var(--bad)' }}>
-                      −{fmt0(r.amount)}
+                    <TableCell className="py-1 text-right tnum" style={{ color: budgetDiff(0, r.amount) < 0 ? 'var(--bad)' : 'var(--good)' }}>
+                      {diffLabel(budgetDiff(0, r.amount))}
                     </TableCell>
                     <TableCell></TableCell>
                   </TableRow>
@@ -768,8 +791,8 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                   <TableCell className="py-1">Not budgeted total</TableCell>
                   <TableCell className="py-1 pr-2 text-right tnum text-[var(--text-muted)]">—</TableCell>
                   <TableCell className="py-1 text-right tnum">{fmt0(ghostTotal)}</TableCell>
-                  <TableCell className="py-1 text-right tnum" style={{ color: 'var(--bad)' }}>
-                    −{fmt0(ghostTotal)}
+                  <TableCell className="py-1 text-right tnum" style={{ color: budgetDiff(0, ghostTotal) < 0 ? 'var(--bad)' : 'var(--good)' }}>
+                    {diffLabel(budgetDiff(0, ghostTotal))}
                   </TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -866,14 +889,14 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                         {Math.round(r.amount)}
                       </Button>
                     ) : (
-                      <RoundedAmountInput value={r.amount} onCommit={(v) => update(r.id, { amount: v })} />
+                      <RoundedAmountInput value={r.amount} label={`${r.name} amount per month`} onCommit={(v) => update(r.id, { amount: v })} />
                     )}
                   </TableCell>
                   {compareMode && (() => {
                     const actual = actualForBudgetRow(r, compareMonth)
                     // both sides rounded before subtracting — every amount on this
                     // page is whole dollars, so an unrounded diff renders "−$0"
-                    const diff = actual === null ? null : Math.round(r.amount) - Math.round(actual) // positive = under budget
+                    const diff = actual === null ? null : budgetDiff(r.amount, actual) // positive = under budget
                     return (
                       <>
                         <TableCell className="py-1 text-right tnum text-[var(--text-secondary)]">
@@ -883,7 +906,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                           className="py-1 text-right tnum"
                           style={diff === null ? undefined : { color: diff < 0 ? 'var(--bad)' : 'var(--good)' }}
                         >
-                          {diff === null ? '—' : (diff < 0 ? '−' : '+') + fmt0(Math.abs(diff))}
+                          {diff === null ? '—' : diffLabel(diff)}
                         </TableCell>
                       </>
                     )
@@ -939,9 +962,9 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                   <TableCell className="py-2 text-right tnum text-[var(--text-secondary)]">{fmt0(subActual)}</TableCell>
                   <TableCell
                     className="py-2 text-right tnum"
-                    style={{ color: subTotal - subActual < 0 ? 'var(--bad)' : 'var(--good)' }}
+                    style={{ color: budgetDiff(subTotal, subActual) < 0 ? 'var(--bad)' : 'var(--good)' }}
                   >
-                    {(subTotal - subActual < 0 ? '−' : '+') + fmt0(Math.abs(subTotal - subActual))}
+                    {diffLabel(budgetDiff(subTotal, subActual))}
                   </TableCell>
                 </>
               )}
@@ -955,10 +978,10 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                   <TableCell className="py-2 text-right tnum">{fmt0(totalActual)}</TableCell>
                   <TableCell
                     className="py-2 text-right tnum"
-                    style={{ color: expenses - totalActual < 0 ? 'var(--bad)' : 'var(--good)' }}
+                    style={{ color: budgetDiff(expenses, totalActual) < 0 ? 'var(--bad)' : 'var(--good)' }}
                     title="Every dollar spent this month, including the not-budgeted rows above"
                   >
-                    {(expenses - totalActual < 0 ? '−' : '+') + fmt0(Math.abs(expenses - totalActual))}
+                    {diffLabel(budgetDiff(expenses, totalActual))}
                   </TableCell>
                 </>
               )}

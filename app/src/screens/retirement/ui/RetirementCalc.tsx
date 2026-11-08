@@ -8,8 +8,7 @@ import type { RetireEvent } from '@/screens/retirement/types/RetireEvent'
 import type { RetireExtra } from '@/screens/retirement/types/RetireExtra'
 import type { RetirePhase } from '@/screens/retirement/types/RetirePhase'
 import type { RetirePresetData } from '@/screens/retirement/types/RetirePresetData'
-import type { RetireSimResult } from '@/screens/retirement/types/RetireSimResult'
-import type { RetireSimRow } from '@/screens/retirement/types/RetireSimRow'
+import type { RetireSimInput } from '@/screens/retirement/types/RetireSimInput'
 import type { RetireState } from '@/screens/retirement/types/RetireState'
 import { isObj } from '@/shared/utils/isObj'
 import { STATES } from '@/shared/constants/STATES'
@@ -54,7 +53,6 @@ import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { budgetIncomeFor } from '@/shared/utils/budgetIncomeFor'
 import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
 import { equityPayout } from '@/shared/utils/equityPayout'
-import { eventAmountAt } from '@/screens/retirement/utils/eventAmountAt'
 import { gainsTaxPct } from '@/screens/retirement/utils/gainsTaxPct'
 import { leftoverAmount } from '@/shared/utils/leftoverAmount'
 import { leftoverShare } from '@/shared/utils/leftoverShare'
@@ -62,6 +60,8 @@ import { newId } from '@/shared/utils/newId'
 import { normalizeLeftover } from '@/shared/utils/normalizeLeftover'
 import { normalizeRetire } from '@/screens/retirement/utils/normalizeRetire'
 import { normalizeTakeHome } from '@/shared/utils/normalizeTakeHome'
+import { payoffEventsByDebt } from '@/screens/retirement/utils/payoffEventsByDebt'
+import { simulateRetirement } from '@/screens/retirement/utils/simulateRetirement'
 import { sumBalances } from '@/shared/utils/sumBalances'
 import { takeHome401kMatchYearly } from '@/shared/utils/takeHome401kMatchYearly'
 import { takeHome401kYearly } from '@/screens/retirement/utils/takeHome401kYearly'
@@ -91,7 +91,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // normalize on read; the stored value is only rewritten when something is edited
   const c = useMemo(() => normalizeRetire(rawC), [rawC])
   const setC = (next: RetireState) => setRawC(normalizeRetire(next))
-  const [findNotFound, setFindNotFound] = useState(false)
+  // the inputs Find last failed on; the note shows only while they are unchanged
+  const [findNotFoundFor, setFindNotFoundFor] = useState<string | null>(null)
   const validRows = (v: unknown): boolean => Array.isArray(v) && v.every((r) => typeof r?.alloc === 'number' && typeof r?.perf === 'number')
   const [port, setPort] = usePersistedState<PortfolioRow[]>('retirePortfolio', DEFAULT_PORTFOLIO, validRows)
   const [portAfterRaw, setPortAfter] = usePersistedState<PortfolioAfter>(
@@ -155,21 +156,21 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
         // the same rows the Budget page counts (live subscription amounts), so the
         // leftover here matches its "Left over / month"
         const budgetExpenses = budgetExpensesOf(d)
-        setBudgetLeftover(budgetMonthlyIncome - budgetExpenses)
+        // never below zero: an overspent Budget saves nothing, it does not take from savings
+        const leftover = leftoverAmount(budgetMonthlyIncome, budgetExpenses)
+        setBudgetLeftover(leftover)
+        // with no allocation at all, everything left goes to savings. Once there is one,
+        // only its savings share does (zero if nothing targets savings)
         const alloc = normalizeLeftover(d.leftover)
-        setSavingsShare(
-          alloc.some((a) => a.target === 'savings')
-            ? leftoverShare(alloc, 'savings', leftoverAmount(budgetMonthlyIncome, budgetExpenses))
-            : null,
-        )
-        setSavingsPct(alloc.some((a) => a.target === 'savings') ? Math.min(100, alloc.filter((a) => a.target === 'savings').reduce((t, a) => t + a.pct, 0)) : null)
+        setSavingsShare(alloc.length > 0 ? leftoverShare(alloc, 'savings', leftover) : null)
+        setSavingsPct(alloc.length > 0 ? Math.min(100, alloc.filter((a) => a.target === 'savings').reduce((t, a) => t + a.pct, 0)) : null)
         setBudgetRows(d.rows)
       })
       .catch(() => {})
   }, [budgetMonthlyIncome])
   const autoContribSavings = (savingsShare ?? budgetLeftover ?? 0) * 12
   // a paid-off debt's payment follows the Budget allocation: the savings share goes into
-  // savings and the rest is spent. With no allocation set, all of it goes to savings.
+  // savings and the rest is spent. With no allocation set at all, all of it goes to savings.
   const freedToSavings = savingsPct == null ? 1 : savingsPct / 100
   // extra lines the user added with the plus button, summed by where they go
   const extraYearly = (x: RetireExtra) => (x.unit === 'mo' ? 12 : 1) * (Number(x.amount) || 0)
@@ -191,10 +192,9 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
         ? { ...e, amount: e.custom ? e.amount : debtOf(e)?.balance ?? 0, repeat: 'once', years: 1 }
         : e,
   )
-  // debts with a payoff event leave the starting hole (they come out of savings at that
-  // age instead) and their payment flows into savings from that age on
-  const payoffByDebt: Record<string, RetireEvent> = {}
-  for (const e of events) if (e.kind === 'debt' && debtOf(e) && !((e.debtId ?? '') in payoffByDebt)) payoffByDebt[e.debtId ?? ''] = e
+  // debts with a payoff event inside the plan leave the starting hole (they come out of
+  // savings at that age instead) and their payment flows into savings from that age on
+  const payoffByDebt = payoffEventsByDebt(events, debts.map((d) => d.id), c.age, c.endAge)
   const patchEvent = (id: string, p: Partial<RetireEvent>) => setC({ ...c, events: c.events.map((e) => (e.id === id ? { ...e, ...p } : e)) })
   const addEvent = () =>
     setC({ ...c, events: [...c.events, { id: newId('e'), name: '', amount: 0, kind: 'out', age: c.age + 1, repeat: 'once', years: 1 }] })
@@ -231,12 +231,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     const total = rows.reduce((s: number, x) => s + x.alloc, 0)
     return { total, avg: total > 0 ? rows.reduce((s, x) => s + x.alloc * x.perf, 0) / total : 0 }
   }
-  const totalAlloc = weighted(port).total
   const avgReturn = weighted(port).avg
   const avgReturnAfter = weighted(afterRows).avg
   const r = avgReturn / 100
   const rAfter = avgReturnAfter / 100
-  const totalDebt = sumBalances(debts)
   // starting balances: from the Balances page (anything unchecked is left out) or typed
   const fromBalances = c.startFrom === 'balances'
   const startOff = new Set(c.startOff)
@@ -248,60 +246,28 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const toggleStart = (id: string) =>
     setC({ ...c, startOff: startOff.has(id) ? c.startOff.filter((x) => x !== id) : [...c.startOff, id] })
 
-  // simulate — pulled into a function of retireAge so "Find" (below) can replay it
-  // against candidate ages without duplicating the model
-  const simulate = (retireAge: number): RetireSimResult => {
-    const simRows: RetireSimRow[] = []
-    let k = startK
-    let s = startS - (countDebt ? holeDebt : 0)
-    let simRunOutAge: number | null = null
-    let simAtRetirement: RetireSimResult['atRetirement'] = null
-    for (let age = c.age; age <= c.endAge; age++) {
-      const working = age < retireAge
-      const rate = working ? r : rAfter
-      // first year: 401k eligibility starts 3 months into employment -> 9/12 of the contribution
-      const contribK = working ? (age === c.age ? baseContrib401k * 0.75 : baseContrib401k) + extras401k : 0
-      const freedDebtPayments = working
-        ? debtSchedules.reduce((sum, sched, i) => sum + freedFromDebt(sched, debtPayments[i], age), 0)
-        : 0
-      const contribS = working ? effectiveContribSavings + freedDebtPayments * freedToSavings : 0
-      // Social Security covers part of the monthly need from the claim age on
-      const ssNow = c.ss.on && age >= c.ss.claimAge ? ssMonthly : 0
-      const withdrawal = working ? 0 : Math.max(0, c.withdrawMo - ssNow) * 12
-      const kGrowth = k > 0 ? k * rate : 0
-      const sGrowth = s > 0 ? s * rate * (1 - taxPct / 100) : 0
-      // events: money out and money in for the years each one covers. An event linked
-      // to the Equity payout tool is treated like RSUs: it only vests while you still
-      // work, so it stops the moment you retire, same as regular contributions
-      let oneTime = 0
-      let options = 0
-      for (const e of events) {
-        if (e.auto === 'equity' && !working) continue
-        const v = eventAmountAt(e, age, Number(e.amount) || 0, Math.max(1, Number(e.years) || 1))
-        if (e.kind === 'in') options += v
-        else if (e.kind === 'debt' && !(debtOf(e) && payoffByDebt[e.debtId ?? ''] === e)) continue
-        else oneTime += v
-      }
-      k += kGrowth + contribK
-      s += sGrowth + contribS + options - withdrawal - oneTime
-      if (age === c.accessAge && k > 0) {
-        s += k
-        k = 0
-      }
-      // Total = LIQUID money only (the savings pool); the 401k joins when it unlocks at accessAge
-      const total = s
-      const phase: RetirePhase = working ? 'working' : age < c.accessAge ? 'early-retired' : 'retired'
-      // growth column shows the LIQUID pool's growth only, to stay consistent with Total (liquid);
-      // the 401k's growth is visible in its own balance column
-      simRows.push({ age, phase, k, s, contrib: contribK + contribS + options, growth: sGrowth, withdrawal: withdrawal + oneTime, total })
-      if (age === retireAge - 1) simAtRetirement = { liquid: s, locked: k }
-      if (simRunOutAge === null && !working && total < 0) simRunOutAge = age
-    }
-    return { rows: simRows, runOutAge: simRunOutAge, atRetirement: simAtRetirement }
+  // a debt unticked on the starting balances is left out entirely, so it frees nothing
+  const freedPerYear = (age: number) =>
+    debtSchedules.reduce((sum, sched, i) =>
+      fromBalances && startOff.has(debts[i].id) ? sum : sum + freedFromDebt(sched, debtPayments[i], age), 0) * freedToSavings
+  // the model itself is simulateRetirement; this is a function of retireAge so "Find"
+  // (below) can replay it against candidate ages
+  const simInput: RetireSimInput = {
+    age: c.age, accessAge: c.accessAge, endAge: c.endAge,
+    start401k: startK, startSavings: startS - (countDebt ? holeDebt : 0),
+    base401k: baseContrib401k, extras401k, contribSavings: effectiveContribSavings, freed: freedPerYear,
+    withdrawMo: c.withdrawMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
+    // a debt payoff event counts only when it is the one that applies to its debt
+    events: events.filter((e) => e.kind !== 'debt' || payoffByDebt[e.debtId ?? ''] === e),
   }
+  const simulate = (retireAge: number) => simulateRetirement(simInput, retireAge)
+  // everything Find depends on; the "no safe age" note clears once any of it changes
+  const findKey = JSON.stringify({ ...simInput, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
+  const findNotFound = findNotFoundFor === findKey
   const { rows, runOutAge, atRetirement } = simulate(c.retireAge)
-  // balance at a few milestone ages, only the ones the projection reaches
-  const milestones = [60, 70, 80, 90, 100]
+  // balance at a few milestone ages plus the end age, only the ones the projection reaches
+  const milestones = [...new Set([60, 70, 80, 90, 100, c.endAge])]
+    .sort((a, b) => a - b)
     .filter((a) => a > c.age && a <= c.endAge)
     .map((a) => ({ age: a, total: rows.find((r) => r.age === a)?.total ?? 0 }))
 
@@ -351,10 +317,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
               onClick={() => {
                 const found = findEarliestSafeRetireAge()
                 if (found === null) {
-                  setFindNotFound(true)
+                  setFindNotFoundFor(findKey)
                   return
                 }
-                setFindNotFound(false)
+                setFindNotFoundFor(null)
                 setC({ ...c, retireAge: found })
               }}
               title="Finds the earliest age you could retire without running out of money, using the numbers on this page."
@@ -787,7 +753,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       <Card className="mt-5 p-5">
       <div className="text-[12px] text-[var(--text-muted)]">Year by year</div>
       {(
-        <div className="mt-2 max-h-[420px] overflow-y-auto overflow-x-auto overscroll-contain">
+        <div tabIndex={0} role="region" aria-label="Year by year projection table" className="mt-2 max-h-[420px] overflow-y-auto overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Table className="w-full text-[13px]">
             <TableHeader className="sticky top-0 z-10 bg-transparent backdrop-blur-xl [&_th]:border-b [&_th]:border-[var(--grid)]">
               <TableRow className="text-left text-[11px] text-[var(--text-muted)]">
@@ -801,14 +767,14 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="401k"
-                    tip={`Your retirement account. ${fmt0(effectiveContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. That is why this column shows a dash after that.`}
+                    tip={`Your retirement account. ${fmt0(effectiveContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
                     right
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Contributions"
-                    tip={`New money in that year: 401k (${fmt0(effectiveContrib401k)}) plus savings (${fmt0(effectiveContribSavings)}), any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in. Regular saving stops the year you retire.`}
+                    tip={`New money in that year: 401k (${fmt0(effectiveContrib401k)}) plus savings (${fmt0(effectiveContribSavings)}), any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in. Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
                     right
                   />
                 </TableHead>

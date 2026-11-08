@@ -68,17 +68,27 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
     )
   }
 
+  // overrides are keyed by row id, so a deleted row sheds its own: only rows still in the
+  // budget are read, saved to presets or kept on the next edit
+  const liveOverrides = Object.fromEntries(
+    Object.entries(overrides).filter(([id]) => budget.rows.some((r) => r.id === id)),
+  )
   const effectiveAmount = (r: RentScenarioExpense): number => (overrides[r.id] != null ? overrides[r.id] : r.amount)
   const overriddenCount = budget.rows.filter((r) => overrides[r.id] != null && overrides[r.id] !== r.amount).length
   const nonRent = budget.rows.reduce((s, r) => s + effectiveAmount(r), 0)
 
-  const rents = []
+  const MAX_ROWS = 40
+  const rents: number[] = []
   const step = Math.max(50, c.step)
-  for (let r = c.from; r <= c.to + 0.001 && rents.length < 40; r += step) rents.push(r)
-  const closest = rents.reduce(
-    (best, r) => (Math.abs(r - budget.currentRent) < Math.abs(best - budget.currentRent) ? r : best),
-    rents[0] ?? 0,
-  )
+  for (let r = c.from; r <= c.to + 0.001 && rents.length < MAX_ROWS; r += step) rents.push(r)
+  const truncated = rents.length === MAX_ROWS && rents[MAX_ROWS - 1] + step <= c.to + 0.001
+  // no marker without a current rent to compare against
+  const closest = budget.currentRent > 0
+    ? rents.reduce(
+        (best, r) => (Math.abs(r - budget.currentRent) < Math.abs(best - budget.currentRent) ? r : best),
+        rents[0] ?? 0,
+      )
+    : null
 
   const incomeTip = `Monthly income from the Budget tab: average full paycheck × 2/month, derived from actual payroll deposits in your statements (${fmt(income)}).`
   const expenseTip = `Everything on your Budget tab EXCEPT the Rent row — each scenario substitutes its own rent. Currently ${fmt(nonRent)}/month of non-rent expenses${overriddenCount ? ` (${overriddenCount} row${overriddenCount > 1 ? 's' : ''} overridden just for this tool — see "Expenses used")` : ' (straight from the Budget tab)'}.`
@@ -96,7 +106,7 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold">Rent scenarios</h3>
+      <h2 className="text-[15px] font-semibold">Rent scenarios</h2>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         This helps you figure out how much rent you can afford. Try a few rents,
         like $3,000 or $5,000, and see what you'd have left each month after everything else. Income
@@ -149,16 +159,16 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
           )}
           <PresetBar
             presets={presets}
-            currentData={overrides}
+            currentData={liveOverrides}
             onApply={(d: Record<string, number>) => setOverrides(d)}
-            onSave={(name: string) => save(name, overrides)}
+            onSave={(name: string) => save(name, liveOverrides)}
             onDelete={remove}
             canSave={overriddenCount > 0}
             scope="rentScenario"
           />
         </div>
         {showExpenses && (
-          <div className="mt-3 max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain rounded-lg bg-[var(--surface-2)]/40 p-3 ring-1 ring-[var(--ring)] max-sm:p-2">
+          <div tabIndex={0} role="region" aria-label="Budget expenses used in this scenario" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-3 max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain rounded-lg bg-[var(--surface-2)]/40 p-3 ring-1 ring-[var(--ring)] max-sm:p-2">
             <Table className="w-full text-[13px]">
               <TableHeader>
                 <TableRow className="text-left text-[11px] text-[var(--text-muted)]">
@@ -183,9 +193,10 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
                       </TableCell>
                       <TableCell className="py-1 pl-4 text-right max-sm:pl-2">
                         <DraftNumberInput
+                          ariaLabel={`${r.name} amount used here`}
                           step={1}
                           value={effectiveAmount(r)}
-                          onChange={(v: number) => setOverrides({ ...overrides, [r.id]: v })}
+                          onChange={(v: number) => setOverrides({ ...liveOverrides, [r.id]: v })}
                           className={
                             'w-24 max-sm:w-20 border-input bg-[var(--surface-1)] text-right tnum ' +
                             (overridden ? 'border-[#5c4a1d] text-[#e8c76a]' : '')
@@ -203,73 +214,82 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
           </div>
         )}
       </div>
-      <Table className="mt-5 w-full text-[13px]">
-        <TableHeader>
-          <TableRow className="text-left text-[12px] text-[var(--text-muted)]">
-            <TableHead className="pb-2 font-medium">Rent / mo</TableHead>
-            <TableHead className="pb-2 text-right font-medium">
-              <span className="inline-flex items-center gap-1.5">
-                Left / month
-                <span className="group/tip relative inline-flex normal-case tracking-normal">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="cursor-help text-[var(--text-muted)]">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-                  </svg>
-                  <span className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 w-[280px] rounded-lg bg-[var(--surface-3)] px-3 py-2 text-[12px] font-normal leading-relaxed text-[var(--text-secondary)] opacity-0 shadow-xl ring-1 ring-[var(--ring)] transition-opacity group-hover/tip:opacity-100">
-                    {incomeTip} Minus scenario rent, minus non-rent expenses: {expenseTip}
+      {c.from > c.to ? (
+        <p className="mt-5 text-[13px] text-[var(--bad)]">"To" must be at least "From".</p>
+      ) : (
+        <>
+          <Table className="mt-5 w-full text-[13px]">
+            <TableHeader>
+              <TableRow className="text-left text-[12px] text-[var(--text-muted)]">
+                <TableHead className="pb-2 font-medium">Rent / mo</TableHead>
+                <TableHead className="pb-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    Left / month
+                    <span className="group/tip relative inline-flex normal-case tracking-normal">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="cursor-help text-[var(--text-muted)]">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                      </svg>
+                      <span className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 w-[280px] rounded-lg bg-[var(--surface-3)] px-3 py-2 text-[12px] font-normal leading-relaxed text-[var(--text-secondary)] opacity-0 shadow-xl ring-1 ring-[var(--ring)] transition-opacity group-hover/tip:opacity-100">
+                        {incomeTip} Minus scenario rent, minus non-rent expenses: {expenseTip}
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </span>
-            </TableHead>
-            <TableHead className="pb-2 text-right font-medium">Left / year</TableHead>
-            <TableHead className="pb-2 text-right font-medium">
-              <span className="inline-flex items-center gap-1.5">
-                Debt paid off in
-                <span className="group/tip2 relative inline-flex normal-case tracking-normal">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="cursor-help text-[var(--text-muted)]">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-                  </svg>
-                  <span className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 w-[280px] rounded-lg bg-[var(--surface-3)] px-3 py-2 text-[12px] font-normal leading-relaxed text-[var(--text-secondary)] opacity-0 shadow-xl ring-1 ring-[var(--ring)] transition-opacity group-hover/tip2:opacity-100">
-                    {payoffTip}
+                </TableHead>
+                <TableHead className="pb-2 text-right font-medium">Left / year</TableHead>
+                <TableHead className="pb-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    Debt paid off in
+                    <span className="group/tip2 relative inline-flex normal-case tracking-normal">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="cursor-help text-[var(--text-muted)]">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                      </svg>
+                      <span className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 w-[280px] rounded-lg bg-[var(--surface-3)] px-3 py-2 text-[12px] font-normal leading-relaxed text-[var(--text-secondary)] opacity-0 shadow-xl ring-1 ring-[var(--ring)] transition-opacity group-hover/tip2:opacity-100">
+                        {payoffTip}
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rents.map((r) => {
-            const left = income - nonRent - r
-            const isCurrent = r === closest
-            return (
-              <TableRow
-                key={r}
-                className={
-                  'border-t border-[var(--grid)] hover:bg-[var(--surface-2)] transition-colors' +
-                  (isCurrent ? ' bg-[var(--surface-2)]' : '')
-                }
-              >
-                <TableCell className="py-1.5 tnum">
-                  {fmt0(r)}
-                  {isCurrent && (
-                    <span className="ml-2 text-[11px] text-[#e8c76a]">← closest to current ({fmt0(budget.currentRent)})</span>
-                  )}
-                </TableCell>
-                <TableCell className="py-1.5 text-right tnum" style={{ color: left >= 0 ? 'var(--good)' : 'var(--bad)' }}>
-                  {fmt(left)}
-                </TableCell>
-                <TableCell className="py-1.5 text-right tnum" style={{ color: left >= 0 ? 'var(--good)' : 'var(--bad)' }}>
-                  {fmt(left * 12)}
-                </TableCell>
-                <TableCell className="py-1.5 text-right tnum text-[var(--text-secondary)]">
-                  {payoffLabel(left)}
-                </TableCell>
+                </TableHead>
               </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {rents.map((r) => {
+                const left = income - nonRent - r
+                const isCurrent = r === closest
+                return (
+                  <TableRow
+                    key={r}
+                    className={
+                      'border-t border-[var(--grid)] hover:bg-[var(--surface-2)] transition-colors' +
+                      (isCurrent ? ' bg-[var(--surface-2)]' : '')
+                    }
+                  >
+                    <TableCell className="py-1.5 tnum">
+                      {fmt0(r)}
+                      {isCurrent && (
+                        <span className="ml-2 text-[11px] text-[#e8c76a]">← closest to current ({fmt0(budget.currentRent)})</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right tnum" style={{ color: left >= 0 ? 'var(--good)' : 'var(--bad)' }}>
+                      {fmt(left)}
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right tnum" style={{ color: left >= 0 ? 'var(--good)' : 'var(--bad)' }}>
+                      {fmt(left * 12)}
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right tnum text-[var(--text-secondary)]">
+                      {payoffLabel(left)}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+          {truncated && (
+            <p className="mt-2 text-[11px] text-[var(--text-muted)]">Showing the first {MAX_ROWS} rows. Raise the step to reach {fmt0(c.to)}.</p>
+          )}
+        </>
+      )}
     </Card>
   )
 }

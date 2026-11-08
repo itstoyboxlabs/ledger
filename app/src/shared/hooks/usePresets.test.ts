@@ -33,6 +33,13 @@ describe('usePresets', () => {
     await waitFor(async () => expect(await saved('tool')).toEqual(result.current.presets))
   })
 
+  it('a save made before the stored list loads adds to it instead of replacing it', async () => {
+    const { result } = renderHook(() => usePresets('tool'))
+    act(() => result.current.save('C', { x: 3 }))
+    await waitFor(() => expect(result.current.presets.map((p) => p.name)).toEqual(['A', 'B', 'C']))
+    await waitFor(async () => expect((await saved('tool'))?.map((p) => p.name)).toEqual(['A', 'B', 'C']))
+  })
+
   it('remove drops a preset and saves', async () => {
     const { result } = renderHook(() => usePresets('tool'))
     await waitFor(() => expect(result.current.presets).toHaveLength(2))

@@ -45,6 +45,8 @@ export function LogMeter({ row, spent, onHide }: LogMeterProps) {
       </div>
       <Progress
         value={pct * 100}
+        aria-label={`${row.name} spent`}
+        aria-valuetext={`${fmt0(spent)} of ${fmt0(budget)}`}
         indicatorColor={over ? 'var(--bad)' : 'var(--good)'}
         className="mt-2 h-1.5 bg-[var(--surface-1)]"
       />

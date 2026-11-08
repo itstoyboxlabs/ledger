@@ -51,6 +51,6 @@ describe('budgetEffRows', () => {
   })
   it('keeps a hand-added subscription the statements have not seen', () => {
     const hulu: BudgetRow = { id: 'h', name: 'Hulu', amount: 3, source: 'subscription' }
-    expect(budgetEffRows([hulu], {}).find((r) => r.id === 'h')?.amount).toBe(8)
+    expect(budgetEffRows([hulu], {}).find((r) => r.id === 'h')?.amount).toBe(3)
   })
 })

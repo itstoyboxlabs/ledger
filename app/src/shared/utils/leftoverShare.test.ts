@@ -14,4 +14,11 @@ describe('leftoverShare', () => {
     expect(leftoverShare(list, 'savings', 0)).toBe(0)
     expect(leftoverShare([], 'savings', 1000)).toBe(0)
   })
+  it('counts a share aimed at a deleted row toward savings when live ids are given', () => {
+    const dead: LeftoverAllocation[] = [...list, { id: 'd', target: 'gone', pct: 15 }]
+    expect(leftoverShare(dead, 'gone', 1000, ['r1'])).toBe(0)
+    expect(leftoverShare(dead, 'savings', 1000, ['r1'])).toBe(750)
+    expect(leftoverShare(dead, 'r1', 1000, ['r1'])).toBe(250)
+    expect(leftoverShare(dead, 'gone', 1000)).toBe(150)
+  })
 })

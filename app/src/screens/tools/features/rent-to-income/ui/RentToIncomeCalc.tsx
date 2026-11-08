@@ -17,7 +17,7 @@ export function RentToIncomeCalc() {
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-[15px] font-semibold">Rent-to-income</h3>
+          <h2 className="text-[15px] font-semibold">Rent-to-income</h2>
           <p className="mt-1 text-[12px] text-[var(--text-muted)]">
             {byRent
               ? 'Landlords often want your yearly income to be some multiple of the monthly rent, usually 40 times, sometimes less. Enter your income, a rent and what they ask for to see if you clear it.'
@@ -48,12 +48,16 @@ export function RentToIncomeCalc() {
         <TableBody>
           {byRent ? (
             <>
-              <ToolRow
-                label={`Your income is ${times.toFixed(1)}× the rent`}
-                value={times >= c.times ? `Clears the ${c.times}× they ask for` : `Short of the ${c.times}× they ask for`}
-                bold
-                tone={times >= c.times ? 'var(--good)' : 'var(--bad)'}
-              />
+              {c.rent > 0 ? (
+                <ToolRow
+                  label={`Your income is ${times.toFixed(1)}× the rent`}
+                  value={times >= c.times ? `Clears the ${c.times}× they ask for` : `Short of the ${c.times}× they ask for`}
+                  bold
+                  tone={times >= c.times ? 'var(--good)' : 'var(--bad)'}
+                />
+              ) : (
+                <ToolRow label="Enter a rent to compare" value="—" bold />
+              )}
               <ToolRow label={`Max rent at ${c.times}×`} value={fmt(c.times > 0 ? c.income / c.times : 0)} />
             </>
           ) : (
