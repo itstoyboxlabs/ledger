@@ -67,6 +67,9 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
     $9,098 into savings). Retire at 62, Need per month follows the Retirement preset, Current age is on Auto. Events
     are a $300 a month Roth IRA from 25 for 15 years, replacing the car at 40 and a family gift at 50. The
     Retirement presets (retire at 62, 58 and 67) carry the same plan.
+  - **Returns are conservative** on purpose, since the model has no inflation input: an index fund at 4.6% and
+    bonds at 2.5%, 70/30 while working (3.97% a year) and 30/70 after retiring (3.13%). The headline reads about
+    $2.57M at 62 and money lasts to the plan-to age of 95 with plenty left over.
   - **Balances** fit a 25 year old: $25,200 owed (car loan, student loan, credit card) and $48,700 owned, of which
     $28,200 is savings, so the starting savings stay positive after debts ($3,000).
   - Statements, Budget rows and the leftover split are unchanged.

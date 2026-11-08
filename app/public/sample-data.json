@@ -4743,12 +4743,12 @@
        {
         "name": "Index fund",
         "alloc": 70,
-        "perf": 7
+        "perf": 4.6
        },
        {
         "name": "Bonds",
         "alloc": 30,
-        "perf": 3.5
+        "perf": 2.5
        }
       ],
       "portAfter": {
@@ -4756,13 +4756,13 @@
        "rows": [
         {
          "name": "Index fund",
-         "alloc": 40,
-         "perf": 7
+         "alloc": 30,
+         "perf": 4.6
         },
         {
          "name": "Bonds",
-         "alloc": 60,
-         "perf": 3.5
+         "alloc": 70,
+         "perf": 2.5
         }
        ]
       },
@@ -4861,12 +4861,12 @@
        {
         "name": "Index fund",
         "alloc": 70,
-        "perf": 7
+        "perf": 4.6
        },
        {
         "name": "Bonds",
         "alloc": 30,
-        "perf": 3.5
+        "perf": 2.5
        }
       ],
       "portAfter": {
@@ -4874,13 +4874,13 @@
        "rows": [
         {
          "name": "Index fund",
-         "alloc": 40,
-         "perf": 7
+         "alloc": 30,
+         "perf": 4.6
         },
         {
          "name": "Bonds",
-         "alloc": 60,
-         "perf": 3.5
+         "alloc": 70,
+         "perf": 2.5
         }
        ]
       },
@@ -4979,12 +4979,12 @@
        {
         "name": "Index fund",
         "alloc": 70,
-        "perf": 7
+        "perf": 4.6
        },
        {
         "name": "Bonds",
         "alloc": 30,
-        "perf": 3.5
+        "perf": 2.5
        }
       ],
       "portAfter": {
@@ -4992,13 +4992,13 @@
        "rows": [
         {
          "name": "Index fund",
-         "alloc": 40,
-         "perf": 7
+         "alloc": 30,
+         "perf": 4.6
         },
         {
          "name": "Bonds",
-         "alloc": 60,
-         "perf": 3.5
+         "alloc": 70,
+         "perf": 2.5
         }
        ]
       },
@@ -5281,12 +5281,12 @@
     {
      "name": "Index fund",
      "alloc": 70,
-     "perf": 7
+     "perf": 4.6
     },
     {
      "name": "Bonds",
      "alloc": 30,
-     "perf": 3.5
+     "perf": 2.5
     }
    ],
    "ledger:retirePortfolioAfter": {
@@ -5294,13 +5294,13 @@
     "rows": [
      {
       "name": "Index fund",
-      "alloc": 40,
-      "perf": 7
+      "alloc": 30,
+      "perf": 4.6
      },
      {
       "name": "Bonds",
-      "alloc": 60,
-      "perf": 3.5
+      "alloc": 70,
+      "perf": 2.5
      }
     ]
    },
