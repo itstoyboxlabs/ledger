@@ -50,6 +50,7 @@ import { lazyNamed } from '@/shared/utils/lazyNamed'
 
 // each page is its own chunk, loaded the first time it is opened
 const AboutYouView = lazyNamed(() => import('@/screens/about-you/ui/AboutYouView'), 'AboutYouView')
+const BalancesPresets = lazyNamed(() => import('@/screens/balances/ui/BalancesPresets'), 'BalancesPresets')
 const BalancesView = lazyNamed(() => import('@/screens/balances/ui/BalancesView'), 'BalancesView')
 const BudgetView = lazyNamed(() => import('@/screens/budget/ui/BudgetView'), 'BudgetView')
 const CashFlowChart = lazyNamed(() => import('@/screens/spending/ui/CashFlowChart'), 'CashFlowChart')
@@ -148,7 +149,7 @@ export default function App() {
   const prevName = nMonths === 1 ? monthLabel(prevWindow?.[0]?.m ?? getMonths()[0]).slice(0, 3) : `previous ${nMonths} months`
   const allAccounts = accounts.length === Object.keys(getAccounts()).length
   const vsBudget = month !== 'all' && allAccounts && budgetTotal != null ? spending - budgetTotal * nMonths : null
-  const [, pageTitle, , pageSubtitle] = NAV.find((n) => n[0] === view) ?? NAV[0]
+  const [, pageTitle, , pageSubtitle] = NAV.find((n) => n[0] === view) ?? NAV.find((n) => n[0] === 'actuals') ?? NAV[0]
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -207,6 +208,7 @@ export default function App() {
           </>
         )}
         {view === 'tools' && <ToolPicker />}
+        {view === 'balances' && <BalancesPresets />}
       </PageHeader>
       {showNotes && (
         <Suspense fallback={null}>
@@ -231,7 +233,7 @@ export default function App() {
       {view === 'about' && <AboutYouView />}
       {view === 'tools' && <ToolsView goToAboutYou={() => setView('about')} />}
       {view === 'retirement' && <RetirementView goToBalances={() => setView('balances')} />}
-      {view === 'balances' && <BalancesView goToAboutYou={() => setView('about')} />}
+      {view === 'balances' && <BalancesView />}
 
       {view === 'actuals' && (
       <>

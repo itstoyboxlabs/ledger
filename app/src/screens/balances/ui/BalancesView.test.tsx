@@ -85,14 +85,11 @@ describe('BalancesView', () => {
     expect(await screen.findByDisplayValue('300')).toBeInTheDocument()
   })
 
-  it('points to About you for the tax state and filing status', async () => {
-    const goToAboutYou = vi.fn()
+  it('has no tax state card, picker or About you pointer', () => {
     localStorage.setItem('ledger:taxState', '"ca"')
-    renderApp(<BalancesView goToAboutYou={goToAboutYou} />)
-    expect(screen.getByText('Your tax state and filing status now live on the About you tab.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Taxed in California' })).toBeInTheDocument()
+    renderApp(<BalancesView />)
+    expect(screen.queryByText(/Taxed in/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open About you' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^State/ })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Open About you' }))
-    expect(goToAboutYou).toHaveBeenCalledTimes(1)
   })
 })
