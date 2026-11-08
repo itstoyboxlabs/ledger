@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "test:all": "node scripts/test-all.mjs",
     "videos": "vercel env pull /tmp/ledger-blob.env --environment production --yes > /dev/null && node --env-file=/tmp/ledger-blob.env scripts/upload-videos.mjs; rm -f /tmp/ledger-blob.env",
+    "icons": "vercel env pull /tmp/ledger-blob.env --environment production --yes > /dev/null && node --env-file=/tmp/ledger-blob.env scripts/upload-icon-catalog.mjs; rm -f /tmp/ledger-blob.env",
     "deploy": "vercel deploy --prod --yes && node scripts/indexnow.mjs"
   },
   "dependencies": {

@@ -91,7 +91,8 @@ All files are plain JSON except where noted.
   - A card payment is a `kind: 'transfer'` row.
   - `periods` holds the opening and closing dates of each statement. It drives the coverage system.
   - `subscriptions` is the list of recurring charges, each with `lastSeen` and a billing day.
-  - `merchants` maps a merchant name to a website domain, used for icons.
+  - `merchants` maps a merchant name to a website domain, used for icons. It is optional: on the hosted site a
+    merchant without a domain can still match the logo catalog by name.
 - `budget.json`: the Budget plan (rows, `dismissedSubs`, `leftover`).
 - `log.json`: Log entries.
 - `notes.json`: notes.
@@ -129,9 +130,34 @@ All files are plain JSON except where noted.
   `IMPORT_PROMPT.md` too and run `python3 scripts/build-import-prompt.py`.
 - **What survives.** Anything that must outlive the browser, or be visible to an assistant during a refresh, goes
   through these files and not through localStorage.
-- **Merchant icons** are served from `app/public/icons/<domain>.png`. `scripts/fetch-icons.sh` downloads them from
-  the `merchants` map, follows redirects and checks that each file is a real image. Unknown merchants get a
-  letter avatar. The app itself never looks icons up on the network.
+- **Merchant icons.** `MerchantIcon` asks `faviconUrl(name)` for a logo and shows the first letter when there is
+  none or the image fails to load.
+  - **Local mode**: icons are served from `app/public/icons/<domain>.png`, using the domain in the `merchants` map.
+    `scripts/fetch-icons.sh` downloads them, follows redirects and checks that each file is a real image. The
+    folder is gitignored because it reflects one person's merchants.
+  - **Browser mode (the hosted site)**: icons come from a shared catalog of common merchants in the site's own
+    public Blob store, at `ICON_BASE_URL` (`.../icons/<domain>.png` plus `.../icons/index.json`). `useIconCatalog`
+    asks for the index once, when the browser is idle after the first paint (`requestIconCatalog`,
+    `loadIconCatalog`), caches it in sessionStorage and keeps it in `iconCatalogStore`. Failures are silent and
+    leave the letters. The index is `{ domains, names }`. `catalogDomainFor` matches a merchant first by its
+    `merchants` domain, then by its name normalized with `normalizeMerchantName` (lowercase, no punctuation,
+    digits, card processor prefixes like `SQ *` or filler like "inc" and "com"), trying the full name and then
+    shorter leading word groups: "Uber Eats Delivery" tries "uber eats delivery", "uber eats", "uber". The index
+    request is identical for every visitor, so it reveals nothing about anyone's merchants. The logo requests go
+    only to the site's own store. No third-party service is ever contacted. CSP: `img-src` and `connect-src` allow
+    the Blob host.
+  - **The catalog** is built from `app/scripts/icon-domains.txt`, one merchant per line as
+    `Brand name | domain | alias, alias`. It is public and hand-written, never derived from anyone's data. The
+    import prompt links to it so an assistant can use the exact brand names. To change it, from `app/`:
+    1. edit `scripts/icon-domains.txt`;
+    2. `node scripts/build-icon-catalog.mjs` downloads a 64px favicon per domain (the same Google favicon service
+       as `fetch-icons.sh`, 8 at a time), skips failures, the service's default globe and icons under 16px, converts
+       other formats to PNG with macOS `sips`, keeps each file under 6 KB, and writes `app/.icon-catalog/`
+       (gitignored) with `<domain>.png` files and `index.json`. It skips logos it already has. Name keys that are
+       everyday words ("rent", "budget", "acme") are left out of `names` so they never pick up a brand's logo;
+    3. `npm run icons` uploads new logos to `icons/<domain>.png` and always re-uploads `icons/index.json` (one day
+       cache; logos cache for a year). It reads the Blob token from the production environment through the
+       Vercel CLI and never prints it. `--force` re-uploads every logo.
 
 ---
 
