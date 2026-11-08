@@ -13,7 +13,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "videos": "node scripts/sync-videos.mjs",
-    "deploy": "npm run videos && vercel deploy --prod --yes"
+    "deploy": "npm run videos && vercel deploy --prod --yes && node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
