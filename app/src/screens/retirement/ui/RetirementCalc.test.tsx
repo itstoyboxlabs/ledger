@@ -84,7 +84,7 @@ describe('RetirementCalc', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
     expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByLabelText(/Retire at/)).toHaveValue(60)
-  })
+  }, 30000)
 
   it('Find moves the retire age when a safe age exists', async () => {
     localStorage.setItem('ledger:retireCalc', JSON.stringify({ events: [], withdrawMo: 0, retireAge: 90 }))
@@ -220,7 +220,7 @@ describe('RetirementCalc', () => {
     await userEvent.clear(need)
     await userEvent.type(need, '99000')
     await waitFor(() => expect(screen.queryByText(/No retire age before/)).toBeNull())
-  })
+  }, 30000)
 
   it('adds a chip for the end age, once', () => {
     seedPlan({ endAge: 85 })

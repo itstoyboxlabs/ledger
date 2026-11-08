@@ -44,6 +44,13 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   data (budget, log, notes, presets) is loaded and saved through the storage adapter.
 - **Fake data**: `app/public/sample-data.json` is the demo and test data. Real data is never imported by the code
   and never used in tests.
+  The sample carries a full `settings` block, so loading it fills every page: Budget rows (including a Car loan and
+  a Student loan row) with a leftover plan, three Budget presets (`Today`, `Leaner (easier job)`, `Retirement`),
+  Log entries, Notes, and `local` keys for Balances (`ledger:debts` linked to the loan rows, `ledger:assets` in the
+  savings and 401k pools, planning-variables presets), the Retirement plan, portfolio, presets and the Budget preset
+  it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists. Take-home pay is
+  left at its defaults. Browser tests use `app/e2e/lean-settings.json` (the sample's settings before this was added)
+  unless a test passes `openApp(page, { rich: true })`, so most specs still start from a bare plan.
 - **Tests**: Vitest unit tests sit beside each source file (`npm run test:unit`). Playwright browser tests live in
   `app/e2e` and click through every page with fake data in a throwaway browser (`npm run test:e2e`). See
   `app/e2e/README.md`. `npm test` runs both.
