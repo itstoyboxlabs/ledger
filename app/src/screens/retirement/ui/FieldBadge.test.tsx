@@ -17,7 +17,7 @@ describe('FieldBadge', () => {
     expect(screen.getByRole('button', { name: 'Find' })).toHaveAttribute('aria-pressed', 'true')
   })
   it('still renders a working button when a title is given', async () => {
-    // the hover tooltip needs layout APIs jsdom lacks, so only the button is checked
+    // clicking moves the pointer over the button, which opens its tooltip
     const onClick = vi.fn()
     renderApp(<FieldBadge label="Find" active={false} onClick={onClick} title="Finds the earliest age" />)
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
