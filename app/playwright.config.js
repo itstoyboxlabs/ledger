@@ -12,6 +12,8 @@ export default defineConfig({
   testMatch: '**/*.spec.js',
   globalSetup: './e2e/global-setup.js',
   fullyParallel: true,
+  // 10 browsers at once on a laptop; CI is already split into shards, so each shard stays small
+  workers: Number(process.env.PW_WORKERS) || (process.env.CI ? 2 : 10),
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
