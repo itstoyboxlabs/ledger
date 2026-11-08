@@ -75,9 +75,18 @@ LEDGER_DATA_DIR=~/Documents/Ledger/data
 
 Git ignores `data/`, `statements/` and `.env.local`, so none of it is ever committed.
 
+## Merchant logos
+
+Ledger shows a logo next to each merchant it recognizes and the merchant's first letter for the rest.
+
+- **On the website**, logos come from a catalog of about 3,400 common US merchants (grocery, restaurants, transit, airlines, streaming, utilities, banks and more), listed in [`app/scripts/icon-domains.txt`](app/scripts/icon-domains.txt). A merchant matches by the website domain in your file's `merchants` map, or by its name ("Uber", "UBER *TRIP" and "Uber Eats" all work). The app downloads the catalog's list once, after the page has drawn, from Ledger's own file storage. That request is the same for everyone, so it says nothing about which merchants you have. The import prompt points your assistant at the same list, so the names it writes match.
+- **On your computer**, `bash scripts/fetch-icons.sh` downloads a logo for every domain in your `merchants` map into `app/public/icons/`, so merchants outside the catalog get one too.
+
+To add merchants to the catalog, add a line to `icon-domains.txt` and see "Merchant icons" in [DOCS.md](DOCS.md).
+
 ## Privacy
 
-Your statements are only ever read by the assistant you choose, the same way any file you attach to a chat is. Ledger itself has no server, no database and no analytics on your data. You can read all of the code to check.
+Your statements are only ever read by the assistant you choose, the same way any file you attach to a chat is. Ledger itself has no server, no database and no analytics on your data. The only thing the app loads from the network is the shared merchant logo catalog, which is the same for everyone. You can read all of the code to check.
 
 ## Built with
 

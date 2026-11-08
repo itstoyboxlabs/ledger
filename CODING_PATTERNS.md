@@ -69,8 +69,9 @@ app/src/
 
 ## State
 
-Zustand is the only state library. Ledger makes no network calls (everything is IndexedDB, localStorage or the
-local file server), so there is no use for React Query, and Redux is more than this needs.
+Zustand is the only state library. Ledger makes no network calls for data (everything is IndexedDB, localStorage or the
+local file server; the one exception is the shared merchant logo catalog, a single public file loaded once into
+`iconCatalogStore`), so there is no use for React Query, and Redux is more than this needs.
 
 - **Saved data** (budget, log, notes, presets): one store each. A store has `load`, a debounced `save` that also
   flushes when the page closes, and a reload when the window regains focus (skipped while a save is pending).

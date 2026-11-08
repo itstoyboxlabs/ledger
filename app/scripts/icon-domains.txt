@@ -1,0 +1,3583 @@
+# Merchant logo catalog for Ledger's hosted site. One merchant per line:
+#   Brand name | domain | alias, alias
+# Brand name is the name to use for the merchant in a Ledger data file. Domain is the brand's main website, the
+# key for its logo. Aliases are other spellings that show up on bank and card statements (optional).
+# Lines starting with # and blank lines are ignored. To add a merchant, add a line, then from app/ run
+# `node scripts/build-icon-catalog.mjs` and `npm run icons`.
+
+# Grocery and supermarkets
+Whole Foods | wholefoodsmarket.com | Whole Foods Market, WFM
+Trader Joe's | traderjoes.com | Trader Joes
+Kroger | kroger.com
+Safeway | safeway.com
+Albertsons | albertsons.com
+Publix | publix.com
+H-E-B | heb.com | HEB
+Wegmans | wegmans.com
+Aldi | aldi.us
+Lidl | lidl.com
+Costco | costco.com | Costco Wholesale, Costco Whse
+Sam's Club | samsclub.com | Sams Club
+BJ's Wholesale | bjs.com | BJs Wholesale, BJs
+Sprouts | sprouts.com | Sprouts Farmers Market
+Food Lion | foodlion.com
+Stop & Shop | stopandshop.com | Stop and Shop
+Giant Food | giantfood.com
+Giant Food Stores | giantfoodstores.com
+Harris Teeter | harristeeter.com
+Meijer | meijer.com
+Hy-Vee | hy-vee.com | HyVee
+WinCo Foods | wincofoods.com | WinCo
+ShopRite | shoprite.com | Shop Rite
+Fairway Market | fairwaymarket.com | Fairway
+Zabar's | zabars.com | Zabars
+Key Food | keyfood.com
+Food Bazaar | foodbazaar.com
+Citarella | citarella.com
+Gristedes | gristedes.com
+Morton Williams | mortonwilliams.com
+FreshDirect | freshdirect.com | Fresh Direct
+Instacart | instacart.com | Maplebear
+Weis Markets | weismarkets.com | Weis
+Giant Eagle | gianteagle.com
+Fry's Food | frysfood.com | Frys Food
+Ralphs | ralphs.com
+King Soopers | kingsoopers.com
+Fred Meyer | fredmeyer.com
+Vons | vons.com
+Jewel-Osco | jewelosco.com | Jewel Osco
+Acme Markets | acmemarkets.com | Acme
+Shaw's | shaws.com | Shaws
+Hannaford | hannaford.com
+Market Basket | shopmarketbasket.com
+Price Chopper | pricechopper.com
+Tops Markets | topsmarkets.com | Tops
+Winn-Dixie | winndixie.com | Winn Dixie
+Ingles | ingles-markets.com | Ingles Markets
+Lowes Foods | lowesfoods.com
+Save A Lot | savealot.com
+Grocery Outlet | groceryoutlet.com
+Smart & Final | smartandfinal.com | Smart and Final
+Raley's | raleys.com | Raleys
+Stater Bros | staterbros.com
+Natural Grocers | naturalgrocers.com
+The Fresh Market | thefreshmarket.com | Fresh Market
+Erewhon | erewhon.com
+Misfits Market | misfitsmarket.com
+Thrive Market | thrivemarket.com
+Weee! | sayweee.com | Weee
+H Mart | hmart.com | HMart
+99 Ranch Market | 99ranch.com | 99 Ranch
+Patel Brothers | patelbros.com
+Gopuff | gopuff.com | Go Puff
+ButcherBox | butcherbox.com | Butcher Box
+HelloFresh | hellofresh.com | Hello Fresh
+Blue Apron | blueapron.com
+Home Chef | homechef.com
+Factor | factor75.com | Factor 75
+Green Chef | greenchef.com
+EveryPlate | everyplate.com
+CookUnity | cookunity.com
+Daily Harvest | daily-harvest.com
+Territory Foods | territoryfoods.com
+Good Eggs | goodeggs.com
+Boxed | boxed.com
+Imperfect Foods | imperfectfoods.com
+
+# Big box, department and dollar stores
+Walmart | walmart.com | Wal-Mart, Walmart Supercenter, WM Supercenter, Walmart Plus
+Target | target.com | Target T
+Amazon | amazon.com | AMZN, AMZN Mktp, Amazon Marketplace, Amazon.com, Amazon Prime, Prime, Amazon Digital, Amazon Retail, Kindle
+Best Buy | bestbuy.com
+The Home Depot | homedepot.com | Home Depot
+Lowe's | lowes.com | Lowes
+Menards | menards.com
+Kohl's | kohls.com | Kohls
+Macy's | macys.com | Macys
+JCPenney | jcpenney.com | JC Penney, JCP
+Nordstrom | nordstrom.com
+Nordstrom Rack | nordstromrack.com
+Bloomingdale's | bloomingdales.com | Bloomingdales
+Saks Fifth Avenue | saksfifthavenue.com | Saks
+Saks Off 5th | saksoff5th.com
+Neiman Marcus | neimanmarcus.com
+Bergdorf Goodman | bergdorfgoodman.com
+Dillard's | dillards.com | Dillards
+Belk | belk.com
+TJ Maxx | tjmaxx.com | T.J. Maxx, TJMaxx
+Marshalls | marshalls.com
+HomeGoods | homegoods.com | Home Goods
+Ross | rossstores.com | Ross Stores, Ross Dress for Less
+Burlington | burlington.com | Burlington Coat Factory
+Century 21 | c21stores.com
+Dollar General | dollargeneral.com
+Dollar Tree | dollartree.com
+Family Dollar | familydollar.com
+Five Below | fivebelow.com
+Big Lots | biglots.com
+Ollie's | ollies.us | Ollies Bargain Outlet
+Kmart | kmart.com
+Sears | sears.com
+Bed Bath & Beyond | bedbathandbeyond.com | Bed Bath and Beyond
+The Container Store | containerstore.com | Container Store
+Michaels | michaels.com
+Joann | joann.com | Jo-Ann Fabrics
+Hobby Lobby | hobbylobby.com
+Party City | partycity.com
+Staples | staples.com
+Office Depot | officedepot.com | OfficeMax
+Barnes & Noble | barnesandnoble.com | Barnes and Noble
+Books-A-Million | booksamillion.com
+GameStop | gamestop.com
+IKEA | ikea.com
+Crate & Barrel | crateandbarrel.com | Crate and Barrel
+CB2 | cb2.com
+Pottery Barn | potterybarn.com
+West Elm | westelm.com
+Williams Sonoma | williams-sonoma.com | Williams-Sonoma
+RH | rh.com | Restoration Hardware
+Wayfair | wayfair.com
+Overstock | overstock.com
+Ashley | ashleyfurniture.com | Ashley Furniture
+Rooms To Go | roomstogo.com
+Raymour & Flanigan | raymourflanigan.com | Raymour and Flanigan
+Bob's Discount Furniture | mybobs.com | Bobs Furniture
+Living Spaces | livingspaces.com
+Article | article.com
+Burrow | burrow.com
+Floyd | floydhome.com
+AllModern | allmodern.com
+Joss & Main | jossandmain.com
+Birch Lane | birchlane.com
+World Market | worldmarket.com | Cost Plus World Market
+Kirkland's | kirklands.com | Kirklands
+At Home | athome.com
+Arhaus | arhaus.com
+Ethan Allen | ethanallen.com
+Havertys | havertys.com
+Lovesac | lovesac.com
+Tempur-Pedic | tempurpedic.com
+Casper | casper.com
+Purple | purple.com
+Sleep Number | sleepnumber.com
+Mattress Firm | mattressfirm.com
+Saatva | saatva.com
+Tuft & Needle | tuftandneedle.com
+Nectar | nectarsleep.com
+Helix | helixsleep.com
+Avocado | avocadogreenmattress.com | Avocado Mattress
+Brooklinen | brooklinen.com
+Parachute | parachutehome.com
+Boll & Branch | bollandbranch.com
+Our Place | fromourplace.com
+Caraway | carawayhome.com
+Made In | madeincookware.com
+HexClad | hexclad.com
+Le Creuset | lecreuset.com
+All-Clad | all-clad.com
+Sur La Table | surlatable.com
+Zwilling | zwilling.com
+OXO | oxo.com
+Cuisinart | cuisinart.com
+KitchenAid | kitchenaid.com
+Vitamix | vitamix.com
+Ninja | ninjakitchen.com | SharkNinja
+Breville | breville.com
+Keurig | keurig.com
+Nespresso | nespresso.com
+Dyson | dyson.com
+Shark | sharkclean.com
+iRobot | irobot.com | Roomba
+Bissell | bissell.com
+Tractor Supply | tractorsupply.com
+Ace Hardware | acehardware.com
+True Value | truevalue.com
+Harbor Freight | harborfreight.com | Harbor Freight Tools
+Northern Tool | northerntool.com
+Sherwin-Williams | sherwin-williams.com | Sherwin Williams
+Benjamin Moore | benjaminmoore.com
+Floor & Decor | flooranddecor.com
+LL Flooring | llflooring.com | Lumber Liquidators
+Build.com | build.com
+Ferguson | ferguson.com
+Grainger | grainger.com
+Uline | uline.com
+
+# Online marketplaces and shopping
+eBay | ebay.com
+Etsy | etsy.com
+AliExpress | aliexpress.com
+Temu | temu.com
+Shein | shein.com
+Wish | wish.com
+Alibaba | alibaba.com
+Mercari | mercari.com
+Poshmark | poshmark.com
+Depop | depop.com
+thredUP | thredup.com | ThredUp
+The RealReal | therealreal.com | RealReal
+Vestiaire Collective | vestiairecollective.com
+Grailed | grailed.com
+StockX | stockx.com
+GOAT | goat.com
+OfferUp | offerup.com
+Craigslist | craigslist.org
+Facebook | facebook.com | Facebook Marketplace, FB, Facebk, Meta Platforms
+Nextdoor | nextdoor.com
+Rakuten | rakuten.com
+Newegg | newegg.com
+B&H Photo | bhphotovideo.com | B and H Photo, BH Photo
+Adorama | adorama.com
+Micro Center | microcenter.com
+Chewy | chewy.com
+Petco | petco.com
+PetSmart | petsmart.com
+BarkBox | barkbox.com | Bark
+Rover | rover.com
+Wag! | wagwalking.com | Wag
+The Farmer's Dog | thefarmersdog.com | Farmers Dog
+Ollie | myollie.com
+Zulily | zulily.com
+Woot | woot.com
+Groupon | groupon.com
+QVC | qvc.com
+HSN | hsn.com
+Shopify | shopify.com
+Shop | shop.app | Shop Pay
+Reverb | reverb.com
+Discogs | discogs.com
+AbeBooks | abebooks.com
+ThriftBooks | thriftbooks.com
+Bookshop.org | bookshop.org | Bookshop
+Swappa | swappa.com
+Back Market | backmarket.com
+Decluttr | decluttr.com
+1-800-Flowers | 1800flowers.com | 1800 Flowers
+FTD | ftd.com
+ProFlowers | proflowers.com
+UrbanStems | urbanstems.com
+The Bouqs | bouqs.com | Bouqs
+Edible Arrangements | ediblearrangements.com
+Harry & David | harryanddavid.com | Harry and David
+Omaha Steaks | omahasteaks.com
+Goldbelly | goldbelly.com
+Shutterfly | shutterfly.com
+Snapfish | snapfish.com
+Minted | minted.com
+Zazzle | zazzle.com
+Redbubble | redbubble.com
+TeePublic | teepublic.com
+Society6 | society6.com
+Vistaprint | vistaprint.com
+MOO | moo.com
+Custom Ink | customink.com
+Printful | printful.com
+Uncommon Goods | uncommongoods.com
+Hallmark | hallmark.com
+Paperless Post | paperlesspost.com
+Evite | evite.com
+Zola | zola.com
+The Knot | theknot.com
+Babylist | babylist.com
+MyRegistry | myregistry.com
+
+# Apparel, shoes and accessories
+Nike | nike.com
+Adidas | adidas.com
+Under Armour | underarmour.com
+Lululemon | lululemon.com | lululemon athletica
+Athleta | athleta.gap.com
+Gap | gap.com
+Old Navy | oldnavy.com
+Banana Republic | bananarepublic.com
+J.Crew | jcrew.com | J Crew
+Madewell | madewell.com
+Abercrombie & Fitch | abercrombie.com | Abercrombie
+Hollister | hollisterco.com
+American Eagle | ae.com | American Eagle Outfitters, Aerie
+Uniqlo | uniqlo.com
+Zara | zara.com
+H&M | hm.com | H and M, HM
+Mango | mango.com
+COS | cos.com
+Everlane | everlane.com
+Patagonia | patagonia.com
+The North Face | thenorthface.com | North Face
+Columbia | columbia.com | Columbia Sportswear
+REI | rei.com | REI Co-op
+L.L.Bean | llbean.com | LL Bean
+Lands' End | landsend.com | Lands End
+Eddie Bauer | eddiebauer.com
+Carhartt | carhartt.com
+Levi's | levi.com | Levis, Levi Strauss
+Wrangler | wrangler.com
+Express | express.com
+Loft | loft.com | Ann Taylor Loft
+Ann Taylor | anntaylor.com
+Chico's | chicos.com | Chicos
+White House Black Market | whitehouseblackmarket.com
+Talbots | talbots.com
+Torrid | torrid.com
+Lane Bryant | lanebryant.com
+Eloquii | eloquii.com
+Anthropologie | anthropologie.com
+Urban Outfitters | urbanoutfitters.com
+Free People | freepeople.com
+Forever 21 | forever21.com
+Fashion Nova | fashionnova.com
+PrettyLittleThing | prettylittlething.com
+Boohoo | boohoo.com
+ASOS | asos.com
+Revolve | revolve.com
+SSENSE | ssense.com
+Farfetch | farfetch.com
+Mytheresa | mytheresa.com
+Net-a-Porter | net-a-porter.com
+Shopbop | shopbop.com
+Lulus | lulus.com
+Princess Polly | princesspolly.com
+Reformation | thereformation.com
+Aritzia | aritzia.com
+Skims | skims.com
+Spanx | spanx.com
+Victoria's Secret | victoriassecret.com | Victorias Secret
+ThirdLove | thirdlove.com
+Savage X Fenty | savagex.com
+Calvin Klein | calvinklein.com
+Tommy Hilfiger | tommy.com
+Ralph Lauren | ralphlauren.com | Polo Ralph Lauren
+Brooks Brothers | brooksbrothers.com
+Bonobos | bonobos.com
+Untuckit | untuckit.com
+Indochino | indochino.com
+Suitsupply | suitsupply.com
+Men's Wearhouse | menswearhouse.com | Mens Wearhouse
+Jos. A. Bank | josbank.com | Jos A Bank
+Jomashop | jomashop.com
+Vineyard Vines | vineyardvines.com
+Lacoste | lacoste.com
+Hugo Boss | hugoboss.com
+Armani Exchange | armaniexchange.com
+Guess | guess.com
+Michael Kors | michaelkors.com
+Coach | coach.com
+Coach Outlet | coachoutlet.com
+Kate Spade | katespade.com
+Tory Burch | toryburch.com
+Marc Jacobs | marcjacobs.com
+Longchamp | longchamp.com
+Louis Vuitton | louisvuitton.com
+Gucci | gucci.com
+Prada | prada.com
+Burberry | burberry.com
+Chanel | chanel.com
+Hermès | hermes.com | Hermes
+Dior | dior.com
+Saint Laurent | ysl.com | YSL
+Balenciaga | balenciaga.com
+Versace | versace.com
+Fendi | fendi.com
+Bottega Veneta | bottegaveneta.com
+Moncler | moncler.com
+Canada Goose | canadagoose.com
+Arc'teryx | arcteryx.com | Arcteryx
+Outdoor Voices | outdoorvoices.com
+Vuori | vuoriclothing.com
+Alo Yoga | aloyoga.com | Alo
+Gymshark | gymshark.com
+Fabletics | fabletics.com
+Sweaty Betty | sweatybetty.com
+Girlfriend Collective | girlfriend.com
+Rhone | rhone.com
+Ten Thousand | tenthousand.cc
+Oakley | oakley.com
+Ray-Ban | ray-ban.com | Ray Ban
+Warby Parker | warbyparker.com
+Zenni Optical | zennioptical.com | Zenni
+EyeBuyDirect | eyebuydirect.com
+GlassesUSA | glassesusa.com
+LensCrafters | lenscrafters.com
+Pearle Vision | pearlevision.com
+1-800 Contacts | 1800contacts.com | 1800 Contacts
+Sunglass Hut | sunglasshut.com
+Fossil | fossil.com
+Daniel Wellington | danielwellington.com
+Swatch | swatch.com
+Casio | casio.com
+Seiko | seikowatches.com
+Citizen | citizenwatch.com
+Garmin | garmin.com
+Pandora Jewelry | pandora.net
+Kay Jewelers | kay.com | Kay
+Zales | zales.com
+Jared | jared.com
+Tiffany & Co. | tiffany.com | Tiffany, Tiffany and Co
+Cartier | cartier.com
+Blue Nile | bluenile.com
+Brilliant Earth | brilliantearth.com
+Mejuri | mejuri.com
+Gorjana | gorjana.com
+Kendra Scott | kendrascott.com
+Alex and Ani | alexandani.com
+BaubleBar | baublebar.com
+Claire's | claires.com | Claires
+Swarovski | swarovski.com
+David Yurman | davidyurman.com
+Foot Locker | footlocker.com
+Champs Sports | champssports.com | Champs
+Finish Line | finishline.com
+JD Sports | jdsports.com
+DSW | dsw.com | Designer Shoe Warehouse
+Famous Footwear | famousfootwear.com
+Zappos | zappos.com
+6pm | 6pm.com
+Shoe Carnival | shoecarnival.com
+Journeys | journeys.com
+Vans | vans.com
+Converse | converse.com
+New Balance | newbalance.com
+ASICS | asics.com
+Brooks Running | brooksrunning.com | Brooks
+Hoka | hoka.com
+On | on.com | On Running
+Saucony | saucony.com
+Reebok | reebok.com
+Puma | puma.com
+Skechers | skechers.com
+Crocs | crocs.com
+Birkenstock | birkenstock.com
+Dr. Martens | drmartens.com | Dr Martens
+Timberland | timberland.com
+UGG | ugg.com
+Allbirds | allbirds.com
+Rothy's | rothys.com | Rothys
+Clarks | clarks.com
+Cole Haan | colehaan.com
+Steve Madden | stevemadden.com
+Sam Edelman | samedelman.com
+Aldo | aldoshoes.com
+Stuart Weitzman | stuartweitzman.com
+Keen | keenfootwear.com
+Merrell | merrell.com
+Salomon | salomon.com
+Teva | teva.com
+Sorel | sorel.com
+Hunter | hunterboots.com
+Red Wing | redwingshoes.com
+Thursday Boot Co. | thursdayboots.com | Thursday Boots
+Veja | veja-store.com
+Tecovas | tecovas.com
+Boot Barn | bootbarn.com
+Dick's Sporting Goods | dickssportinggoods.com | Dicks Sporting Goods, Dicks
+Academy Sports | academy.com | Academy Sports and Outdoors
+Bass Pro Shops | basspro.com | Bass Pro
+Cabela's | cabelas.com | Cabelas
+Scheels | scheels.com
+Big 5 Sporting Goods | big5sportinggoods.com | Big 5
+Fanatics | fanatics.com
+Lids | lids.com
+NFL Shop | nflshop.com
+MLB Shop | mlbshop.com
+NBA Store | store.nba.com
+Backcountry | backcountry.com
+Moosejaw | moosejaw.com
+Sierra | sierra.com | Sierra Trading Post
+evo | evo.com
+Tillys | tillys.com
+Zumiez | zumiez.com
+PacSun | pacsun.com | Pacific Sunwear
+Hot Topic | hottopic.com
+BoxLunch | boxlunch.com
+Spencer's | spencersonline.com | Spencers
+Buckle | buckle.com
+Carter's | carters.com | Carters
+OshKosh B'gosh | oshkosh.com | OshKosh
+The Children's Place | childrensplace.com | Childrens Place
+Janie and Jack | janieandjack.com
+Hanna Andersson | hannaandersson.com
+Primary | primary.com
+
+# Beauty and personal care
+Sephora | sephora.com
+Ulta Beauty | ulta.com | Ulta
+Sally Beauty | sallybeauty.com
+Glossier | glossier.com
+Fenty Beauty | fentybeauty.com
+Rare Beauty | rarebeauty.com
+Kylie Cosmetics | kyliecosmetics.com
+MAC Cosmetics | maccosmetics.com | MAC
+Clinique | clinique.com
+Estée Lauder | esteelauder.com | Estee Lauder
+Lancôme | lancome-usa.com | Lancome
+Benefit Cosmetics | benefitcosmetics.com | Benefit
+NYX | nyxcosmetics.com
+Maybelline | maybelline.com
+L'Oréal Paris | lorealparis.com | Loreal
+e.l.f. Cosmetics | elfcosmetics.com | elf
+ColourPop | colourpop.com
+Morphe | morphe.com
+Anastasia Beverly Hills | anastasiabeverlyhills.com
+Tarte | tartecosmetics.com
+Too Faced | toofaced.com
+Urban Decay | urbandecay.com
+Charlotte Tilbury | charlottetilbury.com
+NARS | narscosmetics.com
+Kiehl's | kiehls.com | Kiehls
+Origins | origins.com
+Drunk Elephant | drunkelephant.com
+The Ordinary | theordinary.com
+CeraVe | cerave.com
+La Roche-Posay | laroche-posay.us | La Roche Posay
+Neutrogena | neutrogena.com
+Olay | olay.com
+Dove | dove.com
+Aveeno | aveeno.com
+Cetaphil | cetaphil.com
+Paula's Choice | paulaschoice.com | Paulas Choice
+Tatcha | tatcha.com
+Sunday Riley | sundayriley.com
+Glow Recipe | glowrecipe.com
+Summer Fridays | summerfridays.com
+Supergoop! | supergoop.com | Supergoop
+Kosas | kosas.com
+Ilia | iliabeauty.com
+Merit | meritbeauty.com
+Native | nativecos.com | Native Deodorant
+Dr. Squatch | drsquatch.com | Dr Squatch
+Harry's | harrys.com | Harrys
+Dollar Shave Club | dollarshaveclub.com
+Gillette | gillette.com
+Billie | mybillie.com
+Manscaped | manscaped.com
+Hims | hims.com
+Hers | forhers.com
+Keeps | keeps.com
+Ro | ro.co | Roman
+Nurx | nurx.com
+Curology | curology.com
+Agency | withagency.com
+Prose | prose.com
+Function of Beauty | functionofbeauty.com
+Olaplex | olaplex.com
+Ouai | theouai.com
+Briogeo | briogeo.com
+Amika | loveamika.com
+Drybar | drybar.com
+Ipsy | ipsy.com
+Birchbox | birchbox.com
+FabFitFun | fabfitfun.com
+Bath & Body Works | bathandbodyworks.com | Bath and Body Works
+Lush | lush.com
+The Body Shop | thebodyshop.com | Body Shop
+L'Occitane | loccitane.com | Loccitane
+Aesop | aesop.com
+Jo Malone | jomalone.com
+Diptyque | diptyqueparis.com
+Byredo | byredo.com
+Le Labo | lelabofragrances.com
+FragranceNet | fragrancenet.com
+OPI | opi.com
+Essie | essie.com
+Olive & June | oliveandjune.com | Olive and June
+Supercuts | supercuts.com
+Great Clips | greatclips.com
+Fantastic Sams | fantasticsams.com
+Sport Clips | sportclips.com
+European Wax Center | waxcenter.com
+Hand & Stone | handandstone.com | Hand and Stone
+Massage Envy | massageenvy.com
+Elements Massage | elementsmassage.com
+Heyday | heydayskincare.com
+Silver Mirror | silvermirror.com
+GlossGenius | glossgenius.com
+Vagaro | vagaro.com
+Booksy | booksy.com
+StyleSeat | styleseat.com
+Mindbody | mindbodyonline.com
+Fresha | fresha.com
+
+# Pharmacies, health and wellness
+CVS | cvs.com | CVS Pharmacy, CVS Caremark, Caremark
+Walgreens | walgreens.com | Walgreen
+Rite Aid | riteaid.com
+Duane Reade | duanereade.com
+GoodRx | goodrx.com
+Capsule | capsule.com | Capsule Pharmacy
+Alto Pharmacy | alto.com | Alto
+Express Scripts | express-scripts.com
+Optum Rx | optumrx.com
+Mark Cuban Cost Plus Drugs | costplusdrugs.com | Cost Plus Drugs
+Blink Health | blinkhealth.com
+SingleCare | singlecare.com
+1-800-PetMeds | 1800petmeds.com | PetMeds
+The Vitamin Shoppe | vitaminshoppe.com | Vitamin Shoppe
+GNC | gnc.com
+iHerb | iherb.com
+Vitacost | vitacost.com
+Swanson | swansonvitamins.com
+Ritual | ritual.com
+Care/of | takecareof.com | Care of
+AG1 | drinkag1.com | Athletic Greens
+Thorne | thorne.com
+Garden of Life | gardenoflife.com
+Nature Made | naturemade.com
+Olly | olly.com
+Momentous | livemomentous.com
+Liquid I.V. | liquid-iv.com | Liquid IV
+LMNT | drinklmnt.com
+Nuun | nuunlife.com
+One Medical | onemedical.com
+Teladoc | teladoc.com
+MDLIVE | mdlive.com
+Amwell | amwell.com
+Doctor On Demand | doctorondemand.com
+PlushCare | plushcare.com
+Sesame | sesamecare.com
+Kaiser Permanente | kaiserpermanente.org | Kaiser
+Mount Sinai | mountsinai.org
+NYU Langone | nyulangone.org
+NewYork-Presbyterian | nyp.org | NewYork Presbyterian, NY Presbyterian
+Northwell Health | northwell.edu | Northwell
+Hospital for Special Surgery | hss.edu | HSS
+Memorial Sloan Kettering | mskcc.org | MSK
+Mayo Clinic | mayoclinic.org
+Cleveland Clinic | clevelandclinic.org
+Johns Hopkins Medicine | hopkinsmedicine.org
+Quest Diagnostics | questdiagnostics.com | Quest
+Labcorp | labcorp.com
+CityMD | citymd.com
+GoHealth Urgent Care | gohealthuc.com
+MinuteClinic | minuteclinic.com
+Carbon Health | carbonhealth.com
+Forward | goforward.com
+Parsley Health | parsleyhealth.com
+Talkspace | talkspace.com
+BetterHelp | betterhelp.com
+Cerebral | cerebral.com
+Headspace | headspace.com
+Calm | calm.com
+Brightside | brightside.com
+Lyra Health | lyrahealth.com
+Spring Health | springhealth.com
+Noom | noom.com
+WeightWatchers | weightwatchers.com | WW, Weight Watchers
+Jenny Craig | jennycraig.com
+Nutrisystem | nutrisystem.com
+MyFitnessPal | myfitnesspal.com
+Lose It! | loseit.com | Lose It
+Whoop | whoop.com
+Oura | ouraring.com | Oura Ring
+Fitbit | fitbit.com
+Polar | polar.com
+Eight Sleep | eightsleep.com
+Hatch | hatch.co
+Aspen Dental | aspendental.com
+Candid | candidco.com
+Invisalign | invisalign.com
+Delta Dental | deltadental.com
+Quip | getquip.com
+Visionworks | visionworks.com
+America's Best | americasbest.com | Americas Best Contacts
+MyEyeDr | myeyedr.com
+Everlywell | everlywell.com
+LetsGetChecked | letsgetchecked.com
+23andMe | 23andme.com
+Ancestry | ancestry.com | Ancestry.com
+MyHeritage | myheritage.com
+Function Health | functionhealth.com
+Maven Clinic | mavenclinic.com
+Kindbody | kindbody.com
+Progyny | progyny.com
+Carrot Fertility | get-carrot.com
+Lemonaid | lemonaidhealth.com
+K Health | khealth.com
+Included Health | includedhealth.com
+Hinge Health | hingehealth.com
+Sword Health | swordhealth.com
+Omada | omadahealth.com
+Virta Health | virtahealth.com
+Calibrate | joincalibrate.com
+Found | joinfound.com
+Henry Meds | henrymeds.com
+Planned Parenthood | plannedparenthood.org
+
+# Restaurants, fast food and fast casual
+McDonald's | mcdonalds.com | McDonalds, Mcdonald
+Burger King | bk.com
+Wendy's | wendys.com | Wendys
+Taco Bell | tacobell.com
+Chick-fil-A | chick-fil-a.com | Chick fil A, Chickfila
+Chipotle | chipotle.com | Chipotle Mexican Grill, Chipotle Online
+Subway | subway.com
+Starbucks | starbucks.com | SBUX, Starbucks Card
+Dunkin' | dunkindonuts.com | Dunkin, Dunkin Donuts
+KFC | kfc.com | Kentucky Fried Chicken
+Popeyes | popeyes.com | Popeyes Louisiana Kitchen
+Arby's | arbys.com | Arbys
+Sonic | sonicdrivein.com | Sonic Drive-In
+Jack in the Box | jackinthebox.com
+Carl's Jr. | carlsjr.com | Carls Jr
+Hardee's | hardees.com | Hardees
+Whataburger | whataburger.com
+In-N-Out Burger | in-n-out.com | In N Out, In-N-Out
+Five Guys | fiveguys.com
+Shake Shack | shakeshack.com
+Smashburger | smashburger.com
+The Habit Burger Grill | habitburger.com | Habit Burger
+Culver's | culvers.com | Culvers
+Steak 'n Shake | steaknshake.com | Steak n Shake
+White Castle | whitecastle.com
+Krystal | krystal.com
+Checkers | checkers.com | Rallys
+Dairy Queen | dairyqueen.com | DQ
+Baskin-Robbins | baskinrobbins.com | Baskin Robbins
+Cold Stone Creamery | coldstonecreamery.com | Cold Stone
+Ben & Jerry's | benjerry.com | Ben and Jerrys
+Carvel | carvel.com
+Menchie's | menchies.com | Menchies
+Pinkberry | pinkberry.com
+Yogurtland | yogurt-land.com
+16 Handles | 16handles.com
+Van Leeuwen | vanleeuwenicecream.com
+Salt & Straw | saltandstraw.com | Salt and Straw
+Jeni's | jenis.com | Jenis Splendid Ice Creams
+Insomnia Cookies | insomniacookies.com
+Crumbl | crumblcookies.com | Crumbl Cookies
+Cinnabon | cinnabon.com
+Auntie Anne's | auntieannes.com | Auntie Annes
+Wetzel's Pretzels | wetzels.com | Wetzels
+Krispy Kreme | krispykreme.com
+Tim Hortons | timhortons.com
+Panera Bread | panerabread.com | Panera
+Sweetgreen | sweetgreen.com
+Cava | cava.com
+Just Salad | justsalad.com
+Chopt | choptsalad.com
+Dig | diginn.com | Dig Inn
+Honeygrow | honeygrow.com
+Tender Greens | tendergreens.com
+Mendocino Farms | mendocinofarms.com
+Saladworks | saladworks.com
+Qdoba | qdoba.com
+Moe's Southwest Grill | moes.com | Moes
+El Pollo Loco | elpolloloco.com
+Taco Cabana | tacocabana.com
+Del Taco | deltaco.com
+Chuy's | chuys.com | Chuys
+Torchy's Tacos | torchystacos.com | Torchys
+Velvet Taco | velvettaco.com
+Rubio's | rubios.com | Rubios
+Wingstop | wingstop.com
+Buffalo Wild Wings | buffalowildwings.com | BWW, BDubs
+Hooters | hooters.com
+Pizza Hut | pizzahut.com
+Domino's | dominos.com | Dominos, Dominos Pizza
+Papa John's | papajohns.com | Papa Johns
+Little Caesars | littlecaesars.com
+Papa Murphy's | papamurphys.com | Papa Murphys
+Marco's Pizza | marcos.com | Marcos
+Sbarro | sbarro.com
+MOD Pizza | modpizza.com
+Blaze Pizza | blazepizza.com
+Jet's Pizza | jetspizza.com | Jets Pizza
+Hungry Howie's | hungryhowies.com
+Round Table Pizza | roundtablepizza.com
+Cici's | cicis.com | Cicis Pizza
+Chuck E. Cheese | chuckecheese.com | Chuck E Cheese
+Joe's Pizza | joespizzanyc.com | Joes Pizza
+Artichoke Basille's Pizza | artichokepizza.com | Artichoke Pizza
+Olive Garden | olivegarden.com
+Red Lobster | redlobster.com
+Applebee's | applebees.com | Applebees
+Chili's | chilis.com | Chilis
+TGI Fridays | tgifridays.com | Fridays
+Outback Steakhouse | outback.com | Outback
+Texas Roadhouse | texasroadhouse.com
+LongHorn Steakhouse | longhornsteakhouse.com | LongHorn
+Ruth's Chris Steak House | ruthschris.com | Ruths Chris
+Morton's | mortons.com | Mortons
+The Capital Grille | thecapitalgrille.com | Capital Grille
+Fleming's | flemingssteakhouse.com | Flemings
+Mastro's | mastrosrestaurants.com | Mastros
+The Cheesecake Factory | thecheesecakefactory.com | Cheesecake Factory
+P.F. Chang's | pfchangs.com | PF Changs
+Panda Express | pandaexpress.com
+Benihana | benihana.com
+Red Robin | redrobin.com
+Ruby Tuesday | rubytuesday.com
+Denny's | dennys.com | Dennys
+IHOP | ihop.com
+Cracker Barrel | crackerbarrel.com
+Bob Evans | bobevans.com
+Waffle House | wafflehouse.com
+First Watch | firstwatch.com
+Snooze | snoozeeatery.com | Snooze an AM Eatery
+BJ's Restaurant | bjsrestaurants.com | BJs Restaurant
+Yard House | yardhouse.com
+California Pizza Kitchen | cpk.com | CPK
+Maggiano's | maggianos.com | Maggianos
+Carrabba's | carrabbas.com | Carrabbas
+Bonefish Grill | bonefishgrill.com
+Famous Dave's | famousdaves.com
+Dickey's Barbecue Pit | dickeys.com | Dickeys
+Sonny's BBQ | sonnysbbq.com
+Mission BBQ | mission-bbq.com
+Noodles & Company | noodles.com | Noodles and Company
+Potbelly | potbelly.com
+Jersey Mike's | jerseymikes.com | Jersey Mikes
+Jimmy John's | jimmyjohns.com | Jimmy Johns
+Firehouse Subs | firehousesubs.com
+Which Wich | whichwich.com
+Jason's Deli | jasonsdeli.com
+McAlister's Deli | mcalistersdeli.com | McAlisters
+Schlotzsky's | schlotzskys.com
+Charleys Cheesesteaks | charleys.com | Charleys
+Zaxby's | zaxbys.com | Zaxbys
+Raising Cane's | raisingcanes.com | Raising Canes, Canes
+Bojangles | bojangles.com
+Church's Chicken | churchs.com | Churchs
+Bareburger | bareburger.com
+Umami Burger | umamiburger.com
+BurgerFi | burgerfi.com
+Freddy's | freddys.com | Freddys Frozen Custard
+Portillo's | portillos.com | Portillos
+Eataly | eataly.com
+Le Pain Quotidien | lepainquotidien.com
+Pret A Manger | pret.com | Pret
+Dos Toros | dostoros.com
+Joe & the Juice | joejuice.com | Joe and the Juice
+Pressed | pressed.com | Pressed Juicery
+Jamba | jamba.com | Jamba Juice
+Smoothie King | smoothieking.com
+Tropical Smoothie Cafe | tropicalsmoothiecafe.com
+Playa Bowls | playabowls.com
+Pokeworks | pokeworks.com
+Gong Cha | gongchausa.com
+Kung Fu Tea | kungfutea.com
+Chatime | chatime.com
+Blue Bottle Coffee | bluebottlecoffee.com | Blue Bottle
+Peet's Coffee | peets.com | Peets
+Caribou Coffee | cariboucoffee.com | Caribou
+Dutch Bros | dutchbros.com
+The Coffee Bean & Tea Leaf | coffeebean.com | Coffee Bean
+Lavazza | lavazza.com
+illy | illy.com
+La Colombe | lacolombe.com
+Stumptown | stumptowncoffee.com
+Intelligentsia | intelligentsia.com
+Counter Culture | counterculturecoffee.com
+Joe Coffee | joecoffeecompany.com
+Birch Coffee | birchcoffee.com
+Gregorys Coffee | gregoryscoffee.com | Gregorys
+Bluestone Lane | bluestonelane.com
+Devoción | devocion.com | Devocion
+Partners Coffee | partnerscoffee.com
+Blank Street | blankstreet.com | Blank Street Coffee
+Think Coffee | thinkcoffee.com
+Toby's Estate | tobysestate.com | Tobys Estate
+Cafe Grumpy | cafegrumpy.com
+Trade Coffee | drinktrade.com
+Atlas Coffee Club | atlascoffeeclub.com
+Onyx Coffee Lab | onyxcoffeelab.com
+Verve Coffee | vervecoffee.com
+Philz Coffee | philzcoffee.com | Philz
+Biggby Coffee | biggby.com
+Scooter's Coffee | scooterscoffee.com
+PJ's Coffee | pjscoffee.com
+The Halal Guys | thehalalguys.com | Halal Guys
+Xi'an Famous Foods | xianfoods.com | Xian Famous Foods
+Din Tai Fung | dintaifungusa.com
+Nobu | noburestaurants.com
+Momofuku | momofuku.com
+Ippudo | ippudony.com
+Ichiran | ichiranusa.com
+Katz's Delicatessen | katzsdelicatessen.com | Katzs Deli
+Russ & Daughters | russanddaughters.com | Russ and Daughters
+Levain Bakery | levainbakery.com | Levain
+Magnolia Bakery | magnoliabakery.com
+Dominique Ansel | dominiqueansel.com
+Milk Bar | milkbarstore.com
+Sprinkles | sprinkles.com
+Nothing Bundt Cakes | nothingbundtcakes.com
+Tous les Jours | tlj.com
+Paris Baguette | parisbaguette.com
+85°C Bakery Cafe | 85cbakerycafe.com | 85C Bakery
+Breads Bakery | breadsbakery.com
+Maison Kayser | maison-kayser-usa.com
+OpenTable | opentable.com
+Resy | resy.com
+Tock | exploretock.com
+SevenRooms | sevenrooms.com
+Yelp | yelp.com
+Toast | toasttab.com | TST
+Clover | clover.com
+Seamless | seamless.com
+Grubhub | grubhub.com
+DoorDash | doordash.com | DD, Door Dash, DD DoorDash, DashPass, DoorDash Dashpass
+Uber Eats | ubereats.com | UberEats, Uber Eats Order
+Postmates | postmates.com
+Caviar | trycaviar.com
+Slice | slicelife.com
+ChowNow | chownow.com
+ezCater | ezcater.com
+Beyond Menu | beyondmenu.com
+Menufy | menufy.com
+Owner.com | owner.com
+BentoBox | getbento.com
+
+# Beverages, wine and spirits
+Starbucks at Home | starbucksathome.com
+Death Wish Coffee | deathwishcoffee.com
+Black Rifle Coffee | blackriflecoffee.com
+MUD\WTR | mudwtr.com | MUD WTR
+Athletic Brewing | athleticbrewing.com
+Olipop | drinkolipop.com
+Poppi | drinkpoppi.com
+Liquid Death | liquiddeath.com
+Celsius | celsius.com
+Red Bull | redbull.com
+Monster Energy | monsterenergy.com
+Coca-Cola | coca-cola.com | Coca Cola, Coke
+Pepsi | pepsi.com
+SodaStream | sodastream.com
+Zevia | zevia.com
+Drizly | drizly.com
+Minibar Delivery | minibardelivery.com | Minibar
+Total Wine | totalwine.com | Total Wine and More
+BevMo | bevmo.com
+Spec's | specsonline.com | Specs
+Wine.com | wine.com
+Firstleaf | firstleaf.com
+Naked Wines | nakedwines.com
+Vivino | vivino.com
+Wine Access | wineaccess.com
+Astor Wines | astorwines.com
+Saucey | saucey.com
+ReserveBar | reservebar.com
+Flaviar | flaviar.com
+Caskers | caskers.com
+
+# Rideshare, scooters and car share
+Uber | uber.com | Uber Trip, Uber Technologies, Uber One, Uber Rides
+Lyft | lyft.com | Lyft Ride
+Via | ridewithvia.com
+Curb | gocurb.com | Curb Taxi
+Revel | gorevel.com
+Lime | li.me | Lime Scooter
+Bird | bird.co
+Veo | veoride.com
+Zipcar | zipcar.com
+Getaround | getaround.com
+Turo | turo.com
+Blade | blade.com | Fly Blade
+Waymo | waymo.com
+Bolt | bolt.eu
+Grab | grab.com
+Cabify | cabify.com
+Blacklane | blacklane.com
+Carmel Limo | carmellimo.com | Carmel
+Dial 7 | dial7.com
+
+# Transit, trains, buses and tolls
+MTA | mta.info | Metropolitan Transportation Authority, NYC Transit, NYCT, MetroCard, OMNY, MTA NYCT, NYC Subway, LIRR, Long Island Rail Road, Metro-North, Metro North
+Citi Bike | citibikenyc.com | Citibike, Citi Bike NYC
+Divvy | divvybikes.com
+Bluebikes | bluebikes.com
+Capital Bikeshare | capitalbikeshare.com
+Bay Wheels | baywheels.com
+Amtrak | amtrak.com
+NJ Transit | njtransit.com | New Jersey Transit, NJT
+PATH | panynj.gov | Port Authority, PANYNJ, Port Authority NY NJ
+NYC Ferry | ferry.nyc
+Seastreak | seastreak.com
+NY Waterway | nywaterway.com
+SEPTA | septa.org
+WMATA | wmata.com | Washington Metro, SmarTrip
+MBTA | mbta.com | CharlieCard
+CTA | transitchicago.com | Chicago Transit Authority, Ventra
+Metra | metra.com
+BART | bart.gov
+Muni | sfmta.com | SFMTA
+Clipper | clippercard.com | Clipper Card
+LA Metro | metro.net | TAP Card
+Sound Transit | soundtransit.org
+ORCA | myorca.com | ORCA Card
+TriMet | trimet.org
+RTD Denver | rtd-denver.com | RTD
+DART | dart.org
+Metro Transit | metrotransit.org
+MARTA | itsmarta.com
+Brightline | gobrightline.com
+Greyhound | greyhound.com
+Megabus | megabus.com
+FlixBus | flixbus.com
+Peter Pan | peterpanbus.com | Peter Pan Bus
+Coach USA | coachusa.com
+OurBus | ourbus.com
+Wanderu | wanderu.com
+Busbud | busbud.com
+Hampton Jitney | hamptonjitney.com
+Academy Bus | academybus.com
+E-ZPass New York | e-zpassny.com | EZPass NY, E-ZPass NY, EZ Pass, EZPass, E ZPass
+E-ZPass New Jersey | ezpassnj.com | EZPass NJ, E-ZPass NJ
+E-ZPass Massachusetts | ezdrivema.com | EZDriveMA, EZ Drive MA
+SunPass | sunpass.com
+FasTrak | bayareafastrak.org
+The Toll Roads | thetollroads.com
+TxTag | txtag.org
+NTTA | ntta.org | TollTag
+Peach Pass | peachpass.com
+Illinois Tollway | illinoistollway.com | I-PASS, IPass
+Good To Go | mygoodtogo.com
+Tolls by Mail NY | tollsbymailny.com | Tolls by Mail
+New York State Thruway | thruway.ny.gov | NYS Thruway, Thruway
+ParkMobile | parkmobile.io | Park Mobile
+SpotHero | spothero.com | Spot Hero
+ParkWhiz | parkwhiz.com
+PayByPhone | paybyphone.com | Pay By Phone
+Passport Parking | passportinc.com
+LAZ Parking | lazparking.com | LAZ
+Icon Parking | iconparking.com
+Impark | impark.com
+SP+ | spplus.com | SP Plus
+Premium Parking | premiumparking.com
+Interstate Parking | interstateparking.com
+Reef Parking | reefparking.com
+
+# Airlines
+Delta | delta.com | Delta Air Lines, Delta Airlines, Delta Air
+United | united.com | United Airlines
+American Airlines | aa.com | American Air, AA
+Southwest | southwest.com | Southwest Airlines, Southwes
+JetBlue | jetblue.com | Jet Blue, JetBlue Airways
+Alaska Airlines | alaskaair.com | Alaska Air
+Spirit | spirit.com | Spirit Airlines, Spirit Airl
+Frontier | flyfrontier.com | Frontier Airlines
+Allegiant | allegiantair.com | Allegiant Air
+Sun Country | suncountry.com | Sun Country Airlines
+Hawaiian Airlines | hawaiianairlines.com
+Breeze | flybreeze.com | Breeze Airways
+Avelo | aveloair.com | Avelo Airlines
+Air Canada | aircanada.com
+WestJet | westjet.com
+British Airways | britishairways.com
+Virgin Atlantic | virginatlantic.com
+Lufthansa | lufthansa.com
+Air France | airfrance.com
+KLM | klm.com
+Iberia | iberia.com
+Aer Lingus | aerlingus.com
+Icelandair | icelandair.com
+Norse Atlantic | flynorse.com | Norse
+Swiss | swiss.com | Swiss International Air Lines
+Austrian Airlines | austrian.com
+TAP Air Portugal | flytap.com | TAP Portugal
+Turkish Airlines | turkishairlines.com
+Emirates | emirates.com
+Qatar Airways | qatarairways.com
+Etihad | etihad.com
+El Al | elal.com
+Singapore Airlines | singaporeair.com
+Cathay Pacific | cathaypacific.com
+Japan Airlines | jal.co.jp | JAL
+ANA | ana.co.jp | All Nippon Airways
+Korean Air | koreanair.com
+Asiana | flyasiana.com
+EVA Air | evaair.com
+China Airlines | china-airlines.com
+Qantas | qantas.com
+Air New Zealand | airnewzealand.com
+LATAM | latamairlines.com
+Avianca | avianca.com
+Copa Airlines | copaair.com | Copa
+Aeroméxico | aeromexico.com | Aeromexico
+Volaris | volaris.com
+Viva Aerobus | vivaaerobus.com
+Caribbean Airlines | caribbean-airlines.com
+Ryanair | ryanair.com
+easyJet | easyjet.com
+Wizz Air | wizzair.com
+Vueling | vueling.com
+Norwegian | norwegian.com
+SAS | flysas.com | Scandinavian Airlines
+Finnair | finnair.com
+LOT | lot.com | LOT Polish Airlines
+Aegean | aegeanair.com
+ITA Airways | ita-airways.com
+Condor | condor.com
+Eurowings | eurowings.com
+Ethiopian Airlines | ethiopianairlines.com
+Air India | airindia.com
+IndiGo | goindigo.in
+AirAsia | airasia.com
+Delta Vacations | deltavacations.com
+Southwest Vacations | southwestvacations.com
+
+# Airports and travel services
+JFK Airport | jfkairport.com
+LaGuardia Airport | laguardiaairport.com | LGA
+Newark Airport | newarkairport.com | EWR
+CLEAR | clearme.com | Clear Secure
+TSA PreCheck | tsa.gov | TSA
+Priority Pass | prioritypass.com
+Gogo | gogoair.com | Gogo Inflight
+Viasat | viasat.com
+Airalo | airalo.com
+Holafly | esim.holafly.com
+Global Entry | ttp.dhs.gov | Trusted Traveler
+
+# Hotels, lodging and travel booking
+Marriott | marriott.com | Marriott Bonvoy, Courtyard, Residence Inn, Fairfield Inn, SpringHill Suites, TownePlace Suites, Westin, Sheraton, W Hotels, Aloft, Moxy, Four Points
+Hilton | hilton.com | Hilton Honors, Hampton Inn, Hilton Garden Inn, DoubleTree, Embassy Suites, Homewood Suites, Home2 Suites, Tru by Hilton
+Hyatt | hyatt.com | Hyatt Regency, Hyatt Place, Hyatt House, Andaz
+IHG | ihg.com | Holiday Inn, Holiday Inn Express, Crowne Plaza, InterContinental, Staybridge Suites, Candlewood Suites
+Wyndham | wyndhamhotels.com | Days Inn, Super 8, Ramada, La Quinta, Travelodge, Microtel, Wingate
+Choice Hotels | choicehotels.com | Comfort Inn, Quality Inn, Sleep Inn, Econo Lodge, Rodeway Inn, Cambria
+Best Western | bestwestern.com
+Radisson | radissonhotels.com
+Accor | accor.com | Sofitel, Novotel, Ibis
+Four Seasons | fourseasons.com
+The Ritz-Carlton | ritzcarlton.com | Ritz Carlton
+St. Regis | stregis.com | St Regis
+Ace Hotel | acehotel.com
+The Standard | standardhotels.com
+1 Hotels | 1hotels.com
+Kimpton | kimptonhotels.com
+Loews Hotels | loewshotels.com | Loews
+Omni Hotels | omnihotels.com | Omni
+Fairmont | fairmont.com
+Mandarin Oriental | mandarinoriental.com
+The Peninsula | peninsula.com
+Rosewood | rosewoodhotels.com
+Aman | aman.com
+Belmond | belmond.com
+citizenM | citizenm.com
+Yotel | yotel.com
+The Pod Hotels | thepodhotel.com | Pod Hotel
+Arlo Hotels | arlohotels.com | Arlo
+Selina | selina.com
+Generator | staygenerator.com
+Hostelworld | hostelworld.com
+HI USA | hiusa.org | Hostelling International
+Red Roof | redroof.com | Red Roof Inn
+Motel 6 | motel6.com
+Extended Stay America | extendedstayamerica.com
+MGM Resorts | mgmresorts.com | MGM Grand, Bellagio, Aria
+Caesars | caesars.com | Caesars Entertainment, Caesars Palace, Harrahs
+Wynn | wynnlasvegas.com | Wynn Las Vegas
+The Venetian | venetianlasvegas.com | Venetian
+Atlantis | atlantisbahamas.com
+Sandals | sandals.com
+Club Med | clubmed.us
+Hard Rock | hardrock.com | Hard Rock Hotel
+Walt Disney World | disneyworld.disney.go.com | Disney World, WDW
+Disneyland | disneyland.disney.go.com
+Disney | disney.com | Disney Store, Walt Disney
+Universal Orlando | universalorlando.com | Universal Studios
+SeaWorld | seaworld.com
+Six Flags | sixflags.com
+Cedar Point | cedarpoint.com
+Legoland | legoland.com
+Great Wolf Lodge | greatwolf.com
+Kalahari | kalahariresorts.com
+Vail Resorts | vailresorts.com | Epic Pass
+Ikon Pass | ikonpass.com
+Airbnb | airbnb.com | Air BnB, Airbnb Inc
+Vrbo | vrbo.com | HomeAway
+Booking.com | booking.com | Booking
+Expedia | expedia.com
+Hotels.com | hotels.com
+Priceline | priceline.com
+Kayak | kayak.com
+Orbitz | orbitz.com
+Travelocity | travelocity.com
+Hotwire | hotwire.com
+Trivago | trivago.com
+Agoda | agoda.com
+Tripadvisor | tripadvisor.com | Trip Advisor
+Hopper | hopper.com
+Skyscanner | skyscanner.com
+Skiplagged | skiplagged.com
+Momondo | momondo.com
+CheapOair | cheapoair.com
+Kiwi.com | kiwi.com
+StudentUniverse | studentuniverse.com
+Costco Travel | costcotravel.com
+Amex Travel | travel.americanexpress.com
+Chase Travel | travelsecure.chase.com
+Capital One Travel | travel.capitalone.com
+Navan | navan.com | TripActions
+Concur | concur.com | SAP Concur
+Egencia | egencia.com
+Hipcamp | hipcamp.com
+Recreation.gov | recreation.gov
+ReserveAmerica | reserveamerica.com
+KOA | koa.com | Kampgrounds of America
+Outdoorsy | outdoorsy.com
+RVshare | rvshare.com
+Sonder | sonder.com
+Blueground | theblueground.com
+Furnished Finder | furnishedfinder.com
+Kasa | kasa.com
+HotelTonight | hoteltonight.com | Hotel Tonight
+Mr & Mrs Smith | mrandmrssmith.com
+Virtuoso | virtuoso.com
+Viator | viator.com
+GetYourGuide | getyourguide.com | Get Your Guide
+Klook | klook.com
+Tiqets | tiqets.com
+Headout | headout.com
+CityPASS | citypass.com
+Go City | gocity.com
+Big Bus Tours | bigbustours.com | Big Bus
+Gray Line | grayline.com
+City Experiences | cityexperiences.com | Hornblower
+Circle Line | circleline.com
+Empire State Building | esbnyc.com | ESB
+Top of the Rock | rockefellercenter.com | Rockefeller Center
+Edge NYC | edgenyc.com | Edge Hudson Yards
+Summit One Vanderbilt | summitov.com | Summit
+One World Observatory | oneworldobservatory.com
+9/11 Memorial & Museum | 911memorial.org | 911 Memorial
+The Met | metmuseum.org | Metropolitan Museum of Art, Met Museum
+MoMA | moma.org | Museum of Modern Art
+Guggenheim | guggenheim.org
+Whitney Museum | whitney.org | Whitney
+American Museum of Natural History | amnh.org | AMNH
+Brooklyn Museum | brooklynmuseum.org
+New Museum | newmuseum.org
+Intrepid Museum | intrepidmuseum.org | Intrepid
+New-York Historical Society | nyhistory.org
+Museum of the City of New York | mcny.org
+The Frick | frick.org | Frick Collection
+The Morgan Library | themorgan.org | Morgan Library
+Cooper Hewitt | cooperhewitt.org
+New York Botanical Garden | nybg.org | NYBG
+Brooklyn Botanic Garden | bbg.org
+Bronx Zoo | bronxzoo.com
+New York Aquarium | nyaquarium.com
+Central Park Conservancy | centralparknyc.org
+The High Line | thehighline.org | High Line
+Carnegie Hall | carnegiehall.org
+Lincoln Center | lincolncenter.org
+The Metropolitan Opera | metopera.org | Met Opera
+New York City Ballet | nycballet.com | NYCB
+New York Philharmonic | nyphil.org | NY Phil
+BAM | bam.org | Brooklyn Academy of Music
+The Public Theater | publictheater.org | Public Theater
+Broadway.com | broadway.com
+Telecharge | telecharge.com
+TodayTix | todaytix.com
+TDF | tdf.org | TKTS
+Ticketmaster | ticketmaster.com | TM Ticketmaster
+Live Nation | livenation.com
+StubHub | stubhub.com
+SeatGeek | seatgeek.com
+Vivid Seats | vividseats.com
+AXS | axs.com
+Eventbrite | eventbrite.com
+DICE | dice.fm
+Tixr | tixr.com
+Etix | etix.com
+See Tickets | seetickets.us
+TicketWeb | ticketweb.com
+Gametime | gametime.co
+TickPick | tickpick.com
+Fandango | fandango.com
+Atom Tickets | atomtickets.com
+AMC Theatres | amctheatres.com | AMC, AMC Stubs
+Regal | regmovies.com | Regal Cinemas
+Cinemark | cinemark.com
+Alamo Drafthouse | drafthouse.com
+Angelika | angelikafilmcenter.com
+Film Forum | filmforum.org
+IFC Center | ifccenter.com
+Metrograph | metrograph.com
+Nitehawk Cinema | nitehawkcinema.com | Nitehawk
+Landmark Theatres | landmarktheatres.com
+Harkins | harkins.com
+Marcus Theatres | marcustheatres.com
+Studio Movie Grill | studiomoviegrill.com
+Cinépolis | cinepolisusa.com | Cinepolis
+iPic | ipic.com
+Bowlero | bowlero.com
+Lucky Strike | luckystrikeent.com
+Dave & Buster's | daveandbusters.com | Dave and Busters
+Topgolf | topgolf.com
+Puttshack | puttshack.com
+Chelsea Piers | chelseapiers.com
+Brooklyn Bowl | brooklynbowl.com
+Meow Wolf | meowwolf.com
+Museum of Ice Cream | museumoficecream.com
+Sky Zone | skyzone.com
+Urban Air | urbanair.com
+Main Event | mainevent.com
+Round1 | round1usa.com
+
+# Car rental and moving
+Hertz | hertz.com
+Avis | avis.com
+Enterprise | enterprise.com | Enterprise Rent-A-Car
+Budget | budget.com | Budget Rent A Car
+National | nationalcar.com | National Car Rental
+Alamo | alamo.com
+Thrifty | thrifty.com
+Dollar Car Rental | dollar.com
+Sixt | sixt.com
+Fox Rent A Car | foxrentacar.com
+Payless Car Rental | paylesscar.com
+Europcar | europcar.com
+AutoSlash | autoslash.com
+Rentalcars.com | rentalcars.com
+Discover Cars | discovercars.com
+U-Haul | uhaul.com | UHaul
+Penske | pensketruckrental.com | Penske Truck Rental
+Budget Truck | budgettruck.com
+Ryder | ryder.com
+PODS | pods.com
+U-Pack | upack.com
+Two Men and a Truck | twomenandatruck.com
+Bellhop | getbellhops.com
+Dolly | dolly.com
+Lugg | lugg.com
+TaskRabbit | taskrabbit.com
+Thumbtack | thumbtack.com
+Angi | angi.com | Angies List
+HomeAdvisor | homeadvisor.com
+Porch | porch.com
+Handy | handy.com
+Houzz | houzz.com
+
+# Gas stations and convenience stores
+Shell | shell.us | Shell Oil, Shell Service
+ExxonMobil | exxon.com | Exxon, Mobil, Exxon Mobil
+BP | bp.com | BP Gas
+Chevron | chevron.com
+Texaco | texaco.com
+Sunoco | sunoco.com
+Citgo | citgo.com
+Marathon | marathonbrand.com
+Speedway | speedway.com
+Circle K | circlek.com
+7-Eleven | 7-eleven.com | 7 Eleven, Seven Eleven
+Wawa | wawa.com
+Sheetz | sheetz.com
+QuikTrip | quiktrip.com | QT
+RaceTrac | racetrac.com
+Casey's | caseys.com | Caseys
+Kwik Trip | kwiktrip.com
+Love's | loves.com | Loves Travel Stop
+Pilot Flying J | pilotflyingj.com | Pilot, Flying J
+TravelCenters of America | ta-petro.com | TA Petro
+Buc-ee's | buc-ees.com | Bucees
+Cumberland Farms | cumberlandfarms.com
+Stewart's Shops | stewartsshops.com | Stewarts
+Getty | getty.com
+Valero | valero.com
+Phillips 66 | phillips66gas.com
+76 | 76.com
+Conoco | conoco.com
+ARCO | arco.com
+Murphy USA | murphyusa.com
+Holiday | holidaystationstores.com | Holiday Stationstores
+Thorntons | mythorntons.com
+Maverik | maverik.com
+Gulf | gulfoil.com
+Kum & Go | kumandgo.com | Kum and Go
+Royal Farms | royalfarms.com
+Rutter's | rutters.com | Rutters
+Turkey Hill | turkeyhill.com
+GasBuddy | gasbuddy.com
+Upside | upside.com
+
+# EV charging, cars and car services
+Tesla | tesla.com | Tesla Supercharger, Tesla Motors, Tesla Insurance
+ChargePoint | chargepoint.com
+Electrify America | electrifyamerica.com
+EVgo | evgo.com
+Blink Charging | blinkcharging.com
+Shell Recharge | shellrecharge.com
+Rivian | rivian.com
+Lucid | lucidmotors.com
+Polestar | polestar.com
+Ford | ford.com | Ford Motor, Ford Credit
+Chevrolet | chevrolet.com | Chevy
+GM | gm.com | General Motors, GM Financial
+Toyota | toyota.com | Toyota Financial, TFS
+Honda | honda.com | American Honda Finance, Honda Financial
+Nissan | nissanusa.com | Nissan Motor Acceptance
+Hyundai | hyundaiusa.com | Hyundai Motor Finance
+Kia | kia.com
+Subaru | subaru.com
+Mazda | mazdausa.com
+Volkswagen | vw.com | VW Credit
+BMW | bmwusa.com | BMW Financial
+Mercedes-Benz | mbusa.com | Mercedes Benz
+Audi | audiusa.com
+Lexus | lexus.com
+Acura | acura.com
+Infiniti | infinitiusa.com
+Volvo | volvocars.com
+Jeep | jeep.com
+Ram | ramtrucks.com
+Dodge | dodge.com
+Chrysler | chrysler.com | Chrysler Capital, Stellantis
+Buick | buick.com
+GMC | gmc.com
+Cadillac | cadillac.com
+Lincoln | lincoln.com
+Genesis | genesis.com
+Porsche | porsche.com
+Land Rover | landroverusa.com
+MINI | miniusa.com
+Mitsubishi | mitsubishicars.com
+Carvana | carvana.com
+CarMax | carmax.com
+Vroom | vroom.com
+CarGurus | cargurus.com
+Autotrader | autotrader.com
+Cars.com | cars.com
+TrueCar | truecar.com
+Edmunds | edmunds.com
+Kelley Blue Book | kbb.com | KBB
+AutoNation | autonation.com
+Copart | copart.com
+Jiffy Lube | jiffylube.com
+Valvoline | vioc.com | Valvoline Instant Oil Change
+Pep Boys | pepboys.com
+AutoZone | autozone.com
+Advance Auto Parts | advanceautoparts.com
+O'Reilly Auto Parts | oreillyauto.com | OReilly
+NAPA | napaonline.com | NAPA Auto Parts
+RockAuto | rockauto.com
+CarParts.com | carparts.com
+Summit Racing | summitracing.com
+Tire Rack | tirerack.com
+Discount Tire | discounttire.com | Americas Tire
+Goodyear | goodyear.com
+Firestone | firestonecompleteautocare.com | Firestone Complete Auto Care
+Bridgestone | bridgestonetire.com
+Michelin | michelinman.com
+NTB | ntb.com | National Tire and Battery
+Les Schwab | lesschwab.com
+Mavis | mavis.com | Mavis Discount Tire
+Monro | monro.com
+Meineke | meineke.com
+Midas | midas.com
+Maaco | maaco.com
+Safelite | safelite.com | Safelite AutoGlass
+Caliber Collision | caliber.com | Caliber
+Take 5 | take5.com | Take 5 Oil Change
+Mister Car Wash | mistercarwash.com
+Zips Car Wash | zipscarwash.com
+Quick Quack | dontdrivedirty.com | Quick Quack Car Wash
+Spiffy | getspiffy.com
+RepairPal | repairpal.com
+YourMechanic | yourmechanic.com
+Carfax | carfax.com
+NY DMV | dmv.ny.gov | New York DMV, NYS DMV, DMV
+AAA | aaa.com | American Automobile Association
+Good Sam | goodsam.com
+
+# Insurance
+GEICO | geico.com | Geico Insurance
+Progressive | progressive.com | Progressive Insurance
+State Farm | statefarm.com
+Allstate | allstate.com
+Liberty Mutual | libertymutual.com
+Farmers Insurance | farmers.com | Farmers
+Nationwide | nationwide.com
+USAA | usaa.com
+Travelers | travelers.com
+The Hartford | thehartford.com | Hartford
+American Family | amfam.com | AmFam
+Erie Insurance | erieinsurance.com
+Safeco | safeco.com
+MetLife | metlife.com
+Prudential | prudential.com
+New York Life | newyorklife.com
+Northwestern Mutual | northwesternmutual.com
+MassMutual | massmutual.com | Mass Mutual
+Guardian | guardianlife.com | Guardian Life
+Transamerica | transamerica.com
+Pacific Life | pacificlife.com
+Lincoln Financial | lincolnfinancial.com
+Principal | principal.com | Principal Financial
+Aflac | aflac.com
+Unum | unum.com
+Colonial Life | coloniallife.com
+Mutual of Omaha | mutualofomaha.com
+Globe Life | globelifeinsurance.com
+Haven Life | havenlife.com
+Ladder | ladderlife.com
+Ethos | ethos.com | Ethos Life
+Policygenius | policygenius.com
+Bestow | bestow.com
+Lemonade | lemonade.com | Lemonade Insurance
+Root | joinroot.com | Root Insurance
+Metromile | metromile.com
+Hippo | hippo.com
+Kin Insurance | kin.com
+Branch | ourbranch.com
+Openly | openly.com
+Clearcover | clearcover.com
+Dairyland | dairylandinsurance.com
+Direct Auto | directauto.com
+The General | thegeneral.com
+Infinity | infinityauto.com
+Bristol West | bristolwest.com
+Kemper | kemper.com
+Mercury Insurance | mercuryinsurance.com
+Plymouth Rock | plymouthrock.com
+NYCM Insurance | nycm.com | NYCM
+NJM | njm.com
+Amica | amica.com
+Chubb | chubb.com
+The Hanover | hanover.com
+Foremost | foremost.com
+Assurant | assurant.com
+Asurion | asurion.com | Asurion Phone Insurance
+SquareTrade | squaretrade.com
+Allstate Protection Plans | allstateprotectionplans.com
+Extend | helloextend.com
+Healthfirst | healthfirst.org
+Fidelis Care | fideliscare.org
+MetroPlus | metroplus.org
+EmblemHealth | emblemhealth.com
+Oscar Health | hioscar.com | Oscar
+UnitedHealthcare | uhc.com | United Healthcare, UHC
+Optum | optum.com
+Aetna | aetna.com
+Cigna | cigna.com
+Anthem | anthem.com
+Blue Cross Blue Shield | bcbs.com | BCBS
+Empire BlueCross | empireblue.com
+Horizon BCBSNJ | horizonblue.com | Horizon Blue Cross
+Blue Cross Blue Shield of Massachusetts | bluecrossma.org
+Blue Shield of California | blueshieldca.com
+Humana | humana.com
+Ambetter | ambetterhealth.com
+Molina Healthcare | molinahealthcare.com | Molina
+Wellcare | wellcare.com
+CareSource | caresource.com
+Independence Blue Cross | ibx.com
+Highmark | highmark.com
+Excellus | excellusbcbs.com
+MVP Health Care | mvphealthcare.com
+Harvard Pilgrim | harvardpilgrim.org
+Clover Health | cloverhealth.com
+Devoted Health | devoted.com
+HealthCare.gov | healthcare.gov
+NY State of Health | nystateofhealth.ny.gov
+Covered California | coveredca.com
+Medicare | medicare.gov
+VSP | vsp.com | VSP Vision Care
+EyeMed | eyemed.com
+Trupanion | trupanion.com
+Healthy Paws | healthypawspetinsurance.com
+Embrace Pet Insurance | embracepetinsurance.com | Embrace
+Pets Best | petsbest.com
+Figo | figopetinsurance.com
+ASPCA Pet Insurance | aspcapetinsurance.com
+Nationwide Pet | petinsurance.com
+Fetch Pet Insurance | fetchpet.com | Fetch
+Pumpkin | pumpkin.care | Pumpkin Pet Insurance
+Spot Pet Insurance | spotpetins.com
+Allianz Travel | allianztravelinsurance.com
+World Nomads | worldnomads.com
+Travel Guard | travelguard.com
+Squaremouth | squaremouth.com
+SafetyWing | safetywing.com
+Jewelers Mutual | jewelersmutual.com
+Hiscox | hiscox.com
+NEXT Insurance | nextinsurance.com
+Thimble | thimble.com
+Embroker | embroker.com
+Goosehead | goosehead.com
+Insurify | insurify.com
+The Zebra | thezebra.com
+Gabi | gabi.com
+Jerry | getjerry.com
+EverQuote | everquote.com
+
+# Banks, credit unions and card issuers
+Chase | chase.com | JPMorgan Chase, Chase Bank, Chase Card, Chase Credit Card, JPMCB
+Bank of America | bankofamerica.com | BofA, BOA, Bank of America Credit Card
+Wells Fargo | wellsfargo.com | Wells Fargo Card
+Citi | citi.com | Citibank, Citicard, Citi Card, Citigroup
+Capital One | capitalone.com | Capital One Card, Cap One, Capital One 360
+U.S. Bank | usbank.com | US Bank, USBank
+PNC | pnc.com | PNC Bank
+TD Bank | td.com | TD
+Truist | truist.com | BB&T, SunTrust
+Fifth Third | 53.com | Fifth Third Bank
+KeyBank | key.com | Key Bank
+Regions | regions.com | Regions Bank
+M&T Bank | mtb.com | M and T Bank, MT Bank
+Citizens | citizensbank.com | Citizens Bank
+Huntington | huntington.com | Huntington Bank
+BMO | bmo.com | BMO Harris
+Santander | santanderbank.com | Santander Bank
+Santander Consumer | santanderconsumerusa.com
+First Republic | firstrepublic.com
+Flagstar | flagstar.com | Flagstar Bank, NYCB
+Valley Bank | valley.com | Valley National Bank
+Webster Bank | websterbank.com | Webster
+Apple Bank | applebank.com
+Ridgewood Savings Bank | ridgewoodbank.com | Ridgewood Savings
+Dime Community Bank | dime.com | Dime
+Emigrant | emigrant.com | Emigrant Savings Bank
+Amalgamated Bank | amalgamatedbank.com | Amalgamated
+Carver Federal | carverbank.com | Carver Bank
+Provident Bank | provident.bank
+OceanFirst | oceanfirst.com
+First Citizens | firstcitizens.com | First Citizens Bank
+East West Bank | eastwestbank.com
+Cathay Bank | cathaybank.com
+Hanmi Bank | hanmi.com
+BOK Financial | bokf.com
+Bank OZK | ozk.com
+Synovus | synovus.com
+Hancock Whitney | hancockwhitney.com
+First Horizon | firsthorizon.com
+UMB | umb.com
+Commerce Bank | commercebank.com
+Frost | frost.com | Frost Bank
+Comerica | comerica.com
+Zions Bank | zionsbank.com
+Associated Bank | associatedbank.com
+Old National | oldnational.com
+Wintrust | wintrust.com
+Glacier Bank | glacierbank.com
+Banner Bank | bannerbank.com
+Umpqua | umpquabank.com
+WaFd Bank | wafdbank.com | Washington Federal
+BECU | becu.org | Boeing Employees Credit Union
+Navy Federal | navyfederal.org | Navy Federal Credit Union, NFCU
+PenFed | penfed.org | Pentagon Federal
+Alliant Credit Union | alliantcreditunion.org | Alliant
+SchoolsFirst FCU | schoolsfirstfcu.org | SchoolsFirst
+Golden 1 | golden1.com | Golden 1 Credit Union
+SECU | ncsecu.org | State Employees Credit Union
+Suncoast Credit Union | suncoastcreditunion.com | Suncoast
+Bethpage FCU | bethpagefcu.com | Bethpage
+Municipal Credit Union | nymcu.org | MCU
+Teachers FCU | teachersfcu.org
+Quorum FCU | quorumfcu.org | Quorum
+Lower East Side People's FCU | lespeoples.org
+DCU | dcu.org | Digital Federal Credit Union
+Affinity FCU | affinityfcu.com
+Randolph-Brooks FCU | rbfcu.org | RBFCU
+America First Credit Union | americafirst.com
+Mountain America | macu.com | Mountain America Credit Union
+Desert Financial | desertfinancial.com
+OnPoint | onpointcu.com
+Patelco | patelco.org
+SDCCU | sdccu.com | San Diego County Credit Union
+Kinecta | kinecta.org
+Wescom | wescom.org
+Mission Fed | missionfed.com
+Star One | starone.org | Star One Credit Union
+VyStar | vystarcu.org
+GTE Financial | gtefinancial.org
+Grow Financial | growfinancial.org
+Fairwinds | fairwinds.org
+Discover | discover.com | Discover Card, Discover Bank
+American Express | americanexpress.com | Amex, AmEx Card, American Express Card, AMEX EPAYMENT
+Synchrony | synchrony.com | Synchrony Bank, SYNCB
+Barclays | barclaysus.com | Barclaycard, Barclays Bank
+Comenity | comenity.net | Comenity Bank
+Bread Financial | breadfinancial.com | Bread
+Credit One Bank | creditonebank.com | Credit One
+Mission Lane | missionlane.com
+Merrick Bank | merrickbank.com
+Milestone | milestonecard.com
+First Premier | firstpremier.com
+Petal | petalcard.com
+Tomo | tomocredit.com
+X1 | x1.co
+Bilt | biltrewards.com | Bilt Rewards, Bilt Card
+Imprint | imprint.co
+Apple Card | card.apple.com | Goldman Sachs Apple Card, GS Bank Apple Card
+Goldman Sachs | goldmansachs.com | GS Bank
+Marcus | marcus.com | Marcus by Goldman Sachs
+Ally | ally.com | Ally Bank, Ally Financial, Ally Auto
+SoFi | sofi.com | SoFi Bank
+Chime | chime.com
+Varo | varomoney.com | Varo Bank
+Current | current.com
+One | one.app | ONE Finance
+Dave | dave.com
+MoneyLion | moneylion.com
+Brigit | hellobrigit.com
+EarnIn | earnin.com
+Empower | empower.me
+Cleo | meetcleo.com
+Albert | albert.com
+Aspiration | aspiration.com
+Axos Bank | axosbank.com | Axos
+CIT Bank | cit.com
+LendingClub | lendingclub.com | Lending Club
+Upgrade | upgrade.com
+Avant | avant.com
+Oportun | oportun.com
+OneMain Financial | onemainfinancial.com | OneMain
+Prosper | prosper.com
+Best Egg | bestegg.com
+LightStream | lightstream.com
+Happy Money | happymoney.com
+NetCredit | netcredit.com
+OppLoans | opploans.com
+Possible Finance | possiblefinance.com
+Self | self.inc | Self Lender
+Kikoff | kikoff.com
+Grow Credit | growcredit.com
+Experian | experian.com
+Equifax | equifax.com
+TransUnion | transunion.com
+AnnualCreditReport.com | annualcreditreport.com
+Credit Karma | creditkarma.com
+Credit Sesame | creditsesame.com
+NerdWallet | nerdwallet.com
+Bankrate | bankrate.com
+myFICO | myfico.com
+LifeLock | lifelock.com
+Norton | norton.com | NortonLifeLock, Gen Digital
+Aura | aura.com
+Identity Guard | identityguard.com
+Incogni | incogni.com
+DeleteMe | joindeleteme.com | Delete Me
+Optery | optery.com
+
+# Fintech, payments, investing and money apps
+PayPal | paypal.com | PayPal Inst Xfer, PYPL
+Venmo | venmo.com
+Cash App | cash.app | Square Cash, SQC, CashApp
+Square | squareup.com | Block
+Zelle | zellepay.com
+Google Pay | pay.google.com
+Wise | wise.com | TransferWise
+Remitly | remitly.com
+Western Union | westernunion.com
+MoneyGram | moneygram.com
+Xoom | xoom.com
+WorldRemit | worldremit.com
+Ria Money Transfer | riamoneytransfer.com | Ria
+Sendwave | sendwave.com
+Taptap Send | taptapsend.com
+Payoneer | payoneer.com
+Stripe | stripe.com
+Klarna | klarna.com
+Afterpay | afterpay.com
+Affirm | affirm.com
+Sezzle | sezzle.com
+Zip | zip.co | Quadpay
+Katapult | katapult.com
+Uplift | uplift.com
+Revolut | revolut.com
+N26 | n26.com
+Monzo | monzo.com
+Mercury | mercury.com
+Brex | brex.com
+Ramp | ramp.com
+BILL | bill.com | Bill.com
+Expensify | expensify.com
+Relay | relayfi.com
+Novo | novo.co
+Bluevine | bluevine.com
+Lili | lili.co
+NorthOne | northone.com
+Gusto | gusto.com
+ADP | adp.com
+Paychex | paychex.com
+Paylocity | paylocity.com
+Paycom | paycom.com
+Paycor | paycor.com
+Justworks | justworks.com
+Rippling | rippling.com
+TriNet | trinet.com
+Deel | deel.com
+Workday | workday.com
+UKG | ukg.com
+BambooHR | bamboohr.com
+QuickBooks | quickbooks.intuit.com | QuickBooks Online, QBO
+Intuit | intuit.com
+Xero | xero.com
+FreshBooks | freshbooks.com
+Wave | waveapps.com
+Bench | bench.co
+YNAB | ynab.com | You Need A Budget
+Monarch Money | monarchmoney.com | Monarch
+Copilot Money | copilot.money | Copilot
+Rocket Money | rocketmoney.com | Truebill
+Quicken | quicken.com | Simplifi
+Empower Personal Wealth | empower.com | Personal Capital, Empower Retirement
+Tiller | tillerhq.com | Tiller Money
+EveryDollar | everydollar.com
+Ramsey Solutions | ramseysolutions.com | Ramsey
+PocketGuard | pocketguard.com
+Goodbudget | goodbudget.com
+Honeydue | honeydue.com
+Qapital | qapital.com
+Acorns | acorns.com
+Stash | stash.com
+Robinhood | robinhood.com | Robinhood Gold
+Webull | webull.com
+Public | public.com
+M1 | m1.com | M1 Finance
+Betterment | betterment.com
+Wealthfront | wealthfront.com
+Ellevest | ellevest.com
+Fidelity | fidelity.com | Fidelity Investments
+Charles Schwab | schwab.com | Schwab
+Vanguard | vanguard.com
+E*TRADE | etrade.com | ETrade, E Trade
+Interactive Brokers | interactivebrokers.com | IBKR
+Merrill | ml.com | Merrill Lynch, Merrill Edge
+Morgan Stanley | morganstanley.com
+J.P. Morgan | jpmorgan.com | JP Morgan
+UBS | ubs.com
+Edward Jones | edwardjones.com
+Ameriprise | ameriprise.com
+Raymond James | raymondjames.com
+LPL Financial | lpl.com
+TIAA | tiaa.org
+Voya | voya.com
+Guideline | guideline.com
+Human Interest | humaninterest.com
+Fundrise | fundrise.com
+Yieldstreet | yieldstreet.com
+Masterworks | masterworks.com
+Arrived | arrived.com
+CrowdStreet | crowdstreet.com
+Republic | republic.com
+Wefunder | wefunder.com
+StartEngine | startengine.com
+TreasuryDirect | treasurydirect.gov
+Coinbase | coinbase.com
+Kraken | kraken.com
+Gemini | gemini.com
+Binance.US | binance.us
+Crypto.com | crypto.com
+Blockchain.com | blockchain.com
+BitPay | bitpay.com
+Strike | strike.me
+River | river.com
+Swan Bitcoin | swanbitcoin.com
+Uphold | uphold.com
+eToro | etoro.com
+Bitstamp | bitstamp.net
+OKX | okx.com
+Ledger | ledger.com
+Trezor | trezor.io
+Exodus | exodus.com
+MetaMask | metamask.io
+Phantom | phantom.com
+OpenSea | opensea.io
+MoonPay | moonpay.com
+TradingView | tradingview.com
+Seeking Alpha | seekingalpha.com
+Morningstar | morningstar.com
+The Motley Fool | fool.com | Motley Fool
+Zacks | zacks.com
+Benzinga | benzinga.com
+Koyfin | koyfin.com
+
+# News, magazines and newsletters
+The New York Times | nytimes.com | NYTimes, NY Times, NYT, New York Times
+The Wall Street Journal | wsj.com | WSJ, Wall Street Journal, Dow Jones
+The Washington Post | washingtonpost.com | Washington Post, WaPo
+Bloomberg | bloomberg.com
+Financial Times | ft.com | FT
+The Economist | economist.com | Economist
+Barron's | barrons.com | Barrons
+MarketWatch | marketwatch.com
+Investor's Business Daily | investors.com | IBD
+CNBC | cnbc.com
+Reuters | reuters.com
+Forbes | forbes.com
+Fortune | fortune.com
+Business Insider | businessinsider.com | Insider
+Axios | axios.com
+Politico | politico.com
+The Information | theinformation.com
+Stratechery | stratechery.com
+Puck | puck.news
+Semafor | semafor.com
+The Athletic | theathletic.com
+Los Angeles Times | latimes.com | LA Times
+Chicago Tribune | chicagotribune.com
+The Boston Globe | bostonglobe.com | Boston Globe
+San Francisco Chronicle | sfchronicle.com | SF Chronicle
+The Seattle Times | seattletimes.com
+Miami Herald | miamiherald.com
+The Atlanta Journal-Constitution | ajc.com | AJC
+The Dallas Morning News | dallasnews.com
+Houston Chronicle | houstonchronicle.com
+Star Tribune | startribune.com
+The Denver Post | denverpost.com
+The Philadelphia Inquirer | inquirer.com | Philadelphia Inquirer
+Newsday | newsday.com
+New York Daily News | nydailynews.com | Daily News
+New York Post | nypost.com | NY Post
+amNY | amny.com
+THE CITY | thecity.nyc
+Gothamist | gothamist.com
+New York Magazine | nymag.com | NY Mag, Vox Media
+The New Yorker | newyorker.com | New Yorker, Conde Nast
+The Atlantic | theatlantic.com | Atlantic
+Vanity Fair | vanityfair.com
+Vogue | vogue.com
+GQ | gq.com
+Wired | wired.com
+Ars Technica | arstechnica.com
+The Verge | theverge.com
+Vox | vox.com
+Slate | slate.com
+Salon | salon.com
+The Daily Beast | thedailybeast.com
+HuffPost | huffpost.com
+BuzzFeed | buzzfeed.com
+Vice | vice.com
+Rolling Stone | rollingstone.com
+Pitchfork | pitchfork.com
+Billboard | billboard.com
+Variety | variety.com
+The Hollywood Reporter | hollywoodreporter.com
+Deadline | deadline.com
+People | people.com
+Time | time.com
+Newsweek | newsweek.com
+USA Today | usatoday.com
+CNN | cnn.com
+Fox News | foxnews.com
+MSNBC | msnbc.com
+NBC News | nbcnews.com
+CBS News | cbsnews.com
+NPR | npr.org | National Public Radio
+PBS | pbs.org
+WNYC | wnyc.org | New York Public Radio
+KQED | kqed.org
+WBUR | wbur.org
+ProPublica | propublica.org
+Mother Jones | motherjones.com
+The Nation | thenation.com
+Jacobin | jacobin.com
+The Intercept | theintercept.com
+Democracy Now! | democracynow.org | Democracy Now
+Current Affairs | currentaffairs.org
+Dissent | dissentmagazine.org
+In These Times | inthesetimes.com
+Common Dreams | commondreams.org
+Truthout | truthout.org
+The Baffler | thebaffler.com
+n+1 | nplusonemag.com
+London Review of Books | lrb.co.uk | LRB
+The New York Review of Books | nybooks.com | NYRB
+Harper's Magazine | harpers.org | Harpers
+The Guardian | theguardian.com | Guardian
+BBC | bbc.com
+Al Jazeera | aljazeera.com
+AP News | apnews.com | Associated Press
+The Free Press | thefp.com
+Substack | substack.com
+Medium | medium.com
+Patreon | patreon.com
+Ko-fi | ko-fi.com | Kofi
+Buy Me a Coffee | buymeacoffee.com
+Ghost | ghost.org
+beehiiv | beehiiv.com
+Buttondown | buttondown.com
+Mailchimp | mailchimp.com
+Kit | kit.com | ConvertKit
+OnlyFans | onlyfans.com
+Gumroad | gumroad.com
+Lemon Squeezy | lemonsqueezy.com
+Paddle | paddle.com
+Teachable | teachable.com
+Thinkific | thinkific.com
+Kajabi | kajabi.com
+Podia | podia.com
+Circle | circle.so
+Skool | skool.com
+Mighty Networks | mightynetworks.com
+
+# Social and messaging
+Discord | discord.com | Discord Nitro
+Slack | slack.com
+Telegram | telegram.org | Telegram Premium
+WhatsApp | whatsapp.com
+Signal | signal.org
+Messenger | messenger.com
+Instagram | instagram.com
+Threads | threads.net
+X | x.com | Twitter, X Premium, Twitter Blue
+Bluesky | bsky.app
+Mastodon | joinmastodon.org
+Reddit | reddit.com | Reddit Premium
+Pinterest | pinterest.com
+Tumblr | tumblr.com
+Snapchat | snapchat.com | Snapchat Plus, Snap Inc
+TikTok | tiktok.com
+LinkedIn | linkedin.com | LinkedIn Premium
+Quora | quora.com
+Twitch | twitch.tv
+Kick | kick.com
+YouTube | youtube.com | YouTube Premium, YouTube Music, Google YouTube, YouTube TV
+Vimeo | vimeo.com
+Dailymotion | dailymotion.com
+Rumble | rumble.com
+
+# Streaming video and TV
+Netflix | netflix.com | Netflix.com, Netflix Inc
+Hulu | hulu.com | Hulu Live
+Disney+ | disneyplus.com | Disney Plus, DisneyPlus
+Max | max.com | HBO Max, HBO
+Prime Video | primevideo.com | Amazon Prime Video, Amazon Video
+Peacock | peacocktv.com | Peacock TV, NBCUniversal
+Paramount+ | paramountplus.com | Paramount Plus, CBS All Access
+Apple TV | tv.apple.com | Apple TV Plus, Apple TV+
+ESPN | espn.com | ESPN Plus, ESPN+
+Starz | starz.com
+Showtime | sho.com
+AMC+ | amcplus.com | AMC Plus
+MGM+ | mgmplus.com | MGM Plus, Epix
+BritBox | britbox.com
+Acorn TV | acorn.tv
+The Criterion Channel | criterionchannel.com | Criterion
+MUBI | mubi.com
+Shudder | shudder.com
+Crunchyroll | crunchyroll.com
+HIDIVE | hidive.com
+CuriosityStream | curiositystream.com
+Nebula | nebula.tv
+Dropout | dropout.tv
+discovery+ | discoveryplus.com | Discovery Plus
+Philo | philo.com
+Sling TV | sling.com | Sling
+Fubo | fubo.tv | FuboTV
+DIRECTV | directv.com | DirecTV Stream
+DISH | dish.com | Dish Network
+Frndly TV | frndlytv.com
+Pluto TV | pluto.tv
+Tubi | tubitv.com
+Roku | roku.com | The Roku Channel
+Fandango at Home | vudu.com | Vudu
+Kanopy | kanopy.com
+hoopla | hoopladigital.com
+NFL+ | nfl.com | NFL Plus, NFL Sunday Ticket
+NBA League Pass | nba.com | NBA
+MLB.TV | mlb.com | MLB
+NHL | nhl.com
+MLS | mlssoccer.com
+DAZN | dazn.com
+FanDuel | fanduel.com
+DraftKings | draftkings.com
+BetMGM | betmgm.com
+ESPN BET | espnbet.com
+Fanatics Sportsbook | sportsbook.fanatics.com
+bet365 | bet365.com
+PrizePicks | prizepicks.com
+Underdog Fantasy | underdogfantasy.com
+Sleeper | sleeper.com
+CBS Sports | cbssports.com
+Fox Sports | foxsports.com
+Bleacher Report | bleacherreport.com
+The Ringer | theringer.com
+Barstool Sports | barstoolsports.com
+WWE | wwe.com
+UFC Fight Pass | ufcfightpass.com | UFC
+Formula 1 | formula1.com | F1 TV
+NASCAR | nascar.com
+PGA Tour | pgatour.com
+GolfPass | golfpass.com
+Tennis Channel | tennischannel.com
+US Open | usopen.org
+USTA | usta.com
+New York Road Runners | nyrr.org | NYRR
+RunSignup | runsignup.com
+Active.com | active.com
+Strava | strava.com
+AllTrails | alltrails.com
+Komoot | komoot.com
+Ride with GPS | ridewithgps.com
+TrainingPeaks | trainingpeaks.com
+Zwift | zwift.com
+Peloton | onepeloton.com | Peloton Interactive
+Tonal | tonal.com
+Hydrow | hydrow.com
+iFIT | ifit.com
+NordicTrack | nordictrack.com
+Bowflex | bowflex.com
+Echelon | echelonfit.com
+Beachbody | beachbody.com | BODi
+Obé | obefitness.com | Obe Fitness
+Alo Moves | alomoves.com
+Glo | glo.com
+Centr | centr.com
+Sweat | sweat.com
+Ladder Fitness | joinladder.com
+Future | future.co
+Fitbod | fitbod.me
+ClassPass | classpass.com
+Wellhub | wellhub.com | Gympass
+
+# Gyms and fitness studios
+Planet Fitness | planetfitness.com
+Equinox | equinox.com
+Blink Fitness | blinkfitness.com
+Crunch Fitness | crunch.com | Crunch
+24 Hour Fitness | 24hourfitness.com
+LA Fitness | lafitness.com
+Life Time | lifetime.life | Life Time Fitness, Lifetime Fitness
+Gold's Gym | goldsgym.com | Golds Gym
+Anytime Fitness | anytimefitness.com
+Snap Fitness | snapfitness.com
+Orangetheory | orangetheory.com | Orangetheory Fitness, OTF
+F45 Training | f45training.com | F45
+Barry's | barrys.com | Barrys Bootcamp
+Solidcore | solidcore.co
+SoulCycle | soul-cycle.com | Soul Cycle
+CorePower Yoga | corepoweryoga.com
+YogaWorks | yogaworks.com
+Y7 Studio | y7-studio.com | Y7
+Modo Yoga | modoyoga.com
+Pure Barre | purebarre.com
+barre3 | barre3.com
+Club Pilates | clubpilates.com
+StretchLab | stretchlab.com
+CycleBar | cyclebar.com
+Rumble Boxing | rumbleboxinggym.com | Rumble
+Title Boxing Club | titleboxingclub.com
+Burn Boot Camp | burnbootcamp.com
+CrossFit | crossfit.com
+UFC Gym | ufcgym.com
+New York Sports Clubs | newyorksportsclubs.com | NYSC
+Retro Fitness | retrofitness.com
+Youfit | youfit.com
+EoS Fitness | eosfitness.com
+Chuze Fitness | chuzefitness.com
+VASA Fitness | vasafitness.com
+YMCA | ymca.org | The Y
+YMCA of Greater New York | ymcanyc.org
+JCC Manhattan | jccmanhattan.org
+92NY | 92ny.org | 92nd Street Y
+14th Street Y | 14streety.org
+Asphalt Green | asphaltgreen.org
+Brooklyn Boulders | brooklynboulders.com
+Movement Climbing | movementgyms.com | Movement
+Bouldering Project | boulderingproject.com
+Vital Climbing | vitalclimbing.com
+Mendclimbing | mendclimbing.com
+Touchstone Climbing | touchstoneclimbing.com
+The Cliffs | thecliffsclimbing.com
+Golf Galaxy | golfgalaxy.com
+PGA Tour Superstore | pgatoursuperstore.com
+Callaway | callawaygolf.com
+TaylorMade | taylormadegolf.com
+Titleist | titleist.com
+GolfNow | golfnow.com
+Supreme Golf | supremegolf.com
+NYC Parks | nycgovparks.org
+
+# Telecom, internet and phone
+Verizon | verizon.com | Verizon Wireless, VZW, Verizon Fios, Fios
+AT&T | att.com | ATT, AT and T, ATT Wireless, ATT Uverse
+T-Mobile | t-mobile.com | TMobile, T Mobile
+UScellular | uscellular.com | US Cellular
+Spectrum | spectrum.com | Charter, Charter Communications, Spectrum Mobile
+Xfinity | xfinity.com | Comcast, Xfinity Mobile, Comcast Xfinity
+Cox | cox.com | Cox Communications
+Optimum | optimum.com | Altice, Optimum Online, Cablevision
+Frontier Communications | frontier.com | Frontier Internet
+CenturyLink | centurylink.com
+Lumen | lumen.com
+Quantum Fiber | quantumfiber.com
+Windstream | windstream.com
+Kinetic | gokinetic.com
+Mediacom | mediacomcable.com
+WOW! | wowway.com | WOW Internet
+Astound | astound.com | RCN
+Ziply Fiber | ziplyfiber.com
+Google Fiber | fiber.google.com
+Sonic Internet | sonic.com
+Starlink | starlink.com | SpaceX
+HughesNet | hughesnet.com
+EarthLink | earthlink.net
+Metro by T-Mobile | metrobyt-mobile.com | Metro PCS, MetroPCS
+Cricket Wireless | cricketwireless.com | Cricket
+Boost Mobile | boostmobile.com
+Visible | visible.com
+Mint Mobile | mintmobile.com
+Google Fi | fi.google.com
+US Mobile | usmobile.com
+Tello | tello.com
+Red Pocket | redpocket.com
+Ting | ting.com
+Consumer Cellular | consumercellular.com
+Straight Talk | straighttalk.com
+Tracfone | tracfone.com
+Total Wireless | totalwireless.com
+Simple Mobile | simplemobile.com
+H2O Wireless | h2owireless.com
+Ultra Mobile | ultramobile.com
+Lycamobile | lycamobile.us
+Google Voice | voice.google.com
+Skype | skype.com
+Ooma | ooma.com
+Vonage | vonage.com
+magicJack | magicjack.com
+Grasshopper | grasshopper.com
+Dialpad | dialpad.com
+RingCentral | ringcentral.com
+Nextiva | nextiva.com
+8x8 | 8x8.com
+OpenPhone | openphone.com | Quo
+TextNow | textnow.com
+Burner | burnerapp.com
+Hushed | hushed.com
+Assurance Wireless | assurancewireless.com
+SafeLink Wireless | safelinkwireless.com | SafeLink
+
+# Utilities: power, gas, water and trash
+Con Edison | coned.com | Con Ed, ConEd, Consolidated Edison, ConEdison
+National Grid | nationalgridus.com | NationalGrid, Natl Grid, National Grid NY, Keyspan
+PSEG | pseg.com | PSE&G, PSEG NJ, Public Service Electric and Gas
+PSEG Long Island | psegliny.com | PSEG LI, LIPA
+NYSEG | nyseg.com | New York State Electric and Gas
+RG&E | rge.com | Rochester Gas and Electric
+Central Hudson | centralhudson.com
+Orange & Rockland | oru.com | Orange and Rockland, O&R
+JCP&L | firstenergycorp.com | Jersey Central Power and Light, FirstEnergy, JCPL
+Atlantic City Electric | atlanticcityelectric.com
+Pepco | pepco.com
+BGE | bge.com | Baltimore Gas and Electric
+Delmarva Power | delmarva.com
+ComEd | comed.com | Commonwealth Edison
+PECO | peco.com
+Exelon | exeloncorp.com
+PPL Electric | pplelectric.com | PPL
+Duquesne Light | duquesnelight.com
+Dominion Energy | dominionenergy.com | Dominion
+Duke Energy | duke-energy.com | Duke
+Georgia Power | georgiapower.com
+Southern Company | southerncompany.com
+Alabama Power | alabamapower.com
+FPL | fpl.com | Florida Power and Light
+TECO | tampaelectric.com | Tampa Electric
+Entergy | entergy.com
+Xcel Energy | xcelenergy.com | Xcel
+Consumers Energy | consumersenergy.com
+DTE Energy | dteenergy.com | DTE
+AEP | aep.com | American Electric Power, AEP Ohio
+Appalachian Power | appalachianpower.com
+Evergy | evergy.com
+Ameren | ameren.com
+Alliant Energy | alliantenergy.com
+We Energies | we-energies.com
+MGE | mge.com | Madison Gas and Electric
+NIPSCO | nipsco.com
+CenterPoint Energy | centerpointenergy.com | CenterPoint
+Oncor | oncor.com
+TXU Energy | txu.com | TXU
+Reliant | reliant.com | Reliant Energy
+Direct Energy | directenergy.com
+Green Mountain Energy | greenmountainenergy.com
+Constellation | constellation.com | Constellation Energy
+Just Energy | justenergy.com
+Ambit Energy | ambitenergy.com | Ambit
+Champion Energy | championenergyservices.com
+Gexa Energy | gexaenergy.com | Gexa
+PG&E | pge.com | Pacific Gas and Electric, PGE
+Southern California Edison | sce.com | SCE, SoCal Edison
+SDG&E | sdge.com | San Diego Gas and Electric, SDGE
+SoCalGas | socalgas.com | Southern California Gas
+LADWP | ladwp.com | Los Angeles Department of Water and Power
+SMUD | smud.org
+Puget Sound Energy | pse.com | PSE
+Portland General Electric | portlandgeneral.com | PGE Oregon
+Pacific Power | pacificpower.net
+Rocky Mountain Power | rockymountainpower.net
+Idaho Power | idahopower.com
+NV Energy | nvenergy.com
+APS | aps.com | Arizona Public Service
+SRP | srpnet.com | Salt River Project
+TEP | tep.com | Tucson Electric Power
+PNM | pnm.com
+El Paso Electric | epelectric.com
+Black Hills Energy | blackhillsenergy.com
+Spire | spireenergy.com
+Atmos Energy | atmosenergy.com | Atmos
+Nicor Gas | nicorgas.com | Nicor
+Peoples Gas | peoplesgasdelivery.com
+Columbia Gas | columbiagasohio.com
+NiSource | nisource.com
+Washington Gas | washingtongas.com
+Piedmont Natural Gas | piedmontng.com
+Southwest Gas | swgas.com
+Eversource | eversource.com
+Unitil | unitil.com
+Avangrid | avangrid.com
+United Illuminating | uinet.com
+Central Maine Power | cmpco.com | CMP
+Green Mountain Power | greenmountainpower.com
+American Water | amwater.com | New Jersey American Water, NJ American Water
+Veolia | veolia.com | Suez Water
+Aqua | aquawater.com | Aqua America, Essential Utilities
+Cal Water | calwater.com | California Water Service
+WM | wm.com | Waste Management
+Republic Services | republicservices.com
+Waste Connections | wasteconnections.com
+Casella | casella.com
+Rumpke | rumpke.com
+GFL Environmental | gflenv.com | GFL
+Recology | recology.com
+Ridwell | ridwell.com
+Arcadia | arcadia.com
+EnergySage | energysage.com
+Sunrun | sunrun.com
+Sunnova | sunnova.com
+SunPower | sunpower.com
+Palmetto | palmetto.com
+Freedom Forever | freedomforever.com
+Momentum Solar | momentumsolar.com
+Enphase | enphase.com
+Generac | generac.com
+Rheem | rheem.com
+Carrier | carrier.com
+Trane | trane.com
+Lennox | lennox.com
+Mitsubishi Electric | mitsubishicomfort.com
+Daikin | daikin.com
+Google Nest | nest.com | Nest
+ecobee | ecobee.com
+Honeywell Home | honeywellhome.com | Resideo
+Sense | sense.com
+Emporia Energy | emporiaenergy.com
+OhmConnect | ohmconnect.com
+
+# Home services, security, smart home and electronics
+ADT | adt.com | ADT Security
+SimpliSafe | simplisafe.com
+Ring | ring.com | Ring Protect
+Vivint | vivint.com
+Brinks Home | brinkshome.com
+Frontpoint | frontpointsecurity.com
+Cove | covesmart.com
+Abode | goabode.com
+Wyze | wyze.com
+Arlo | arlo.com
+eufy | eufy.com
+Blink | blinkforhome.com
+August | august.com
+Level | level.co
+Yale | shopyalehome.com | Yale Home
+Schlage | schlage.com
+Kwikset | kwikset.com
+Latch | latch.com
+ButterflyMX | butterflymx.com
+SmartRent | smartrent.com
+BuildingLink | buildinglink.com
+Philips Hue | philips-hue.com | Hue
+LIFX | lifx.com
+Nanoleaf | nanoleaf.me
+Govee | govee.com
+Sonos | sonos.com
+Bose | bose.com
+JBL | jbl.com
+Bang & Olufsen | bang-olufsen.com | B&O
+Klipsch | klipsch.com
+Sennheiser | sennheiser.com
+Audio-Technica | audio-technica.com
+Sony | sony.com | PlayStation Store
+Samsung | samsung.com
+LG | lg.com
+Vizio | vizio.com
+TCL | tcl.com
+Hisense | hisense-usa.com
+Panasonic | panasonic.com
+Philips | philips.com
+Apple | apple.com | Apple Store, Apple.com, Apple Online Store, Apple Services, App Store, iTunes, iCloud, Apple One, Apple Music, Apple Arcade, APL, APL Itunes, Apple.com Bill
+Google | google.com | Google Services, Google Storage, Google Play, Google One, Google Workspace, Google Cloud, Google Store, Google Ads, GSuite, G Suite
+Microsoft | microsoft.com | Microsoft 365, MSFT, Microsoft Store, Office 365, MS Office, Microsoft Office, Microsoft Azure, Azure, Bing
+Dell | dell.com
+HP | hp.com | HP Instant Ink, Hewlett Packard
+Lenovo | lenovo.com
+ASUS | asus.com
+Acer | acer.com
+MSI | msi.com
+Razer | razer.com
+Logitech | logitech.com
+Corsair | corsair.com
+SteelSeries | steelseries.com
+HyperX | hyperx.com
+Elgato | elgato.com
+Anker | anker.com
+Belkin | belkin.com
+mophie | mophie.com
+OtterBox | otterbox.com
+ZAGG | zagg.com
+Casetify | casetify.com
+Spigen | spigen.com
+dbrand | dbrand.com
+Peak Design | peakdesign.com
+Nomad | nomadgoods.com
+Bellroy | bellroy.com
+Away | awaytravel.com
+Monos | monos.com
+Tumi | tumi.com
+Samsonite | samsonite.com
+Briggs & Riley | briggs-riley.com
+Rimowa | rimowa.com
+Calpak | calpaktravel.com
+Béis | beistravel.com | Beis
+Herschel | herschel.com
+JanSport | jansport.com
+Osprey | osprey.com
+Fjällräven | fjallraven.com | Fjallraven
+YETI | yeti.com
+Hydro Flask | hydroflask.com
+Stanley | stanley1913.com
+Owala | owalalife.com
+Contigo | gocontigo.com
+CamelBak | camelbak.com
+Nalgene | nalgene.com
+LARQ | livelarq.com
+Brita | brita.com
+Aquasana | aquasana.com
+Culligan | culligan.com
+Primo Water | primowater.com
+ReadyRefresh | readyrefresh.com
+GE Appliances | geappliances.com
+Whirlpool | whirlpool.com
+Maytag | maytag.com
+Frigidaire | frigidaire.com
+Electrolux | electrolux.com
+Bosch | bosch-home.com
+Miele | mieleusa.com
+Sub-Zero | subzero-wolf.com
+AJ Madison | ajmadison.com
+Appliances Connection | appliancesconnection.com
+P.C. Richard & Son | pcrichard.com | PC Richard
+Abt | abt.com
+Aaron's | aarons.com | Aarons
+Rent-A-Center | rentacenter.com
+Progressive Leasing | progleasing.com
+Snap Finance | snapfinance.com
+Acima | acima.com
+Merry Maids | merrymaids.com
+Molly Maid | mollymaid.com
+MaidPro | maidpro.com
+Tidy | tidy.com
+Homeaglow | homeaglow.com
+Care.com | care.com
+Sittercity | sittercity.com
+UrbanSitter | urbansitter.com
+Bambino | bambinositters.com
+HelloTech | hellotech.com
+Puls | puls.com
+uBreakiFix | ubreakifix.com
+Batteries Plus | batteriesplus.com
+CPR Cell Phone Repair | cellphonerepair.com
+Geek Squad | geeksquad.com
+Orkin | orkin.com
+Terminix | terminix.com
+Aptive | aptivepestcontrol.com
+Mosquito Joe | mosquitojoe.com
+TruGreen | trugreen.com
+LawnStarter | lawnstarter.com
+GreenPal | yourgreenpal.com
+Sunday Lawn Care | getsunday.com
+Bloomscape | bloomscape.com
+The Sill | thesill.com
+Fast Growing Trees | fast-growing-trees.com
+Burpee | burpee.com
+Gardener's Supply | gardeners.com
+Johnny's Selected Seeds | johnnyseeds.com
+Nature Hills | naturehills.com
+
+# Rent, real estate, mortgages and student loans
+Zillow | zillow.com | Zillow Rentals
+Trulia | trulia.com
+Realtor.com | realtor.com
+Redfin | redfin.com
+Apartments.com | apartments.com
+Rent. | rent.com
+HotPads | hotpads.com
+StreetEasy | streeteasy.com
+Compass | compass.com
+Corcoran | corcoran.com
+Douglas Elliman | elliman.com
+Brown Harris Stevens | bhsusa.com
+Coldwell Banker | coldwellbanker.com
+Century 21 Real Estate | century21.com
+Keller Williams | kw.com
+RE/MAX | remax.com | Remax
+Sotheby's International Realty | sothebysrealty.com
+eXp Realty | exprealty.com
+Opendoor | opendoor.com
+Offerpad | offerpad.com
+HomeLight | homelight.com
+Rocket Mortgage | rocketmortgage.com | Quicken Loans, Rocket
+loanDepot | loandepot.com
+Guild Mortgage | guildmortgage.com
+UWM | uwm.com | United Wholesale Mortgage
+Better | better.com | Better Mortgage
+Rate | rate.com | Guaranteed Rate
+Newrez | newrez.com | Shellpoint
+Mr. Cooper | mrcooper.com | Mr Cooper, Nationstar
+PennyMac | pennymac.com
+Freedom Mortgage | freedommortgage.com
+Lakeview Loan Servicing | lakeview.com
+PHH Mortgage | phhmortgage.com
+Cenlar | cenlar.com
+LoanCare | myloancare.com
+Fannie Mae | fanniemae.com
+Freddie Mac | freddiemac.com
+HUD | hud.gov
+Federal Student Aid | studentaid.gov | FSA, Dept of Education, Dept of Ed, US Dept of Education
+Nelnet | nelnet.com
+MOHELA | mohela.com
+Aidvantage | aidvantage.com
+EdFinancial | edfinancial.com
+Navient | navient.com
+Sallie Mae | salliemae.com
+Earnest | earnest.com
+Laurel Road | laurelroad.com
+Splash Financial | splashfinancial.com
+Ascent | ascentfunding.com
+College Ave | collegeave.com
+AppFolio | appfolio.com
+Buildium | buildium.com
+RentCafe | rentcafe.com | Yardi
+RealPage | realpage.com | ActiveBuilding
+Entrata | entrata.com
+Zego | gozego.com | PayLease
+ClickPay | clickpay.com
+RentPayment | rentpayment.com
+Flex | getflex.com | Flex Rent
+Avail | avail.co
+TurboTenant | turbotenant.com
+RentRedi | rentredi.com
+Apartment List | apartmentlist.com
+Zumper | zumper.com
+PadMapper | padmapper.com
+RentHop | renthop.com
+Leasebreak | leasebreak.com
+SpareRoom | spareroom.com
+Roomies | roomies.com
+Listings Project | listingsproject.com
+June Homes | junehomes.com
+Common | common.com
+Bungalow | bungalow.com
+Outpost Club | outpost-club.com
+TheGuarantors | theguarantors.com
+LeaseLock | leaselock.com
+Rhino | sayrhino.com
+Jetty | jetty.com
+Insurent | insurent.com
+Leap | leaseguarantor.com
+Equity Residential | equityapartments.com
+AvalonBay | avaloncommunities.com | Avalon
+Greystar | greystar.com
+MAA | maac.com
+Camden | camdenliving.com
+Essex | essexapartmenthomes.com
+UDR | udr.com
+Related Rentals | relatedrentals.com | Related
+Glenwood | glenwoodnyc.com
+Stuy Town | stuytown.com | StuyTown, Beam Living
+Brookfield Properties | brookfieldproperties.com
+Tishman Speyer | tishmanspeyer.com
+Public Storage | publicstorage.com
+Extra Space Storage | extraspace.com | Extra Space
+CubeSmart | cubesmart.com
+Life Storage | lifestorage.com
+StorageMart | storage-mart.com
+Manhattan Mini Storage | manhattanministorage.com
+Clutter | clutter.com
+Neighbor | neighbor.com
+StorQuest | storquest.com
+
+# Software, cloud and subscriptions
+iCloud | icloud.com
+Google One | one.google.com
+Google Workspace | workspace.google.com
+Gmail | gmail.com
+Microsoft 365 | microsoft365.com | Office
+Outlook | outlook.com
+Adobe | adobe.com | Adobe Creative Cloud, Adobe Systems, Adobe Acrobat, Photoshop
+Canva | canva.com
+Figma | figma.com
+Sketch | sketch.com
+Framer | framer.com
+Webflow | webflow.com
+Squarespace | squarespace.com | SQSP, Squarespace Domains
+Wix | wix.com
+WordPress.com | wordpress.com
+Automattic | automattic.com
+Jetpack | jetpack.com
+GoDaddy | godaddy.com | Go Daddy, DNH GoDaddy
+Namecheap | namecheap.com
+Porkbun | porkbun.com
+Cloudflare | cloudflare.com
+Hover | hover.com
+Gandi | gandi.net
+Dynadot | dynadot.com
+Name.com | name.com
+Network Solutions | networksolutions.com
+IONOS | ionos.com | 1and1, 1&1
+Bluehost | bluehost.com
+HostGator | hostgator.com
+SiteGround | siteground.com
+DreamHost | dreamhost.com
+A2 Hosting | a2hosting.com
+InMotion Hosting | inmotionhosting.com
+Hostinger | hostinger.com
+WP Engine | wpengine.com
+Kinsta | kinsta.com
+Pantheon | pantheon.io
+Netlify | netlify.com
+Vercel | vercel.com
+Render | render.com
+Railway | railway.com
+Fly.io | fly.io
+Heroku | heroku.com | Salesforce Heroku
+DigitalOcean | digitalocean.com | Digital Ocean
+Linode | linode.com | Akamai
+Vultr | vultr.com
+Hetzner | hetzner.com
+OVHcloud | ovhcloud.com | OVH
+AWS | aws.amazon.com | Amazon Web Services, AWS EMEA
+Google Cloud | cloud.google.com | GCP
+Oracle | oracle.com
+IBM | ibm.com
+Backblaze | backblaze.com
+Wasabi | wasabi.com
+Dropbox | dropbox.com
+Box | box.com
+pCloud | pcloud.com
+Sync.com | sync.com
+IDrive | idrive.com
+Carbonite | carbonite.com
+MEGA | mega.io
+Proton | proton.me | Proton Mail, ProtonMail, Proton VPN, ProtonVPN
+Tuta | tuta.com | Tutanota
+Fastmail | fastmail.com
+HEY | hey.com
+Basecamp | basecamp.com | 37signals
+Zoho | zoho.com
+Yahoo | yahoo.com | Yahoo Mail, Yahoo Finance
+AOL | aol.com
+1Password | 1password.com | AgileBits
+LastPass | lastpass.com
+Bitwarden | bitwarden.com
+Dashlane | dashlane.com
+Keeper | keepersecurity.com | Keeper Security
+NordPass | nordpass.com
+NordVPN | nordvpn.com | Nord VPN, NordSec
+ExpressVPN | expressvpn.com
+Surfshark | surfshark.com
+Mullvad | mullvad.net
+Private Internet Access | privateinternetaccess.com | PIA
+CyberGhost | cyberghostvpn.com
+IPVanish | ipvanish.com
+TunnelBear | tunnelbear.com
+Windscribe | windscribe.com
+Malwarebytes | malwarebytes.com
+McAfee | mcafee.com
+Avast | avast.com
+AVG | avg.com
+Kaspersky | kaspersky.com
+Bitdefender | bitdefender.com
+ESET | eset.com
+Trend Micro | trendmicro.com
+Webroot | webroot.com
+TotalAV | totalav.com
+Intego | intego.com
+Setapp | setapp.com
+MacPaw | macpaw.com | CleanMyMac
+Parallels | parallels.com
+Alfred | alfredapp.com
+Raycast | raycast.com
+BetterTouchTool | folivora.ai
+The Omni Group | omnigroup.com | OmniFocus
+Things | culturedcode.com | Cultured Code
+Todoist | todoist.com | Doist
+TickTick | ticktick.com
+Any.do | any.do
+Asana | asana.com
+Trello | trello.com
+Atlassian | atlassian.com | Jira, Confluence
+monday.com | monday.com | Monday
+ClickUp | clickup.com
+Notion | notion.so | Notion Labs
+Coda | coda.io
+Airtable | airtable.com
+Smartsheet | smartsheet.com
+Wrike | wrike.com
+Linear | linear.app
+Evernote | evernote.com
+Obsidian | obsidian.md
+Roam Research | roamresearch.com
+Logseq | logseq.com
+Craft | craft.do
+Bear | bear.app
+Ulysses | ulysses.app
+Scrivener | literatureandlatte.com
+Grammarly | grammarly.com
+QuillBot | quillbot.com
+LanguageTool | languagetool.org
+DeepL | deepl.com
+Duolingo | duolingo.com | Duolingo Super, Duolingo Plus
+Babbel | babbel.com
+Rosetta Stone | rosettastone.com
+Busuu | busuu.com
+Pimsleur | pimsleur.com
+italki | italki.com
+Preply | preply.com
+Memrise | memrise.com
+Chegg | chegg.com
+Course Hero | coursehero.com
+Quizlet | quizlet.com
+Studocu | studocu.com
+Brainly | brainly.com
+Khan Academy | khanacademy.org
+Coursera | coursera.org
+edX | edx.org
+Udemy | udemy.com
+Udacity | udacity.com
+Skillshare | skillshare.com
+MasterClass | masterclass.com
+Pluralsight | pluralsight.com
+Codecademy | codecademy.com
+DataCamp | datacamp.com
+Frontend Masters | frontendmasters.com
+egghead | egghead.io
+Scrimba | scrimba.com
+Treehouse | teamtreehouse.com
+LeetCode | leetcode.com
+HackerRank | hackerrank.com
+interviewing.io | interviewing.io
+AlgoExpert | algoexpert.io
+Educative | educative.io
+Brilliant | brilliant.org
+Outschool | outschool.com
+ABCmouse | abcmouse.com
+IXL | ixl.com
+Prodigy | prodigygame.com
+Epic | getepic.com
+Homer | learnwithhomer.com
+Lingokids | lingokids.com
+Noggin | noggin.com
+Toca Boca | tocaboca.com
+GitHub | github.com | GitHub Copilot, Github Inc
+GitLab | gitlab.com
+Bitbucket | bitbucket.org
+JetBrains | jetbrains.com
+Sublime Text | sublimetext.com | Sublime HQ
+Panic | panic.com
+Tower | git-tower.com
+Postman | postman.com
+Docker | docker.com
+HashiCorp | hashicorp.com
+npm | npmjs.com
+Sentry | sentry.io
+Datadog | datadoghq.com
+New Relic | newrelic.com
+LogRocket | logrocket.com
+PostHog | posthog.com
+Mixpanel | mixpanel.com
+Amplitude | amplitude.com
+Segment | segment.com
+Plausible | plausible.io
+Fathom Analytics | usefathom.com
+Hotjar | hotjar.com
+FullStory | fullstory.com
+Intercom | intercom.com
+Zendesk | zendesk.com
+Freshdesk | freshworks.com | Freshworks
+Help Scout | helpscout.com
+Front | front.com
+Crisp | crisp.chat
+HubSpot | hubspot.com
+Salesforce | salesforce.com
+Pipedrive | pipedrive.com
+Close | close.com
+Attio | attio.com
+Apollo.io | apollo.io
+ZoomInfo | zoominfo.com
+Calendly | calendly.com
+Cal.com | cal.com
+SavvyCal | savvycal.com
+Doodle | doodle.com
+Zoom | zoom.us | Zoom Video, Zoom.us, Zoom Communications
+Webex | webex.com | Cisco Webex
+GoTo | goto.com | GoToMeeting
+Loom | loom.com
+Descript | descript.com
+Riverside | riverside.fm
+StreamYard | streamyard.com
+Restream | restream.io
+OBS | obsproject.com
+Ecamm | ecamm.com
+Telestream | telestream.net | ScreenFlow
+TechSmith | techsmith.com | Camtasia, Snagit
+CleanShot | cleanshot.com
+Screen Studio | screen.studio
+Kapwing | kapwing.com
+VEED | veed.io
+CapCut | capcut.com
+InShot | inshot.com
+Splice | splice.com
+LumaFusion | luma-touch.com
+Blackmagic Design | blackmagicdesign.com | DaVinci Resolve
+Avid | avid.com
+Wondershare | wondershare.com | Filmora
+Envato | envato.com | Envato Elements, ThemeForest
+Artlist | artlist.io
+Musicbed | musicbed.com
+Epidemic Sound | epidemicsound.com
+Soundstripe | soundstripe.com
+Shutterstock | shutterstock.com
+Getty Images | gettyimages.com
+iStock | istockphoto.com
+Depositphotos | depositphotos.com
+Pond5 | pond5.com
+Storyblocks | storyblocks.com
+Unsplash | unsplash.com
+Freepik | freepik.com
+The Noun Project | thenounproject.com | Noun Project
+Font Awesome | fontawesome.com
+MyFonts | myfonts.com
+Monotype | monotype.com
+Creative Market | creativemarket.com
+Dribbble | dribbble.com
+Behance | behance.net
+Procreate | procreate.com
+Clip Studio | clipstudio.net
+Affinity | affinity.serif.com | Serif
+Corel | corel.com
+Pixelmator | pixelmator.com
+Darkroom | darkroom.co
+VSCO | vsco.co
+Capture One | captureone.com
+Skylum | skylum.com | Luminar
+DxO | dxo.com
+SmugMug | smugmug.com
+Flickr | flickr.com
+500px | 500px.com
+Pixieset | pixieset.com
+ShootProof | shootproof.com
+Format | format.com
+Mpix | mpix.com
+Nations Photo Lab | nationsphotolab.com
+Bay Photo | bayphoto.com
+Printique | printique.com
+Artifact Uprising | artifactuprising.com
+Chatbooks | chatbooks.com
+Mixbook | mixbook.com
+Aura Frames | auraframes.com | Aura Frame
+Nixplay | nixplay.com
+Skylight | skylightframe.com
+NETGEAR | netgear.com | Netgear Armor
+eero | eero.com | eero Plus
+TP-Link | tp-link.com
+Linksys | linksys.com
+Ubiquiti | ui.com
+Synology | synology.com
+QNAP | qnap.com
+Western Digital | westerndigital.com | WD
+Seagate | seagate.com
+SanDisk | sandisk.com
+Crucial | crucial.com
+Kingston | kingston.com
+OWC | owc.com | Other World Computing
+CalDigit | caldigit.com
+Satechi | satechi.net
+Twelve South | twelvesouth.com
+Grovemade | grovemade.com
+Orbitkey | orbitkey.com
+Ridge | ridge.com | Ridge Wallet
+Tile | tile.com
+Chipolo | chipolo.net
+
+# Music, audio, books and podcasts
+Spotify | spotify.com | Spotify USA, Spotify Premium, Spotify AB
+Apple Music | music.apple.com
+YouTube Music | music.youtube.com
+Pandora | pandora.com | Pandora Plus, Pandora Premium
+Tidal | tidal.com
+Deezer | deezer.com
+Qobuz | qobuz.com
+SoundCloud | soundcloud.com
+Bandcamp | bandcamp.com
+Audible | audible.com | Audible Inc, Audible.com
+Libro.fm | libro.fm | Librofm
+Audiobooks.com | audiobooks.com
+Everand | everand.com | Scribd
+Kobo | kobo.com | Rakuten Kobo
+Blinkist | blinkist.com
+Headway | makeheadway.com
+Storytel | storytel.com
+Pocket Casts | pocketcasts.com
+Overcast | overcast.fm
+Castbox | castbox.fm
+iHeartRadio | iheart.com | iHeart
+SiriusXM | siriusxm.com | Sirius XM, Sirius
+TuneIn | tunein.com
+Audacy | audacy.com
+Shazam | shazam.com
+Genius | genius.com
+Last.fm | last.fm
+Songkick | songkick.com
+Bandsintown | bandsintown.com
+LANDR | landr.com
+DistroKid | distrokid.com
+TuneCore | tunecore.com
+CD Baby | cdbaby.com
+Ableton | ableton.com
+Native Instruments | native-instruments.com
+iZotope | izotope.com
+Waves | waves.com
+Plugin Alliance | plugin-alliance.com
+Arturia | arturia.com
+Steinberg | steinberg.net
+PreSonus | presonus.com
+Focusrite | focusrite.com
+Universal Audio | uaudio.com
+Sweetwater | sweetwater.com
+Guitar Center | guitarcenter.com
+Musician's Friend | musiciansfriend.com
+Sam Ash | samash.com
+Fender | fender.com | Fender Play
+Gibson | gibson.com
+Taylor Guitars | taylorguitars.com
+Martin Guitar | martinguitar.com
+Yamaha | yamaha.com
+Roland | roland.com
+Korg | korg.com
+Moog | moogmusic.com
+Teenage Engineering | teenage.engineering
+Elektron | elektron.se
+Novation | novationmusic.com
+Akai Professional | akaipro.com | Akai
+Shure | shure.com
+RØDE | rode.com | Rode
+Yousician | yousician.com
+Simply Piano | hellosimply.com | JoyTunes, Simply
+flowkey | flowkey.com
+MuseScore | musescore.com
+Musicnotes | musicnotes.com
+Sheet Music Plus | sheetmusicplus.com
+Ultimate Guitar | ultimate-guitar.com
+Songsterr | songsterr.com
+Strand Bookstore | strandbooks.com | Strand
+McNally Jackson | mcnallyjackson.com
+Book Culture | bookculture.com
+Powell's Books | powells.com | Powells
+Kinokuniya | kinokuniya.com
+
+# AI tools and assistants
+OpenAI | openai.com | ChatGPT, ChatGPT Plus, OpenAI ChatGPT, ChatGPT Subscription, OpenAI API
+Anthropic | anthropic.com | Claude, Claude.ai, Claude Pro, Claude Max, Anthropic Claude
+Google Gemini | gemini.google.com | Gemini Advanced
+Google DeepMind | deepmind.google
+Perplexity | perplexity.ai | Perplexity AI, Perplexity Pro
+Mistral AI | mistral.ai | Mistral
+xAI | x.ai | Grok
+Meta AI | meta.ai
+Microsoft Copilot | copilot.microsoft.com | Copilot Pro
+Cursor | cursor.com | Anysphere, Cursor AI
+Windsurf | windsurf.com | Codeium
+Replit | replit.com
+Lovable | lovable.dev
+Bolt.new | bolt.new | StackBlitz
+v0 | v0.app
+Tabnine | tabnine.com
+Sourcegraph | sourcegraph.com | Cody
+Warp | warp.dev
+Zed | zed.dev
+Midjourney | midjourney.com | Midjourney Inc
+Stability AI | stability.ai | DreamStudio
+Leonardo.Ai | leonardo.ai | Leonardo AI
+Ideogram | ideogram.ai
+Krea | krea.ai
+Runway | runwayml.com | RunwayML
+Pika | pika.art
+Luma AI | lumalabs.ai | Luma Dream Machine
+Kling AI | klingai.com | Kling
+Higgsfield | higgsfield.ai
+HeyGen | heygen.com
+Synthesia | synthesia.io
+D-ID | d-id.com
+ElevenLabs | elevenlabs.io | Eleven Labs
+Murf AI | murf.ai | Murf
+PlayHT | play.ht
+WellSaid Labs | wellsaidlabs.com
+Resemble AI | resemble.ai
+Suno | suno.com | Suno AI
+Udio | udio.com
+Otter.ai | otter.ai | Otter
+Fireflies.ai | fireflies.ai | Fireflies
+Fathom | fathom.video
+Granola | granola.ai
+tl;dv | tldv.io | tldv
+Read AI | read.ai
+Krisp | krisp.ai
+Superhuman | superhuman.com
+Shortwave | shortwave.com
+Jasper | jasper.ai
+Copy.ai | copy.ai
+Writesonic | writesonic.com
+Rytr | rytr.me
+Wordtune | wordtune.com
+Mem | mem.ai
+Reflect | reflect.app
+Tana | tana.inc
+Gamma | gamma.app
+Beautiful.ai | beautiful.ai
+Tome | tome.app
+Pitch | pitch.com
+Character.AI | character.ai | Character AI
+Replika | replika.com
+Poe | poe.com | Quora Poe
+You.com | you.com
+Phind | phind.com
+Kagi | kagi.com
+Hugging Face | huggingface.co | HuggingFace
+Together AI | together.ai
+Fireworks AI | fireworks.ai
+Groq | groq.com
+Replicate | replicate.com
+OpenRouter | openrouter.ai
+Cohere | cohere.com
+AI21 Labs | ai21.com
+DeepSeek | deepseek.com
+Manus | manus.im
+Genspark | genspark.ai
+Devin | devin.ai | Cognition
+Factory | factory.ai
+Pinecone | pinecone.io
+Weaviate | weaviate.io
+LangChain | langchain.com | LangSmith
+LlamaIndex | llamaindex.ai
+Modal | modal.com
+RunPod | runpod.io
+Lambda | lambda.ai | Lambda Labs
+CoreWeave | coreweave.com
+Paperspace | paperspace.com
+Vast.ai | vast.ai
+Google Colab | colab.research.google.com | Colab, Colab Pro
+Kaggle | kaggle.com
+Weights & Biases | wandb.ai | Weights and Biases, WandB
+OpusClip | opus.pro | Opus Clip
+Captions | captions.ai
+Photoroom | photoroom.com
+remove.bg | remove.bg
+Picsart | picsart.com
+Lensa | prisma-ai.com
+Facetune | facetuneapp.com | Lightricks
+Magnific | magnific.ai
+Topaz Labs | topazlabs.com | Topaz
+
+# Gaming
+Steam | steampowered.com | Valve, Steam Games, Steampowered
+Epic Games | epicgames.com | Epic Games Store
+PlayStation | playstation.com | PlayStation Network, PSN, PlayStation Plus, Sony Interactive
+Xbox | xbox.com | Xbox Game Pass, Xbox Live, Game Pass
+Nintendo | nintendo.com | Nintendo eShop, Nintendo Switch Online
+Electronic Arts | ea.com | EA, EA Play
+Ubisoft | ubisoft.com
+Activision | activision.com
+Blizzard | blizzard.com | Battle.net, Blizzard Entertainment
+Riot Games | riotgames.com | League of Legends, Valorant
+Roblox | roblox.com | Robux
+Minecraft | minecraft.net | Mojang
+Fortnite | fortnite.com
+Rockstar Games | rockstargames.com | Rockstar, GTA Online
+2K | 2k.com | Take-Two
+Bethesda | bethesda.net
+Square Enix | square-enix.com
+Bandai Namco | bandainamcoent.com
+Capcom | capcom.com
+Sega | sega.com
+Konami | konami.com
+GOG | gog.com | GOG.com
+Humble Bundle | humblebundle.com | Humble
+itch.io | itch.io
+Fanatical | fanatical.com
+Green Man Gaming | greenmangaming.com
+GeForce NOW | nvidia.com | NVIDIA
+AMD | amd.com
+Intel | intel.com
+Supercell | supercell.com | Clash of Clans, Clash Royale, Brawl Stars
+King | king.com | Candy Crush
+Zynga | zynga.com
+Scopely | scopely.com | Monopoly Go
+Playtika | playtika.com
+Moon Active | moonactive.com | Coin Master
+Playrix | playrix.com | Homescapes, Gardenscapes
+Miniclip | miniclip.com
+Pokémon | pokemon.com | Pokemon
+Niantic | nianticlabs.com | Pokemon Go
+Chess.com | chess.com
+Lichess | lichess.org
+Pogo | pogo.com
+Big Fish Games | bigfishgames.com
+Arkadium | arkadium.com
+Skillz | skillz.com
+Publishers Clearing House | pch.com | PCH
+Chumba Casino | chumbacasino.com | Chumba
+Stake.us | stake.us | Stake
+McLuck | mcluck.com
+Pulsz | pulsz.com
+New York Lottery | nylottery.ny.gov | NY Lottery
+New Jersey Lottery | njlottery.com | NJ Lottery
+Jackpocket | jackpocket.com
+Powerball | powerball.com
+Wizards of the Coast | wizards.com | Magic the Gathering
+D&D Beyond | dndbeyond.com | DnD Beyond
+TCGplayer | tcgplayer.com
+Card Kingdom | cardkingdom.com
+Games Workshop | games-workshop.com | Warhammer
+Hasbro | hasbro.com
+Mattel | mattel.com
+LEGO | lego.com
+FAO Schwarz | faoschwarz.com
+Toys"R"Us | toysrus.com | Toys R Us
+Melissa & Doug | melissaanddoug.com | Melissa and Doug
+KiwiCo | kiwico.com
+Lovevery | lovevery.com
+Monti Kids | montikids.com
+Fisher-Price | fisher-price.com | Fisher Price
+Build-A-Bear | buildabear.com | Build A Bear
+American Girl | americangirl.com
+Funko | funko.com
+BigBadToyStore | bigbadtoystore.com
+Entertainment Earth | entertainmentearth.com
+
+# Charities and nonprofits
+American Red Cross | redcross.org | Red Cross
+The Salvation Army | salvationarmyusa.org | Salvation Army
+UNICEF USA | unicefusa.org | UNICEF
+Doctors Without Borders | doctorswithoutborders.org | MSF, Medecins Sans Frontieres
+Save the Children | savethechildren.org
+World Wildlife Fund | worldwildlife.org | WWF
+The Nature Conservancy | nature.org | Nature Conservancy
+Sierra Club | sierraclub.org
+NRDC | nrdc.org | Natural Resources Defense Council
+Environmental Defense Fund | edf.org | EDF
+Earthjustice | earthjustice.org
+350.org | 350.org
+Greenpeace | greenpeace.org
+Oceana | oceana.org
+Ocean Conservancy | oceanconservancy.org
+National Audubon Society | audubon.org | Audubon
+National Wildlife Federation | nwf.org
+Defenders of Wildlife | defenders.org
+Humane World for Animals | humanesociety.org | Humane Society, HSUS
+ASPCA | aspca.org
+Best Friends Animal Society | bestfriends.org | Best Friends
+Petfinder | petfinder.com
+St. Jude Children's Research Hospital | stjude.org | St Jude, ALSAC
+American Cancer Society | cancer.org
+Susan G. Komen | komen.org | Komen
+Leukemia & Lymphoma Society | lls.org | LLS
+American Heart Association | heart.org
+American Diabetes Association | diabetes.org
+Alzheimer's Association | alz.org
+The Michael J. Fox Foundation | michaeljfox.org | Michael J Fox Foundation
+NAMI | nami.org
+AFSP | afsp.org | American Foundation for Suicide Prevention
+The Trevor Project | thetrevorproject.org | Trevor Project
+GLAAD | glaad.org
+Human Rights Campaign | hrc.org | HRC
+ACLU | aclu.org | American Civil Liberties Union
+Southern Poverty Law Center | splcenter.org | SPLC
+NAACP | naacp.org
+NAACP Legal Defense Fund | naacpldf.org | LDF
+Planned Parenthood Action | plannedparenthoodaction.org
+Center for Reproductive Rights | reproductiverights.org
+Everytown | everytown.org | Everytown for Gun Safety
+Brady | bradyunited.org
+Feeding America | feedingamerica.org
+Citymeals on Wheels | citymeals.org | Citymeals
+City Harvest | cityharvest.org
+Food Bank For New York City | foodbanknyc.org | Food Bank NYC
+Coalition for the Homeless | coalitionforthehomeless.org
+The Bowery Mission | bowery.org | Bowery Mission
+Robin Hood | robinhood.org | Robin Hood Foundation
+Henry Street Settlement | henrystreet.org
+Children's Aid | childrensaidnyc.org
+Habitat for Humanity | habitat.org
+Goodwill | goodwill.org
+Volunteers of America | voa.org
+United Way | unitedway.org
+Catholic Charities | catholiccharitiesusa.org
+UJA-Federation of New York | ujafedny.org | UJA Federation
+Islamic Relief USA | irusa.org
+Catholic Relief Services | crs.org
+World Vision | worldvision.org
+Compassion International | compassion.com
+CARE | care.org
+Oxfam America | oxfamamerica.org | Oxfam
+Heifer International | heifer.org
+Kiva | kiva.org
+GiveDirectly | givedirectly.org
+GiveWell | givewell.org
+Against Malaria Foundation | againstmalaria.com | AMF
+Helen Keller Intl | helenkellerintl.org
+Malaria Consortium | malariaconsortium.org
+New Incentives | newincentives.org
+The Life You Can Save | thelifeyoucansave.org
+charity: water | charitywater.org | Charity Water
+Water.org | water.org
+Direct Relief | directrelief.org
+Americares | americares.org
+Partners In Health | pih.org
+International Rescue Committee | rescue.org | IRC
+Mercy Corps | mercycorps.org
+World Central Kitchen | wck.org | WCK
+UNHCR | unrefugees.org | USA for UNHCR
+World Food Programme USA | wfpusa.org | WFP
+Amnesty International | amnestyusa.org | Amnesty
+Human Rights Watch | hrw.org
+ICRC | icrc.org
+EFF | eff.org | Electronic Frontier Foundation
+Fight for the Future | fightforthefuture.org
+Wikimedia Foundation | wikimedia.org | Wikipedia, Wikimedia
+Internet Archive | archive.org
+Mozilla | mozilla.org | Mozilla Foundation, Firefox
+The Tor Project | torproject.org | Tor Project
+Free Press | freepress.net
+Committee to Protect Journalists | cpj.org | CPJ
+Texas Tribune | texastribune.org
+CalMatters | calmatters.org
+Vote.org | vote.org
+Rock the Vote | rockthevote.org
+FairVote | fairvote.org
+Common Cause | commoncause.org
+League of Women Voters | lwv.org
+Indivisible | indivisible.org
+MoveOn | moveon.org
+ActBlue | actblue.com | ACT BLUE
+WinRed | winred.com
+Democratic Socialists of America | dsausa.org | DSA
+Working Families Party | workingfamilies.org | WFP Party
+Sunrise Movement | sunrisemovement.org | Sunrise
+GoFundMe | gofundme.com | Go Fund Me
+Givebutter | givebutter.com
+Classy | classy.org
+Donorbox | donorbox.org
+Network for Good | networkforgood.com
+Benevity | benevity.com
+JustGiving | justgiving.com
+Tiltify | tiltify.com
+Indiegogo | indiegogo.com
+Kickstarter | kickstarter.com
+BackerKit | backerkit.com
+Crowd Supply | crowdsupply.com
+WQXR | wqxr.org
+KEXP | kexp.org
+KCRW | kcrw.com
+DonorsChoose | donorschoose.org
+Teach For America | teachforamerica.org
+Big Brothers Big Sisters | bbbs.org
+Boys & Girls Clubs of America | bgca.org | Boys and Girls Club
+Girl Scouts | girlscouts.org
+Scouting America | scouting.org | Boy Scouts
+YWCA | ywca.org
+Special Olympics | specialolympics.org
+Wounded Warrior Project | woundedwarriorproject.org
+DAV | dav.org | Disabled American Veterans
+Fisher House | fisherhouse.org
+Tunnel to Towers | t2t.org
+USO | uso.org
+Make-A-Wish | wish.org | Make A Wish
+Ronald McDonald House Charities | rmhc.org | Ronald McDonald House
+Shriners Children's | shrinerschildrens.org
+Children's Miracle Network Hospitals | childrensmiraclenetworkhospitals.org
+Toys for Tots | toysfortots.org
+Smile Train | smiletrain.org
+Operation Smile | operationsmile.org
+Rotary | rotary.org
+
+# Colleges and school payments
+Harvard | harvard.edu
+Yale University | yale.edu
+Princeton | princeton.edu
+Columbia University | columbia.edu | Columbia
+NYU | nyu.edu | New York University
+Cornell | cornell.edu
+Penn | upenn.edu | University of Pennsylvania
+Brown | brown.edu
+Dartmouth | dartmouth.edu
+MIT | mit.edu
+Stanford | stanford.edu
+UC Berkeley | berkeley.edu | Berkeley
+UCLA | ucla.edu
+University of Chicago | uchicago.edu | UChicago
+Northwestern | northwestern.edu
+Duke | duke.edu
+Johns Hopkins | jhu.edu
+Georgetown | georgetown.edu
+CUNY | cuny.edu | City University of New York
+SUNY | suny.edu | State University of New York
+Fordham | fordham.edu
+The New School | newschool.edu | New School, Parsons
+Pratt | pratt.edu | Pratt Institute
+FIT | fitnyc.edu | Fashion Institute of Technology
+SVA | sva.edu | School of Visual Arts
+Juilliard | juilliard.edu
+Barnard | barnard.edu
+Rutgers | rutgers.edu
+University of Michigan | umich.edu
+UT Austin | utexas.edu
+UW–Madison | wisc.edu
+Ohio State | osu.edu
+Penn State | psu.edu
+Boston University | bu.edu
+Northeastern | northeastern.edu
+USC | usc.edu
+Georgia Tech | gatech.edu
+University of Washington | uw.edu
+Vanderbilt | vanderbilt.edu
+Rice | rice.edu
+Emory | emory.edu
+Tufts | tufts.edu
+WashU | wustl.edu
+Carnegie Mellon | cmu.edu | CMU
+Caltech | caltech.edu
+College Board | collegeboard.org | SAT
+ACT | act.org
+Common App | commonapp.org
+Parchment | parchment.com
+National Student Clearinghouse | studentclearinghouse.org
+Flywire | flywire.com
+Nelnet Campus Commerce | nelnetcampuscommerce.com
+TouchNet | touchnet.com
+Transact Campus | transactcampus.com
+MySchoolBucks | myschoolbucks.com
+SchoolPay | schoolpay.com
+Brightwheel | mybrightwheel.com
+Procare | procaresoftware.com
+Tuition Management Systems | afford.com
+
+# Government, taxes and fees
+IRS | irs.gov | IRS USATAXPYMT, US Treasury Tax, IRS Treas, Internal Revenue Service
+Pay.gov | pay.gov
+EFTPS | eftps.gov
+U.S. Treasury | treasury.gov | US Treasury, Treasury
+NYS Department of Taxation | tax.ny.gov | NYS DTF, NYS Tax, NY State Tax, NYS DTF PIT
+California FTB | ftb.ca.gov | Franchise Tax Board, CA FTB
+Texas Comptroller | comptroller.texas.gov
+Florida Department of Revenue | floridarevenue.com
+Illinois Department of Revenue | tax.illinois.gov
+Massachusetts DOR | mass.gov | Mass DOR, Commonwealth of Massachusetts
+Pennsylvania Department of Revenue | revenue.pa.gov | PA Dept of Revenue
+Virginia Tax | tax.virginia.gov
+Comptroller of Maryland | marylandtaxes.gov
+Connecticut DRS | portal.ct.gov | CT DRS, State of Connecticut
+Ohio Department of Taxation | tax.ohio.gov
+Michigan Treasury | michigan.gov
+Washington DOR | dor.wa.gov
+Oregon DOR | oregon.gov
+Colorado DOR | colorado.gov
+Georgia DOR | dor.georgia.gov
+NC Department of Revenue | ncdor.gov | NCDOR
+NYC | nyc.gov | City of New York, NYC Gov, NYC Finance, NYC DOF, NYC Department of Finance, CityPay, NYC Parking Ticket, NYC DOT
+City of Chicago | chicago.gov
+City of Los Angeles | lacity.gov
+City of San Francisco | sf.gov | SF Gov
+City of Seattle | seattle.gov
+City of Boston | boston.gov
+City of Philadelphia | phila.gov
+District of Columbia | dc.gov | DC Gov
+New York State | ny.gov | NYS, State of New York
+New Jersey | nj.gov | State of New Jersey, NJ Gov
+USPS | usps.com | US Postal Service, United States Postal Service, Postal Service
+UPS | ups.com | United Parcel Service, UPS Store, The UPS Store
+FedEx | fedex.com | Federal Express, FedEx Office
+DHL | dhl.com
+OnTrac | ontrac.com | LaserShip
+Stamps.com | stamps.com
+Pirate Ship | pirateship.com
+ShipStation | shipstation.com
+EasyPost | easypost.com
+Shippo | goshippo.com
+U.S. Passports | travel.state.gov | Passport Services, US Department of State
+USCIS | uscis.gov
+CBP | cbp.gov | US Customs and Border Protection
+NY Courts | nycourts.gov | NYS Unified Court System
+NYC311 | portal.311.nyc.gov | 311
+NYS HCR | hcr.ny.gov | Homes and Community Renewal
+NYC Housing Connect | housingconnect.nyc.gov | Housing Connect
+NY State Parks | parks.ny.gov | NYS Parks
+NYS DEC | dec.ny.gov | DEC
+New York Public Library | nypl.org | NYPL
+Brooklyn Public Library | bklynlibrary.org | BPL
+Queens Public Library | queenslibrary.org
+Library of Congress | loc.gov
+USA.gov | usa.gov
+Login.gov | login.gov
+ID.me | id.me
+Social Security | ssa.gov | SSA, Social Security Administration
+Medicaid | medicaid.gov
+VA | va.gov | Veterans Affairs, US Department of Veterans Affairs
+Military OneSource | militaryonesource.mil
+DFAS | dfas.mil
+TRICARE | tricare.mil
+Census Bureau | census.gov
+SEC | sec.gov
+FINRA | finra.org
+FDIC | fdic.gov
+CFPB | consumerfinance.gov
+FTC | ftc.gov
+USDA | usda.gov
+SNAP | fns.usda.gov | EBT, Food Stamps
+ConnectEBT | connectebt.com
+ebtEDGE | ebtedge.com
+Propel | propel.app | Fresh EBT, Providers
+NYS Department of Labor | dol.ny.gov | NYS DOL, NY Unemployment
+NJ Unemployment | myunemployment.nj.gov
+California EDD | edd.ca.gov | EDD
+Texas Workforce Commission | twc.texas.gov | TWC
+PACER | pacer.uscourts.gov
+U.S. Courts | uscourts.gov
+Congress.gov | congress.gov
+TurboTax | turbotax.intuit.com | Intuit TurboTax, TurboTax Online
+H&R Block | hrblock.com | HR Block, H and R Block
+TaxAct | taxact.com
+FreeTaxUSA | freetaxusa.com
+TaxSlayer | taxslayer.com
+Jackson Hewitt | jacksonhewitt.com
+Liberty Tax | libertytax.com
+1040.com | 1040.com
+OLT | olt.com | OnLine Taxes
+eFile.com | efile.com
+IRS Direct File | directfile.irs.gov
+Avalara | avalara.com
+TaxJar | taxjar.com
+Official Payments | officialpayments.com | ACI Payments, ACI Pay
+Pay1040 | pay1040.com
+PayUSAtax | payusatax.com
+Tyler Technologies | tylertech.com | NIC, NICUSA
+InvoiceCloud | invoicecloud.com
+Paymentus | paymentus.com
+doxo | doxo.com | doxoPAY, DOXO Inc
+KUBRA | kubra.com
+Speedpay | speedpay.com
+Fiserv | fiserv.com | CheckFree
+PayIt | payitgov.com
+
+# Hosting, dev and business services
+Supabase | supabase.com
+Firebase | firebase.google.com
+MongoDB | mongodb.com | MongoDB Atlas
+PlanetScale | planetscale.com
+Neon | neon.com | Neon Database
+Upstash | upstash.com
+Redis | redis.io
+Elastic | elastic.co
+Algolia | algolia.com
+Twilio | twilio.com
+SendGrid | sendgrid.com
+Resend | resend.com
+Postmark | postmarkapp.com
+Mailgun | mailgun.com
+Mailjet | mailjet.com
+Brevo | brevo.com | Sendinblue
+Klaviyo | klaviyo.com
+Constant Contact | constantcontact.com
+ActiveCampaign | activecampaign.com
+Flodesk | flodesk.com
+Typeform | typeform.com
+Jotform | jotform.com
+Tally | tally.so
+SurveyMonkey | surveymonkey.com
+Qualtrics | qualtrics.com
+DocuSign | docusign.com
+Dropbox Sign | sign.dropbox.com | HelloSign
+PandaDoc | pandadoc.com
+SignNow | signnow.com
+Zapier | zapier.com
+Make | make.com | Integromat
+IFTTT | ifttt.com
+n8n | n8n.io
+Retool | retool.com
+Bubble | bubble.io
+Glide | glideapps.com
+Softr | softr.io
+Carrd | carrd.co
+Linktree | linktr.ee
+Beacons | beacons.ai
+Gravatar | gravatar.com
+Unbounce | unbounce.com
+Leadpages | leadpages.com
+ClickFunnels | clickfunnels.com
+SamCart | samcart.com
+ThriveCart | thrivecart.com
+Acuity Scheduling | acuityscheduling.com
+Lightspeed | lightspeedhq.com
+BigCommerce | bigcommerce.com
+WooCommerce | woocommerce.com
+Printify | printify.com
+Elegant Themes | elegantthemes.com | Divi
+Elementor | elementor.com
+Yoast | yoast.com
+Semrush | semrush.com
+Ahrefs | ahrefs.com
+Moz | moz.com
+Similarweb | similarweb.com
+Buffer | buffer.com
+Hootsuite | hootsuite.com
+Later | later.com
+Sprout Social | sproutsocial.com
+Planoly | planoly.com
+Upwork | upwork.com
+Fiverr | fiverr.com
+Toptal | toptal.com
+Freelancer | freelancer.com
+99designs | 99designs.com
+Contra | contra.com
+Wellfound | wellfound.com | AngelList
+Indeed | indeed.com
+Glassdoor | glassdoor.com
+ZipRecruiter | ziprecruiter.com
+Monster | monster.com
+CareerBuilder | careerbuilder.com
+Dice Careers | dice.com
+Built In | builtin.com
+Levels.fyi | levels.fyi
+Blind | teamblind.com
+Idealist | idealist.org
+Handshake | joinhandshake.com
+Greenhouse | greenhouse.io
+Lever | lever.co
+Ashby | ashbyhq.com
+Resume.io | resume.io
+Zety | zety.com
+Teal | tealhq.com
+Huntr | huntr.co
+Jobscan | jobscan.co
+TopResume | topresume.com
+CareerFoundry | careerfoundry.com
+General Assembly | generalassemb.ly
+Flatiron School | flatironschool.com
+Springboard | springboard.com
+Codesmith | codesmith.io
+Le Wagon | lewagon.com
+Ironhack | ironhack.com
+TripleTen | tripleten.com
+Zero To Mastery | zerotomastery.io
+freeCodeCamp | freecodecamp.org
+Stack Overflow | stackoverflow.com
+O'Reilly | oreilly.com | OReilly Media, Safari Books
+Manning | manning.com
+The Pragmatic Bookshelf | pragprog.com
+No Starch Press | nostarch.com
+Leanpub | leanpub.com
+Packt | packtpub.com
+ACM | acm.org
+IEEE | ieee.org

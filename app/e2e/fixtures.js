@@ -6,8 +6,13 @@ import { test as base, expect } from '@playwright/test'
 // "this month" is always November 2026 and the sample data's last month is October 2026.
 export const NOW = '2026-11-08T12:00:00'
 
+// The hosted site loads a shared merchant logo catalog from the Blob store. Tests never reach it: by default the
+// request fails, so merchants show letter avatars as before. icons.spec.js mocks it instead.
+export const ICON_ROUTE = 'https://*.public.blob.vercel-storage.com/icons/**'
+
 export const test = base.extend({
   page: async ({ page }, provide) => {
+    await page.route(ICON_ROUTE, (route) => route.abort())
     await page.clock.install({ time: new Date(NOW) })
     await provide(page)
   },

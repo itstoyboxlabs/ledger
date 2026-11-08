@@ -21,3 +21,6 @@ dist
 test-results
 playwright-report
 .DS_Store
+
+# merchant logo catalog, built by app/scripts/build-icon-catalog.mjs and uploaded to Blob
+/app/.icon-catalog/

@@ -1,7 +1,8 @@
 # Security
 
-Ledger runs on your own computer and keeps your data in your own browser or in a local `data/` folder. It makes no
-network calls and has no accounts. Importing means giving your statements to the AI assistant you choose, under that assistant's own privacy terms.
+Ledger runs on your own computer and keeps your data in your own browser or in a local `data/` folder. It sends none
+of your data anywhere and has no accounts. The only network request the app makes is for the shared merchant logo
+catalog on the hosted site, which is the same for every visitor. Importing means giving your statements to the AI assistant you choose, under that assistant's own privacy terms.
 
 If you find a security problem, please email itstoyboxlabs@gmail.com instead of opening a public issue. Include what
 you found and how to reproduce it. We will reply within a few days.

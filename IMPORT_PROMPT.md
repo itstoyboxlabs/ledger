@@ -56,7 +56,16 @@ A file I exported from Ledger also has `exportedAt` and a `settings` section aft
 
 ## Merchants
 
-- `merchants` maps each merchant name you used to its website domain, like `"Starbucks": "starbucks.com"`. The app uses it to show each company's logo.
+- Ledger has logos for about 3,400 common merchants, listed one per line at https://raw.githubusercontent.com/itstoyboxlabs/ledger/main/app/scripts/icon-domains.txt. Each line reads `Brand name | domain | other spellings`, for example `Uber | uber.com | Uber Trip, Uber One`.
+- If you can open that link, use the exact name from its Brand name column as the `merchant` for every merchant you find there, so "UBER *TRIP 8005" becomes "Uber" and "WHOLEFDS NYC 10021" becomes "Whole Foods". Then add that brand name and the domain from the same line to `merchants`. The third column lists spellings you may see on a statement, to help you find the right line.
+- If you cannot open the link, use each merchant's common brand name, the one people would say out loud, and its website domain as described below. The app still matches most well-known merchants by name.
+- `merchants` maps each merchant name you used to the merchant's main website domain, like `"Starbucks": "starbucks.com"`. The app uses it to show each company's logo. This map is optional: add a domain when you know it, and leave a merchant out when you do not. A merchant without a domain still gets a logo when the app recognizes its name, and otherwise shows its first letter.
+- Use the brand's canonical primary domain: the one the company itself uses as its home page in the United States. Not a country site, a shop subdomain, a payment processor or a link from the statement. Some examples:
+  - The subway, buses, OMNY and the LIRR are all "MTA", domain `mta.info`.
+  - ChatGPT is billed by OpenAI, domain `openai.com`.
+  - YouTube Premium is `youtube.com`, not `google.com`.
+  - Uber rides are `uber.com`, and Uber Eats orders are `ubereats.com`.
+  - DoorDash is `doordash.com`, even when the statement shows the restaurant's name after "DD *".
 - Add one entry per merchant, not per transaction. Only add a domain when you are sure of it. Leave out anything you would be guessing at, like a person on Venmo or a local shop you do not recognize.
 - Also add each bank from `accounts` (like "Chase") to `merchants` with its website domain, so the sidebar can show the bank's logo next to its name.
 - When you add to an existing file, keep every entry that is already there.
