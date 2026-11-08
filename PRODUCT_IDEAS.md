@@ -84,7 +84,7 @@ The same fact typed in more than one place.
 
 Results that cannot be sent where they obviously belong.
 
-1. **A shared "About you" card on Balances.** Birth year, filing status, tax state and an optional partner. Balances
+1. **A shared "About you" card on Balances.** Age, filing status and tax state. Balances
    already owns tax state and its preset is literally called `planningVariables`. Retirement reads age from it,
    Debt payoff shows "debt free at 41", the tax engine reads filing status.
 2. **Log into Remaining this month.** Budget's Remaining this month counts undated rows in full even when the
@@ -124,7 +124,7 @@ From `screens/retirement` (the simulation is `utils/simulateRetirement.ts`).
   federal, state and city brackets. Savings are spent first, then pre-tax, then Roth.
 - The monthly need is typed or follows a Budget preset, minus Social Security from the claim age.
 - Events: money in, money out or pay off a debt, with repeats. Equity events stop when you retire.
-- Still missing: inflation, a partner, filing status, healthcare, flat returns only.
+- Still missing: inflation, filing status, healthcare, flat returns only.
 
 ### Gaps
 
