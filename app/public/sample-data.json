@@ -4590,7 +4590,7 @@
        {
         "id": "d1",
         "name": "Car loan",
-        "balance": 14200,
+        "balance": 11800,
         "apr": 6.4,
         "payment": 385,
         "budgetRow": "b009"
@@ -4598,7 +4598,7 @@
        {
         "id": "d2",
         "name": "Student loan",
-        "balance": 21500,
+        "balance": 17500,
         "apr": 4.5,
         "payment": 210,
         "budgetRow": "b010"
@@ -4606,7 +4606,7 @@
        {
         "id": "d3",
         "name": "Credit card",
-        "balance": 1850,
+        "balance": 1200,
         "apr": 22.9,
         "payment": 150,
         "budgetRow": null
@@ -4622,7 +4622,7 @@
        {
         "id": "d1",
         "name": "Car loan",
-        "balance": 14200,
+        "balance": 11800,
         "apr": 6.4,
         "payment": 385,
         "budgetRow": "b009"
@@ -4630,7 +4630,7 @@
        {
         "id": "d2",
         "name": "Student loan",
-        "balance": 21500,
+        "balance": 17500,
         "apr": 4.5,
         "payment": 210,
         "budgetRow": "b010"
@@ -4638,7 +4638,7 @@
        {
         "id": "d3",
         "name": "Credit card",
-        "balance": 1850,
+        "balance": 1200,
         "apr": 22.9,
         "payment": 150,
         "budgetRow": null
@@ -4956,7 +4956,7 @@
     {
      "id": "d1",
      "name": "Car loan",
-     "balance": 14200,
+     "balance": 11800,
      "apr": 6.4,
      "payment": 385,
      "budgetRow": "b009"
@@ -4964,7 +4964,7 @@
     {
      "id": "d2",
      "name": "Student loan",
-     "balance": 21500,
+     "balance": 17500,
      "apr": 4.5,
      "payment": 210,
      "budgetRow": "b010"
@@ -4972,7 +4972,7 @@
     {
      "id": "d3",
      "name": "Credit card",
-     "balance": 1850,
+     "balance": 1200,
      "apr": 22.9,
      "payment": 150,
      "budgetRow": null
@@ -4988,13 +4988,13 @@
     {
      "id": "a2",
      "name": "Emergency fund (savings)",
-     "balance": 12500,
+     "balance": 20000,
      "pool": "savings"
     },
     {
      "id": "a3",
      "name": "Taxable brokerage",
-     "balance": 18400,
+     "balance": 34000,
      "pool": "savings"
     },
     {
