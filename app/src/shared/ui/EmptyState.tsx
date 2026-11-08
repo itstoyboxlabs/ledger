@@ -48,7 +48,7 @@ export function EmptyState() {
           <li>Upload ledger-data.json.</li>
         </ol>
         <p className="mt-3 text-[13px] text-[var(--text-muted)]">
-          Have a settings backup too? Upload it with the same button.
+          Have a settings backup too? Pick it together with ledger-data.json. Uploading replaces what is stored on this device.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <Input

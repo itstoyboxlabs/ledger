@@ -1,21 +1,28 @@
+import { applyData } from '@/shared/utils/applyData'
+import { applySettings } from '@/shared/utils/applySettings'
+import { clearStoredData } from '@/shared/utils/clearStoredData'
 import { getAllTxns } from '@/shared/utils/getAllTxns'
 import { isLocal } from '@/shared/utils/isLocal'
-import { applySettings } from '@/shared/utils/applySettings'
-import { mergeData } from '@/shared/utils/mergeData'
+import { mergeStatements } from '@/shared/utils/mergeStatements'
+import { setData } from '@/shared/utils/setData'
 import { validateDataFile } from '@/shared/utils/validateDataFile'
 import type { ImportResult } from '@/shared/types/ImportResult'
 
-// merge a validated file into what is loaded, persist it, and re-derive.
-// A file with transactions is a data file, a file with settings is a settings file,
-// and a file with both does both.
-// transactions: union by id, file wins. accounts, merchants and periods: merge by key.
-// Legacy string accounts are upgraded to { name, bank, type, last4 } first.
-// subscriptions: merge by name. settings: only keys present in the file.
+// Replace what this browser stores with a validated file, persist it and re-derive.
+// A file with transactions wipes everything first (statements, budget, log, notes, presets and every
+// "ledger:" key), so nothing from earlier data such as the sample survives. A settings-only file wipes
+// the settings and keeps the statements, so a backup can follow the data file it belongs to.
 export async function importDataFile(f: unknown): Promise<ImportResult> {
   if (isLocal()) throw new Error('Importing is off in local mode. Your data lives in the data folder.')
   validateDataFile(f)
 
-  if (Array.isArray(f.transactions)) await mergeData(f)
+  const data = Array.isArray(f.transactions)
+  await clearStoredData(data ? 'all' : 'settings')
+  if (data) {
+    const statements = mergeStatements({ accounts: {}, merchants: {}, periods: {}, subscriptions: [], transactions: [] }, f)
+    await setData(statements)
+    applyData(statements)
+  }
   await applySettings(f.settings)
-  return { transactions: getAllTxns().length, data: Array.isArray(f.transactions), settings: !!f.settings }
+  return { transactions: getAllTxns().length, data, settings: !!f.settings }
 }

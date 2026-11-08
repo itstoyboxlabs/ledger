@@ -1,5 +1,7 @@
 import { importDataFile } from './importDataFile'
 import { getBudget } from './getBudget'
+import { getPresets } from './getPresets'
+import { getAccounts } from './getAccounts'
 import { getData } from './getData'
 import { getAllTxns } from './getAllTxns'
 import { applyData } from './applyData'
@@ -33,6 +35,40 @@ describe('importDataFile', () => {
   it('does both when the file has both', async () => {
     const r = await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [] } } })
     expect(r).toEqual({ transactions: 1, data: true, settings: true })
+  })
+  it('replaces the stored statements and every setting when the file has transactions', async () => {
+    await importDataFile({
+      version: 1,
+      accounts: { fake: { name: 'Sample checking' } },
+      transactions: [{ ...tx('s1', '2026-01-01'), account: 'fake' }],
+      settings: { budget: { rows: [{ id: 'sample' }] }, presets: { budget: [{ name: 'Today', data: {} }] }, local: { 'ledger:age': 25 } },
+    })
+    localStorage.setItem('ledger:accounts', JSON.stringify(['fake']))
+    const r = await importDataFile({ version: 1, accounts: { chk: { name: 'Mine' } }, transactions: [tx('a', '2026-02-01')] })
+    expect(r).toEqual({ transactions: 1, data: true, settings: false })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['a'])
+    expect(Object.keys(getAccounts())).toEqual(['chk'])
+    expect((await getData())?.transactions?.map((t) => t.id)).toEqual(['a'])
+    expect(await getBudget()).toEqual({ rows: [], dismissedSubs: {} })
+    expect(await getPresets()).toEqual({})
+    expect(localStorage.getItem('ledger:age')).toBeNull()
+    expect(localStorage.getItem('ledger:accounts')).toBeNull()
+  })
+  it('applies the settings the file carries after the wipe', async () => {
+    localStorage.setItem('ledger:old', '1')
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [{ id: 'r1' }] }, local: { 'ledger:age': 30 } } })
+    expect(await getBudget()).toEqual({ rows: [{ id: 'r1' }] })
+    expect(localStorage.getItem('ledger:age')).toBe('30')
+    expect(localStorage.getItem('ledger:old')).toBeNull()
+  })
+  it('keeps the statements but replaces every setting for a settings-only file', async () => {
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { presets: { budget: [{ name: 'Old', data: {} }] } } })
+    localStorage.setItem('ledger:age', '40')
+    await importDataFile({ version: 1, settings: { budget: { rows: [{ id: 'r2' }] } } })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['a'])
+    expect(await getBudget()).toEqual({ rows: [{ id: 'r2' }] })
+    expect(await getPresets()).toEqual({})
+    expect(localStorage.getItem('ledger:age')).toBeNull()
   })
   it('throws in local mode and changes nothing', async () => {
     storageModeStore.setState({ mode: 'local' })

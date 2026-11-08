@@ -5,6 +5,7 @@ import { DataContext } from '@/shared/state/DataContext'
 import { getStorageMode } from '@/shared/utils/getStorageMode'
 import { importDataFile } from '@/shared/utils/importDataFile'
 import { validateDataFile } from '@/shared/utils/validateDataFile'
+import { combineDataFiles } from '@/shared/utils/combineDataFiles'
 import type { DataContextValue } from '@/shared/types/DataContextValue'
 import type { NoticeKind } from '@/shared/types/NoticeKind'
 import type { DataFile } from '@/shared/types/DataFile'
@@ -25,37 +26,29 @@ export default function Root() {
     timer.current = setTimeout(() => setNotice(null), 7000)
   }, [])
 
-  // texts: [{ text, name }]. Reads every file first so one bad file stops the lot
-  // before anything is written, then bumps the version once.
+  // texts: [{ text, name }]. Reads every file first so one bad file stops the lot before anything is
+  // written. Several files are combined into one, which then replaces what is stored. The version is bumped
+  // once at the end.
   const importTexts = useCallback(
     async (texts: { text: string; name: string }[], okMessage?: string) => {
       try {
-        const parsed = texts.map(({ text, name }): unknown => {
+        const files = texts.map(({ text, name }): DataFile => {
+          let parsed: unknown
           try {
-            return JSON.parse(text)
+            parsed = JSON.parse(text)
           } catch {
             throw new Error(`${name} is not valid JSON.`)
           }
+          validateDataFile(parsed)
+          return parsed
         })
-        const files: DataFile[] = []
-        for (const p of parsed) {
-          validateDataFile(p)
-          files.push(p)
-        }
-        let data = false
-        let settings = false
-        // data files first, then settings, so settings never get overwritten by order
-        for (const p of [...files.filter((p) => p.transactions), ...files.filter((p) => !p.transactions)]) {
-          const r = await importDataFile(p)
-          data ||= r.data
-          settings ||= r.settings
-        }
+        const { data, settings } = await importDataFile(combineDataFiles(files))
         setVersion((v) => v + 1)
         if (okMessage) notify(okMessage)
         else if (data && settings) notify('Loaded your statements and settings.')
         else if (data) notify(`Loaded ${getAllTxns().length.toLocaleString('en-US')} transactions.`)
         else if (hasData()) notify('Settings loaded.')
-        else notify('Settings loaded. Now upload ledger-data.json.')
+        else notify('Settings loaded. Now upload ledger-data.json and this backup together, since a data file replaces everything stored here.')
       } catch (e) {
         notify((e instanceof Error && e.message) || 'Could not read that file.', 'error')
       }
