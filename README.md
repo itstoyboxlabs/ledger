@@ -2,7 +2,7 @@
 
 Financial planning that doesn't oversimplify you. Ledger reads your bank statements and turns them into a budget, a running log and a retirement plan that all agree with each other. No bank connections, no accounts, and nothing leaves your computer.
 
-**[Try it at ledger-alpha-azure.vercel.app](https://ledger-alpha-azure.vercel.app)** · [Video tutorial](https://ledger-alpha-azure.vercel.app/tutorial)
+**[Try it at ledgerfinancialplanning.com](https://ledgerfinancialplanning.com)** · [Video tutorial](https://ledgerfinancialplanning.com/tutorial)
 
 ![The Spending page: totals, a category donut and every transaction from your statements](docs/spending.png)
 
@@ -51,7 +51,7 @@ Next month, do it again with the new statements and the same file. The assistant
 
 ## Two ways to run it
 
-**In your browser.** Open [ledger-alpha-azure.vercel.app/app](https://ledger-alpha-azure.vercel.app/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it. Your statements are safe in the `ledger-data.json` file your assistant made, so upload it again. Your budget and settings are not in that file, so use the Export data button now and then to save them to a second file and upload that too.
+**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it. Your statements are safe in the `ledger-data.json` file your assistant made, so upload it again. Your budget and settings are not in that file, so use the Export data button now and then to save them to a second file and upload that too.
 
 **On your computer.** Clone the repo and run it. A coding assistant such as Claude Code or Codex can read your statements folder and write the data files for you, and nothing is lost when you clear your browser.
 
