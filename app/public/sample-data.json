@@ -4063,17 +4063,1102 @@
      "type": "simple",
      "amount": 150,
      "source": "manual"
+    },
+    {
+     "id": "b009",
+     "name": "Car loan",
+     "type": "simple",
+     "amount": 385,
+     "source": "manual",
+     "day": 10
+    },
+    {
+     "id": "b010",
+     "name": "Student loan",
+     "type": "simple",
+     "amount": 210,
+     "source": "manual",
+     "day": 20
     }
    ],
-   "dismissedSubs": {}
+   "dismissedSubs": {},
+   "leftover": [
+    {
+     "id": "l1",
+     "target": "savings",
+     "pct": 60
+    },
+    {
+     "id": "l2",
+     "target": "b009",
+     "pct": 15
+    }
+   ]
   },
   "notes": {
-   "notes": []
+   "notes": [
+    {
+     "id": "n1",
+     "text": "Ask landlord about the lease renewal before March.",
+     "createdAt": 1793000000000,
+     "pinned": true
+    },
+    {
+     "id": "n2",
+     "text": "Car loan is the next debt to clear. Put extra leftover toward it.",
+     "createdAt": 1793100000000,
+     "pinned": false
+    },
+    {
+     "id": "n3",
+     "text": "Move the emergency fund to a higher-yield savings account.",
+     "createdAt": 1793200000000,
+     "pinned": false
+    }
+   ]
   },
-  "presets": {},
+  "presets": {
+   "expenses": [
+    {
+     "name": "Today",
+     "data": [
+      {
+       "id": "b001",
+       "name": "Rent",
+       "type": "simple",
+       "amount": 1850,
+       "source": "tracked",
+       "day": 1
+      },
+      {
+       "id": "b002",
+       "name": "Crunch Fitness",
+       "type": "simple",
+       "amount": 39,
+       "source": "manual",
+       "day": 3
+      },
+      {
+       "id": "b003",
+       "name": "Electricity",
+       "type": "simple",
+       "amount": 95,
+       "source": "manual",
+       "day": 8
+      },
+      {
+       "id": "b004",
+       "name": "Phone",
+       "type": "simple",
+       "amount": 65,
+       "source": "manual",
+       "day": 12,
+       "match": {
+        "merchant": "Verizon"
+       }
+      },
+      {
+       "id": "b005",
+       "name": "Groceries",
+       "type": "breakdown",
+       "amount": 450,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "g1",
+         "name": "Produce",
+         "mode": "month",
+         "amount": 120,
+         "perWeek": 0
+        },
+        {
+         "id": "g2",
+         "name": "Pantry",
+         "mode": "month",
+         "amount": 160,
+         "perWeek": 0
+        },
+        {
+         "id": "g3",
+         "name": "Meat and fish",
+         "mode": "month",
+         "amount": 110,
+         "perWeek": 0
+        },
+        {
+         "id": "g4",
+         "name": "Household",
+         "mode": "month",
+         "amount": 60,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b006",
+       "name": "Restaurants",
+       "type": "breakdown",
+       "amount": 260,
+       "source": "tracked",
+       "prorate": true,
+       "match": {
+        "cat": "Food & Dining",
+        "sub": "Restaurants & Takeout"
+       },
+       "items": [
+        {
+         "id": "r1",
+         "name": "Sit-down meals",
+         "mode": "week",
+         "amount": 35,
+         "perWeek": 1
+        },
+        {
+         "id": "r2",
+         "name": "Takeout",
+         "mode": "week",
+         "amount": 15,
+         "perWeek": 2
+        }
+       ]
+      },
+      {
+       "id": "b007",
+       "name": "Transit",
+       "type": "breakdown",
+       "amount": 120,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "t1",
+         "name": "Subway rides",
+         "mode": "week",
+         "amount": 3,
+         "perWeek": 10
+        }
+       ]
+      },
+      {
+       "id": "b008",
+       "name": "Unexpected",
+       "type": "simple",
+       "amount": 150,
+       "source": "manual"
+      },
+      {
+       "id": "b009",
+       "name": "Car loan",
+       "type": "simple",
+       "amount": 385,
+       "source": "manual",
+       "day": 10
+      },
+      {
+       "id": "b010",
+       "name": "Student loan",
+       "type": "simple",
+       "amount": 210,
+       "source": "manual",
+       "day": 20
+      }
+     ]
+    },
+    {
+     "name": "Leaner (easier job)",
+     "data": [
+      {
+       "id": "b001",
+       "name": "Rent",
+       "type": "simple",
+       "amount": 1450,
+       "source": "tracked",
+       "day": 1
+      },
+      {
+       "id": "b003",
+       "name": "Electricity",
+       "type": "simple",
+       "amount": 80,
+       "source": "manual",
+       "day": 8
+      },
+      {
+       "id": "b004",
+       "name": "Phone",
+       "type": "simple",
+       "amount": 45,
+       "source": "manual",
+       "day": 12,
+       "match": {
+        "merchant": "Verizon"
+       }
+      },
+      {
+       "id": "b005",
+       "name": "Groceries",
+       "type": "breakdown",
+       "amount": 400,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "g1",
+         "name": "Produce",
+         "mode": "month",
+         "amount": 100,
+         "perWeek": 0
+        },
+        {
+         "id": "g2",
+         "name": "Pantry",
+         "mode": "month",
+         "amount": 130,
+         "perWeek": 0
+        },
+        {
+         "id": "g3",
+         "name": "Meat and fish",
+         "mode": "month",
+         "amount": 100,
+         "perWeek": 0
+        },
+        {
+         "id": "g4",
+         "name": "Household",
+         "mode": "month",
+         "amount": 70,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b006",
+       "name": "Restaurants",
+       "type": "breakdown",
+       "amount": 120,
+       "source": "tracked",
+       "prorate": true,
+       "match": {
+        "cat": "Food & Dining",
+        "sub": "Restaurants & Takeout"
+       },
+       "items": [
+        {
+         "id": "r1",
+         "name": "Sit-down meals",
+         "mode": "week",
+         "amount": 30,
+         "perWeek": 1
+        },
+        {
+         "id": "r2",
+         "name": "Takeout",
+         "mode": "week",
+         "amount": 0,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b007",
+       "name": "Transit",
+       "type": "breakdown",
+       "amount": 90,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "t1",
+         "name": "Subway rides",
+         "mode": "week",
+         "amount": 3,
+         "perWeek": 7.5
+        }
+       ]
+      },
+      {
+       "id": "b008",
+       "name": "Unexpected",
+       "type": "simple",
+       "amount": 100,
+       "source": "manual"
+      },
+      {
+       "id": "b009",
+       "name": "Car loan",
+       "type": "simple",
+       "amount": 385,
+       "source": "manual",
+       "day": 10
+      },
+      {
+       "id": "b010",
+       "name": "Student loan",
+       "type": "simple",
+       "amount": 210,
+       "source": "manual",
+       "day": 20
+      }
+     ]
+    },
+    {
+     "name": "Retirement",
+     "data": [
+      {
+       "id": "b001",
+       "name": "Rent",
+       "type": "simple",
+       "amount": 1500,
+       "source": "tracked",
+       "day": 1
+      },
+      {
+       "id": "b002",
+       "name": "Crunch Fitness",
+       "type": "simple",
+       "amount": 39,
+       "source": "manual",
+       "day": 3
+      },
+      {
+       "id": "b003",
+       "name": "Electricity",
+       "type": "simple",
+       "amount": 110,
+       "source": "manual",
+       "day": 8
+      },
+      {
+       "id": "b004",
+       "name": "Phone",
+       "type": "simple",
+       "amount": 65,
+       "source": "manual",
+       "day": 12,
+       "match": {
+        "merchant": "Verizon"
+       }
+      },
+      {
+       "id": "b005",
+       "name": "Groceries",
+       "type": "breakdown",
+       "amount": 450,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "g1",
+         "name": "Produce",
+         "mode": "month",
+         "amount": 120,
+         "perWeek": 0
+        },
+        {
+         "id": "g2",
+         "name": "Pantry",
+         "mode": "month",
+         "amount": 160,
+         "perWeek": 0
+        },
+        {
+         "id": "g3",
+         "name": "Meat and fish",
+         "mode": "month",
+         "amount": 110,
+         "perWeek": 0
+        },
+        {
+         "id": "g4",
+         "name": "Household",
+         "mode": "month",
+         "amount": 60,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b006",
+       "name": "Restaurants",
+       "type": "breakdown",
+       "amount": 240,
+       "source": "tracked",
+       "prorate": true,
+       "match": {
+        "cat": "Food & Dining",
+        "sub": "Restaurants & Takeout"
+       },
+       "items": [
+        {
+         "id": "r1",
+         "name": "Sit-down meals",
+         "mode": "week",
+         "amount": 45,
+         "perWeek": 1
+        },
+        {
+         "id": "r2",
+         "name": "Takeout",
+         "mode": "week",
+         "amount": 15,
+         "perWeek": 1
+        }
+       ]
+      },
+      {
+       "id": "b007",
+       "name": "Transit",
+       "type": "breakdown",
+       "amount": 40,
+       "source": "tracked",
+       "prorate": true,
+       "items": [
+        {
+         "id": "t1",
+         "name": "Subway rides",
+         "mode": "week",
+         "amount": 2,
+         "perWeek": 5
+        }
+       ]
+      },
+      {
+       "id": "b011",
+       "name": "Healthcare",
+       "type": "breakdown",
+       "amount": 900,
+       "source": "manual",
+       "day": 1,
+       "items": [
+        {
+         "id": "h1",
+         "name": "Insurance premium",
+         "mode": "month",
+         "amount": 650,
+         "perWeek": 0
+        },
+        {
+         "id": "h2",
+         "name": "Prescriptions and visits",
+         "mode": "month",
+         "amount": 250,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b012",
+       "name": "Travel",
+       "type": "breakdown",
+       "amount": 600,
+       "source": "manual",
+       "items": [
+        {
+         "id": "v1",
+         "name": "Trips",
+         "mode": "month",
+         "amount": 450,
+         "perWeek": 0
+        },
+        {
+         "id": "v2",
+         "name": "Visiting family",
+         "mode": "month",
+         "amount": 150,
+         "perWeek": 0
+        }
+       ]
+      },
+      {
+       "id": "b008",
+       "name": "Unexpected",
+       "type": "simple",
+       "amount": 200,
+       "source": "manual"
+      }
+     ]
+    }
+   ],
+   "planningVariables": [
+    {
+     "name": "Today (Texas)",
+     "data": {
+      "taxState": "tx",
+      "debts": [
+       {
+        "id": "d1",
+        "name": "Car loan",
+        "balance": 14200,
+        "apr": 6.4,
+        "payment": 385,
+        "budgetRow": "b009"
+       },
+       {
+        "id": "d2",
+        "name": "Student loan",
+        "balance": 21500,
+        "apr": 4.5,
+        "payment": 210,
+        "budgetRow": "b010"
+       },
+       {
+        "id": "d3",
+        "name": "Credit card",
+        "balance": 1850,
+        "apr": 22.9,
+        "payment": 150,
+        "budgetRow": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "Move to New York City",
+     "data": {
+      "taxState": "ny-nyc",
+      "debts": [
+       {
+        "id": "d1",
+        "name": "Car loan",
+        "balance": 14200,
+        "apr": 6.4,
+        "payment": 385,
+        "budgetRow": "b009"
+       },
+       {
+        "id": "d2",
+        "name": "Student loan",
+        "balance": 21500,
+        "apr": 4.5,
+        "payment": 210,
+        "budgetRow": "b010"
+       },
+       {
+        "id": "d3",
+        "name": "Credit card",
+        "balance": 1850,
+        "apr": 22.9,
+        "payment": 150,
+        "budgetRow": null
+       }
+      ]
+     }
+    }
+   ],
+   "retirement": [
+    {
+     "name": "Retire at 62",
+     "data": {
+      "c": {
+       "age": 34,
+       "retireAge": 62,
+       "accessAge": 60,
+       "endAge": 95,
+       "start401k": 0,
+       "startSavings": 0,
+       "startFrom": "balances",
+       "startOff": [],
+       "contrib401k": 0,
+       "contribSavings": 0,
+       "auto401k": true,
+       "autoSavings": true,
+       "withdrawMo": 4000,
+       "taxPct": 15,
+       "autoTax": true,
+       "ss": {
+        "on": true,
+        "claimAge": 67,
+        "auto": true,
+        "monthly": 0
+       },
+       "events": [
+        {
+         "id": "e1",
+         "name": "Replace the car",
+         "amount": 28000,
+         "kind": "out",
+         "age": 40,
+         "repeat": "once",
+         "years": 1
+        },
+        {
+         "id": "e2",
+         "name": "Family gift",
+         "amount": 20000,
+         "kind": "in",
+         "age": 50,
+         "repeat": "once",
+         "years": 1
+        }
+       ],
+       "extras": [
+        {
+         "id": "x1",
+         "name": "Roth IRA",
+         "amount": 500,
+         "unit": "mo",
+         "to": "401k"
+        }
+       ]
+      },
+      "port": [
+       {
+        "name": "Index fund",
+        "alloc": 70,
+        "perf": 7
+       },
+       {
+        "name": "Bonds",
+        "alloc": 30,
+        "perf": 3.5
+       }
+      ],
+      "portAfter": {
+       "same": false,
+       "rows": [
+        {
+         "name": "Index fund",
+         "alloc": 40,
+         "perf": 7
+        },
+        {
+         "name": "Bonds",
+         "alloc": 60,
+         "perf": 3.5
+        }
+       ]
+      },
+      "includeDebt": true
+     }
+    },
+    {
+     "name": "Retire early at 58",
+     "data": {
+      "c": {
+       "age": 34,
+       "retireAge": 58,
+       "accessAge": 60,
+       "endAge": 95,
+       "start401k": 0,
+       "startSavings": 0,
+       "startFrom": "balances",
+       "startOff": [],
+       "contrib401k": 0,
+       "contribSavings": 0,
+       "auto401k": true,
+       "autoSavings": true,
+       "withdrawMo": 4000,
+       "taxPct": 15,
+       "autoTax": true,
+       "ss": {
+        "on": true,
+        "claimAge": 67,
+        "auto": true,
+        "monthly": 0
+       },
+       "events": [
+        {
+         "id": "e1",
+         "name": "Replace the car",
+         "amount": 28000,
+         "kind": "out",
+         "age": 40,
+         "repeat": "once",
+         "years": 1
+        },
+        {
+         "id": "e2",
+         "name": "Family gift",
+         "amount": 20000,
+         "kind": "in",
+         "age": 50,
+         "repeat": "once",
+         "years": 1
+        }
+       ],
+       "extras": [
+        {
+         "id": "x1",
+         "name": "Roth IRA",
+         "amount": 500,
+         "unit": "mo",
+         "to": "401k"
+        }
+       ]
+      },
+      "port": [
+       {
+        "name": "Index fund",
+        "alloc": 70,
+        "perf": 7
+       },
+       {
+        "name": "Bonds",
+        "alloc": 30,
+        "perf": 3.5
+       }
+      ],
+      "portAfter": {
+       "same": false,
+       "rows": [
+        {
+         "name": "Index fund",
+         "alloc": 40,
+         "perf": 7
+        },
+        {
+         "name": "Bonds",
+         "alloc": 60,
+         "perf": 3.5
+        }
+       ]
+      },
+      "includeDebt": true
+     }
+    },
+    {
+     "name": "Work to 67",
+     "data": {
+      "c": {
+       "age": 34,
+       "retireAge": 67,
+       "accessAge": 60,
+       "endAge": 95,
+       "start401k": 0,
+       "startSavings": 0,
+       "startFrom": "balances",
+       "startOff": [],
+       "contrib401k": 0,
+       "contribSavings": 0,
+       "auto401k": true,
+       "autoSavings": true,
+       "withdrawMo": 4000,
+       "taxPct": 15,
+       "autoTax": true,
+       "ss": {
+        "on": true,
+        "claimAge": 67,
+        "auto": true,
+        "monthly": 0
+       },
+       "events": [
+        {
+         "id": "e1",
+         "name": "Replace the car",
+         "amount": 28000,
+         "kind": "out",
+         "age": 40,
+         "repeat": "once",
+         "years": 1
+        },
+        {
+         "id": "e2",
+         "name": "Family gift",
+         "amount": 20000,
+         "kind": "in",
+         "age": 50,
+         "repeat": "once",
+         "years": 1
+        }
+       ],
+       "extras": [
+        {
+         "id": "x1",
+         "name": "Roth IRA",
+         "amount": 500,
+         "unit": "mo",
+         "to": "401k"
+        }
+       ]
+      },
+      "port": [
+       {
+        "name": "Index fund",
+        "alloc": 70,
+        "perf": 7
+       },
+       {
+        "name": "Bonds",
+        "alloc": 30,
+        "perf": 3.5
+       }
+      ],
+      "portAfter": {
+       "same": false,
+       "rows": [
+        {
+         "name": "Index fund",
+         "alloc": 40,
+         "perf": 7
+        },
+        {
+         "name": "Bonds",
+         "alloc": 60,
+         "perf": 3.5
+        }
+       ]
+      },
+      "includeDebt": true
+     }
+    }
+   ],
+   "rentScenario": [
+    {
+     "name": "Work from home",
+     "data": {
+      "b007": 0,
+      "b006": 200
+     }
+    },
+    {
+     "name": "Tight month",
+     "data": {
+      "b005": 380,
+      "b006": 150,
+      "b008": 50
+     }
+    }
+   ]
+  },
   "log": {
-   "entries": []
+   "entries": [
+    {
+     "id": "l1",
+     "date": "2026-11-02",
+     "amount": 48.2,
+     "note": "Farmers market",
+     "rowId": "b005",
+     "createdAt": 1793490000000
+    },
+    {
+     "id": "l2",
+     "date": "2026-11-05",
+     "amount": 32.5,
+     "note": "Dinner with friends",
+     "rowId": "b006",
+     "createdAt": 1793750000000
+    },
+    {
+     "id": "l3",
+     "date": "2026-11-06",
+     "amount": 75,
+     "note": "Bike tire repair",
+     "rowId": "b008",
+     "createdAt": 1793840000000
+    }
+   ]
   },
-  "local": {}
+  "local": {
+   "ledger:taxState": "tx",
+   "ledger:debts": [
+    {
+     "id": "d1",
+     "name": "Car loan",
+     "balance": 14200,
+     "apr": 6.4,
+     "payment": 385,
+     "budgetRow": "b009"
+    },
+    {
+     "id": "d2",
+     "name": "Student loan",
+     "balance": 21500,
+     "apr": 4.5,
+     "payment": 210,
+     "budgetRow": "b010"
+    },
+    {
+     "id": "d3",
+     "name": "Credit card",
+     "balance": 1850,
+     "apr": 22.9,
+     "payment": 150,
+     "budgetRow": null
+    }
+   ],
+   "ledger:assets": [
+    {
+     "id": "a1",
+     "name": "Checking",
+     "balance": 4200,
+     "pool": "savings"
+    },
+    {
+     "id": "a2",
+     "name": "Emergency fund (savings)",
+     "balance": 12500,
+     "pool": "savings"
+    },
+    {
+     "id": "a3",
+     "name": "Taxable brokerage",
+     "balance": 18400,
+     "pool": "savings"
+    },
+    {
+     "id": "a4",
+     "name": "401k (pre-tax)",
+     "balance": 46800,
+     "pool": "401k"
+    },
+    {
+     "id": "a5",
+     "name": "Roth IRA",
+     "balance": 15200,
+     "pool": "401k"
+    }
+   ],
+   "ledger:assetsAsOf": "2026-10-31",
+   "ledger:retireCalc": {
+    "age": 34,
+    "retireAge": 62,
+    "accessAge": 60,
+    "endAge": 95,
+    "start401k": 0,
+    "startSavings": 0,
+    "startFrom": "balances",
+    "startOff": [],
+    "contrib401k": 0,
+    "contribSavings": 0,
+    "auto401k": true,
+    "autoSavings": true,
+    "withdrawMo": 4000,
+    "taxPct": 15,
+    "autoTax": true,
+    "ss": {
+     "on": true,
+     "claimAge": 67,
+     "auto": true,
+     "monthly": 0
+    },
+    "events": [
+     {
+      "id": "e1",
+      "name": "Replace the car",
+      "amount": 28000,
+      "kind": "out",
+      "age": 40,
+      "repeat": "once",
+      "years": 1
+     },
+     {
+      "id": "e2",
+      "name": "Family gift",
+      "amount": 20000,
+      "kind": "in",
+      "age": 50,
+      "repeat": "once",
+      "years": 1
+     }
+    ],
+    "extras": [
+     {
+      "id": "x1",
+      "name": "Roth IRA",
+      "amount": 500,
+      "unit": "mo",
+      "to": "401k"
+     }
+    ]
+   },
+   "ledger:retirePortfolio": [
+    {
+     "name": "Index fund",
+     "alloc": 70,
+     "perf": 7
+    },
+    {
+     "name": "Bonds",
+     "alloc": 30,
+     "perf": 3.5
+    }
+   ],
+   "ledger:retirePortfolioAfter": {
+    "same": false,
+    "rows": [
+     {
+      "name": "Index fund",
+      "alloc": 40,
+      "perf": 7
+     },
+     {
+      "name": "Bonds",
+      "alloc": 60,
+      "perf": 3.5
+     }
+    ]
+   },
+   "ledger:retireIncludeDebt": true,
+   "ledger:retireNeedPreset": "Retirement",
+   "ledger:rentScenario3": {
+    "from": 1250,
+    "to": 3000,
+    "step": 250,
+    "rentRow": "b001"
+   },
+   "ledger:vacationCalc": {
+    "hotel": 180,
+    "flight": 420,
+    "food": 70,
+    "ubers": 60,
+    "spending": 150,
+    "nights": 5,
+    "buffer": 150,
+    "saveMo": 450
+   },
+   "ledger:debtPayoff": {
+    "pick": "all",
+    "perMonth": 900,
+    "custom": {}
+   },
+   "ledger:lists": [
+    {
+     "id": "sell",
+     "title": "Selling stuff",
+     "description": "Things to sell before the move.",
+     "items": [
+      {
+       "id": "s1",
+       "name": "Standing desk",
+       "amount": 180
+      },
+      {
+       "id": "s2",
+       "name": "Monitor",
+       "amount": 90
+      },
+      {
+       "id": "s3",
+       "name": "Road bike",
+       "amount": 250
+      }
+     ]
+    },
+    {
+     "id": "move",
+     "title": "Moving costs",
+     "description": "Rough budget for a move.",
+     "items": [
+      {
+       "id": "m1",
+       "name": "Movers",
+       "amount": 900
+      },
+      {
+       "id": "m2",
+       "name": "Security deposit",
+       "amount": 1800
+      },
+      {
+       "id": "m3",
+       "name": "New furniture",
+       "amount": 700
+      }
+     ]
+    }
+   ]
+  }
  }
 }
