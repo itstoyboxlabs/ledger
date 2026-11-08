@@ -62,6 +62,18 @@ describe('Sidebar', () => {
     expect(onCsv).toHaveBeenCalled()
   })
 
+  it('says Export data saves one ledger-data.json file', async () => {
+    setup({ onUpload: vi.fn() })
+    await userEvent.hover(desktop().getByRole('button', { name: 'Export data' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('save everything to one ledger-data.json file')
+  })
+
+  it('says Upload file takes your ledger-data.json and replaces what is stored', async () => {
+    setup({ onUpload: vi.fn() })
+    await userEvent.hover(desktop().getByRole('button', { name: 'Upload file' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('pick your ledger-data.json. It replaces what is stored on this device.')
+  })
+
   it('shows the upload button only when onUpload is given', async () => {
     setup()
     expect(desktop().queryByRole('button', { name: 'Upload file' })).toBeNull()

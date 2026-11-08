@@ -5,6 +5,8 @@ import { getAccounts } from './getAccounts'
 import { getData } from './getData'
 import { getAllTxns } from './getAllTxns'
 import { applyData } from './applyData'
+import { buildExport } from './buildExport'
+import { clearStoredData } from './clearStoredData'
 import { storageModeStore } from '@/shared/state/storageModeStore'
 import { seedStorage } from '@/test-utils/seedStorage'
 
@@ -36,13 +38,13 @@ describe('importDataFile', () => {
     const r = await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [] } } })
     expect(r).toEqual({ transactions: 1, data: true, settings: true })
   })
-  it('replaces the stored statements and every setting when the file has transactions', async () => {
+  it('replaces the sample and every sample setting, even with a statements-only file', async () => {
     await importDataFile({
       version: 1,
       accounts: { fake: { name: 'Sample checking' } },
       transactions: [{ ...tx('s1', '2026-01-01'), account: 'fake' }],
       settings: { budget: { rows: [{ id: 'sample' }] }, presets: { budget: [{ name: 'Today', data: {} }] }, local: { 'ledger:age': 25 } },
-    })
+    }, { sample: true })
     localStorage.setItem('ledger:accounts', JSON.stringify(['fake']))
     const r = await importDataFile({ version: 1, accounts: { chk: { name: 'Mine' } }, transactions: [tx('a', '2026-02-01')] })
     expect(r).toEqual({ transactions: 1, data: true, settings: false })
@@ -53,6 +55,44 @@ describe('importDataFile', () => {
     expect(await getPresets()).toEqual({})
     expect(localStorage.getItem('ledger:age')).toBeNull()
     expect(localStorage.getItem('ledger:accounts')).toBeNull()
+  })
+  it('replaces the statements and keeps the settings for a statements-only file over your own data', async () => {
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [{ id: 'mine' }] }, local: { 'ledger:age': 33 } } })
+    const r = await importDataFile({ version: 1, transactions: [tx('b', '2026-02-01')] })
+    expect(r).toEqual({ transactions: 1, data: true, settings: false })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['b'])
+    expect(await getBudget()).toEqual({ rows: [{ id: 'mine' }] })
+    expect(localStorage.getItem('ledger:age')).toBe('33')
+  })
+  it('replaces everything with a full file, so settings it lacks go back to defaults', async () => {
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [{ id: 'old' }] }, presets: { budget: [{ name: 'Old', data: {} }] } } })
+    localStorage.setItem('ledger:age', '40')
+    await importDataFile({ version: 1, transactions: [tx('b', '2026-02-01')], settings: { budget: { rows: [{ id: 'new' }] } } })
+    expect(getAllTxns().map((t) => t.id)).toEqual(['b'])
+    expect(await getBudget()).toEqual({ rows: [{ id: 'new' }] })
+    expect(await getPresets()).toEqual({})
+    expect(localStorage.getItem('ledger:age')).toBeNull()
+  })
+  it('round trips an export: clear, upload it and the export comes back the same', async () => {
+    await importDataFile({
+      version: 1,
+      updated: '2026-01-31',
+      notes: ['Made up.'],
+      accounts: { chk: { name: 'Checking', bank: 'B', type: 'checking' as never, last4: '1234' } },
+      merchants: { M: 'm.com' },
+      periods: { 'chk-2026-01': { account: 'chk', start: '2026-01-01', end: '2026-01-31' } },
+      subscriptions: [],
+      transactions: [tx('a', '2026-01-01')],
+      settings: { budget: { rows: [{ id: 'r1' }], dismissedSubs: {} }, presets: { budget: [{ name: 'P', data: {} }] }, local: { 'ledger:age': { age: 30, asOf: 2026 } } },
+    } as never)
+    const first = await buildExport()
+    await clearStoredData('all')
+    expect(getAllTxns()).toHaveLength(0)
+    await importDataFile(JSON.parse(JSON.stringify(first)))
+    const second = await buildExport()
+    expect({ ...second, exportedAt: '' }).toEqual({ ...first, exportedAt: '' })
+    expect(second.settings.local).toEqual({ 'ledger:age': { age: 30, asOf: 2026 } })
+    expect(second.updated).toBe('2026-01-31')
   })
   it('applies the settings the file carries after the wipe', async () => {
     localStorage.setItem('ledger:old', '1')

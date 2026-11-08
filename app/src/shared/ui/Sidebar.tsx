@@ -128,9 +128,9 @@ export function Sidebar({ view, setView, accounts, setAccounts, onNotes, onExpor
         {/* the rarer actions share one row of icons, each named by its tooltip */}
         <div className="mt-1 flex items-center justify-between px-1.5">
           {([
-            { icon: 'share', label: 'Export data', tip: 'Export data: save a backup of your budget and settings.', onClick: onExport },
+            { icon: 'share', label: 'Export data', tip: 'Export data: save everything to one ledger-data.json file.', onClick: onExport },
             { icon: 'download', label: 'Download', tip: `Download transactions as a spreadsheet (CSV)${csvLabel ? `. ${csvLabel}.` : ''}`, onClick: onCsv },
-            onUpload && { icon: 'plus', label: 'Upload file', tip: 'Upload file: replaces what is stored on this device. Use Export data first if you want a copy.', onClick: onUpload },
+            onUpload && { icon: 'plus', label: 'Upload file', tip: 'Upload file: pick your ledger-data.json. It replaces what is stored on this device.', onClick: onUpload },
             { icon: 'play', label: 'Tutorial', tip: 'Tutorial: a video walk-through of every tab.', href: TUTORIAL_URL },
             { icon: 'github', label: 'GitHub', tip: 'GitHub: Ledger is open source, run it yourself.', href: GITHUB_URL },
           ] as (RailAction | null | undefined | false)[]).filter((a): a is RailAction => !!a).map((a) => (

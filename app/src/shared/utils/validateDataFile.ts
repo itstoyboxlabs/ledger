@@ -7,7 +7,7 @@ const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 export function validateDataFile(f: unknown): asserts f is DataFile {
   if (!isObj(f)) throw new Error('That file is not a ledger file.')
   if (f.transactions == null && f.settings == null) {
-    throw new Error('This file has no transactions or settings. Pick ledger-data.json or ledger-settings.json.')
+    throw new Error('This file has no transactions or settings. Pick your ledger-data.json file.')
   }
   if (f.version !== 1) throw new Error('This file has an unknown version. Make a new one and try again.')
   if (f.transactions != null) {

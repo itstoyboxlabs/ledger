@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Builds the demo: fake bank statements (PDF), the ledger-data.json an assistant would make from
-them, and a ledger-settings.json with a fake person's budget and plans.
+them, and exported/ledger-data.json, the same file with a fake person's budget and plans added, as
+Export data would save it.
 Everything here is made up. Run: python3 demo/generate.py"""
 import calendar, datetime as dt, json, os, random
 from reportlab.lib import colors
@@ -217,7 +218,7 @@ used = {t["merchant"] for t in txns} | {"Chase"}
 data_file["merchants"] = {k: v for k, v in MERCHANT_DOMAINS.items() if k in used}
 json.dump(data_file, open(os.path.join(HERE, "ledger-data.json"), "w"), indent=2, ensure_ascii=False)
 
-# ---------- ledger-settings.json ----------
+# ---------- exported/ledger-data.json: the statements plus settings ----------
 rows = [
     {"id": "b001", "name": "Rent", "amount": 3300, "source": "tracked", "day": 1, "type": "simple"},
     {"id": "b-loans", "name": "Student loans", "amount": 420, "source": "tracked", "day": 3, "type": "simple", "match": {"merchant": "Nelnet"}},
@@ -275,9 +276,11 @@ log = {"entries": [
     {"id": "log-demo-2", "date": "2026-11-04", "amount": 38.50, "note": "Takeout", "rowId": "b-rest", "createdAt": 1793780000000},
     {"id": "log-demo-3", "date": "2026-11-05", "amount": 22.00, "note": "Birthday card and flowers", "rowId": "b-unex", "createdAt": 1793860000000},
 ]}
-settings = {"version": 1, "exportedAt": "2026-11-07T00:00:00.000Z",
+exported = {"version": 1, "exportedAt": "2026-11-07T00:00:00.000Z",
+            **{k: v for k, v in data_file.items() if k != "version"},
             "settings": {"budget": budget, "notes": {"notes": []}, "presets": {}, "log": log, "local": local}}
-json.dump(settings, open(os.path.join(HERE, "ledger-settings.json"), "w"), indent=2, ensure_ascii=False)
+os.makedirs(os.path.join(HERE, "exported"), exist_ok=True)
+json.dump(exported, open(os.path.join(HERE, "exported", "ledger-data.json"), "w"), indent=2, ensure_ascii=False)
 
 print("statements:", len(os.listdir(os.path.join(HERE, "statements"))), "pdfs")
 print("transactions:", len(txns))

@@ -1,4 +1,6 @@
-You are helping me import my bank and credit card statements into Ledger, a private financial planning app that runs on my computer. Read the statements I attach (PDF or CSV, from any bank) and produce one file named `ledger-data.json` in the exact format below. If I also attach an existing `ledger-data.json`, add to it instead of starting over.
+You are helping me import my bank and credit card statements into Ledger, a private financial planning app that runs on my computer. Read the statements I attach (PDF or CSV, from any bank) and produce one file named `ledger-data.json` in the exact format below.
+
+Ledger keeps everything in this one file. If this is my first time, I will only give you statements, and you make a new file. After that, I will give you my last `ledger-data.json` (the one I exported from Ledger) together with my new statements. Then you add the new statements to that file and give the whole file back. Never start over when I give you a file. The section "Adding to my last file" below says exactly what to keep.
 
 ## The file
 
@@ -44,6 +46,8 @@ You are helping me import my bank and credit card statements into Ledger, a priv
   ]
 }
 ```
+
+A file I exported from Ledger also has `exportedAt` and a `settings` section after `transactions`. That is my budget, notes, plans and app settings. You never create it, read it or change it. See "Adding to my last file".
 
 ## Accounts
 
@@ -102,11 +106,18 @@ Everything is personal spending. Do not split business from personal.
 - A single large charge that looks like a yearly plan is not something to guess about. Ask me whether it is annual before you set `cadence`.
 - If an existing file already lists a subscription, update its `lastSeen` and amount. Never delete one. Ones that stop charging hide themselves.
 
-## Adding to an existing file
+## Adding to my last file
 
-- Keep every existing account, period, subscription and transaction. Never change an existing `id`.
+When I give you my last `ledger-data.json` with new statements:
+
+- Start from my file and add to it. Do not rebuild it from scratch.
+- Keep every existing account, merchant, period, subscription and transaction exactly as it is. Never change or renumber an existing `id`, and never rename an account id.
 - Skip any transaction already there, meaning the same account, date, amount and `desc`.
+- Add the new transactions, periods, accounts and merchants. Update a subscription's `lastSeen` and amount as described above.
 - Set `updated` to the newest statement end date.
+- If my file has a `settings` section, copy it into the file you give back exactly as it is, byte for byte. Do not reformat it, sort it, shorten it or fix anything inside it. It holds my budget and plans, and Ledger loses them if it changes. Keep `version` and `exportedAt` as they are too.
+- If my file has no `settings` section, do not add one. That is normal for a first file, and Ledger starts my budget and settings from its defaults.
+- Give me back the whole file, not only the new parts. When I upload it, it replaces everything Ledger has stored, so anything left out is gone.
 
 ## Check your work
 
@@ -114,4 +125,4 @@ Everything is personal spending. Do not split business from personal.
 - Tell me the result for each statement. If anything does not match, find the missing or extra row and fix it before you hand the file over.
 - Before you finish, ask me about anything you were unsure of: merchants you could not place, large one time charges, or transfers with no matching side.
 
-When you are done, give me the finished `ledger-data.json` to download. If you cannot create files, say so and give it to me one statement at a time.
+When you are done, give me the whole finished `ledger-data.json` to download, with everything from my last file plus the new statements. If you cannot create files, say so and give it to me one statement at a time.

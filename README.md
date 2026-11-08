@@ -48,11 +48,13 @@ to use.
 2. Open your AI assistant (Claude, ChatGPT, Codex or similar), attach the statements and paste the import prompt (it is in [IMPORT_PROMPT.md](IMPORT_PROMPT.md) and behind a button in the app).
 3. The assistant gives you `ledger-data.json`. Upload it to Ledger.
 
-Next month, do it again with the new statements and the same file. The assistant adds to it. Uploading replaces everything Ledger stores in your browser, so use Export data first and upload the new `ledger-data.json` and that backup together.
+Ledger keeps everything in that one file. When you set up your budget and plans, Export data saves them into the same `ledger-data.json`, next to your statements. There is no second file.
+
+Next month, click Export data to save your latest `ledger-data.json`. Give that file to your assistant with the new statements and the import prompt. It adds the new month, keeps your budget and plans exactly as they are and gives you back the whole file. Upload it, and it replaces what Ledger had stored. Use Export data any time you want a backup.
 
 ## Two ways to run it
 
-**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it. Your statements are safe in the `ledger-data.json` file your assistant made, so upload it again. Your budget and settings are not in that file, so use the Export data button now and then to save them to a second file. Upload both files at once, since a new upload replaces what is stored.
+**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it, so use Export data now and then. It saves one `ledger-data.json` with your statements, budget and settings, and uploading it brings everything back.
 
 **On your computer.** Clone the repo and run it. A coding assistant such as Claude Code or Codex can read your statements folder and write the data files for you, and nothing is lost when you clear your browser.
 
@@ -63,7 +65,7 @@ npm install
 npm run dev
 ```
 
-Then put your statements in a `statements/` folder and tell your coding assistant to import them. It follows the same rules as the import prompt.
+Then put your statements in a `statements/` folder and tell your coding assistant to import them. It follows the same rules as the import prompt. In this mode your budget and settings are saved as files in the data folder, and Export data still saves everything to one `ledger-data.json` if you want a backup.
 
 By default your data files go in a `data/` folder next to `app/`. To keep them somewhere else, such as your Documents folder, create `app/.env.local` with the path:
 

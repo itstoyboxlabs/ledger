@@ -8,6 +8,8 @@ import { getNotes } from './getNotes'
 import { getPresets } from './getPresets'
 import { persistedStore } from '@/shared/state/persistedStore'
 import { storageModeStore } from '@/shared/state/storageModeStore'
+import { idbGet } from './idbGet'
+import { idbSet } from './idbSet'
 import { seedStorage } from '@/test-utils/seedStorage'
 
 const tx = { id: 'a', date: '2026-01-01', account: 'chk', amount: 10, kind: 'spend' }
@@ -53,6 +55,21 @@ describe('clearStoredData', () => {
     expect(getAllTxns()).toHaveLength(1)
     expect(await getPresets()).toEqual({})
     expect(localStorage.getItem('ledger:age')).toBeNull()
+  })
+  it('keeps the settings when only the statements are cleared', async () => {
+    await clearStoredData('statements')
+    expect(await getData()).toBeNull()
+    expect(getAllTxns()).toEqual([])
+    expect(await getBudget()).toEqual({ rows: [{ id: 'r1' }] })
+    expect(await getPresets()).toEqual({ budget: [{ name: 'A', data: {} }] })
+    expect(localStorage.getItem('ledger:age')).toBe('25')
+  })
+  it('forgets that the sample was loaded only when everything is cleared', async () => {
+    await idbSet('sample', true)
+    await clearStoredData('statements')
+    expect(await idbGet('sample')).toBe(true)
+    await clearStoredData('all')
+    expect(await idbGet('sample')).toBeUndefined()
   })
   it('refuses in local mode', async () => {
     storageModeStore.setState({ mode: 'local' })

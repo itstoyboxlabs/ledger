@@ -99,20 +99,34 @@ All files are plain JSON except where noted.
 
 ### Import and export
 
-- **Two files.** `ledger-data.json` holds statements data. It is made by an AI assistant from your statements
-  using `IMPORT_PROMPT.md`, and the app only imports it. `ledger-settings.json` is what "Export data" writes:
-  `{ version, exportedAt, settings: { budget, notes, presets, log, local } }`, with no transactions.
-- **Upload replaces.** Upload takes either file or both, picked at once. Several files are first combined
-  with each other (`combineDataFiles`: transactions by id with the later file winning and a repeated
-  `statement` replacing its old rows whole, accounts, merchants and periods by key, subscriptions by name,
-  settings sections from the settings backup over those in a data file). The result then replaces what the
-  browser stores (`importDataFile`). A file with `transactions` wipes everything first (`clearStoredData('all')`:
-  statements, budget, log, notes, presets and every `ledger:` localStorage key), so nothing from the sample or
-  an earlier file survives. A settings-only file wipes the settings and keeps the statements. Then the file's
-  sections are written. Nothing merges into what was stored before, so to add a month the user exports a
-  backup and uploads the new data file and the backup together. The Upload tooltip and the empty state say so.
-  Import runs in browser mode only. Local mode never imports through the app: an assistant writes `data/`
-  directly and keeps every existing id (see CLAUDE.md), so that workflow is unchanged. If you change the data format, change `IMPORT_PROMPT.md` too.
+- **One file.** `ledger-data.json` holds everything, in the shape of `app/public/sample-data.json`:
+  `{ version, exportedAt, updated, notes, accounts, merchants, periods, subscriptions, transactions, settings }`.
+  An AI assistant makes the statements part from the user's statements using `IMPORT_PROMPT.md`. A first file has
+  no `exportedAt` or `settings`, and the app starts the settings from defaults. "Export data" (`buildExport`,
+  `downloadExport`) writes the whole file: the statements as stored (`statementsPart` keeps `updated` and the
+  top-level `notes`) plus `settings: { budget, notes, presets, log, local }`, where `local` is every `ledger:`
+  localStorage key. In local mode it reads `data/transactions.json`, `budget.json`, `notes.json`, `presets.json` and
+  `log.json` through the dev server API and writes the same one file. Uploading an export replaces everything with
+  exactly what was exported, so an export, clear and upload gives back the same data.
+- **Monthly update.** The user exports, gives that `ledger-data.json` and the new statements to their assistant,
+  and uploads what it gives back. The prompt tells the assistant to keep every id, account, period and subscription
+  and to copy `settings`, `version` and `exportedAt` back byte for byte.
+- **Upload replaces.** The upload result replaces what the browser stores (`importDataFile`); nothing merges into
+  what was stored before. A file replaces the parts it contains:
+  - A full file (statements and `settings`) wipes everything first (`clearStoredData('all')`: statements, budget,
+    log, notes, presets and every `ledger:` localStorage key), then writes the file.
+  - A statements-only file (a first file, or one from before settings moved into it) replaces the statements and
+    keeps the settings (`clearStoredData('statements')`).
+  - A settings-only file (an old version 1 `ledger-settings.json` backup) replaces the settings and keeps the
+    statements (`clearStoredData('settings')`).
+  - Over the sample, any file wipes everything first, so nothing from the sample survives. Loading the sample sets
+    an IndexedDB `sample` mark that `clearStoredData('all')` removes.
+  Picking several files at once still works for old two-file backups: `combineDataFiles` joins them first
+  (transactions by id with the later file winning and a repeated `statement` replacing its old rows whole,
+  accounts, merchants and periods by key, subscriptions by name, settings sections from a settings-only file over
+  those in a data file). Import runs in browser mode only. Local mode never imports through the app: an assistant
+  writes `data/` directly and keeps every existing id (see CLAUDE.md). If you change the data format, change
+  `IMPORT_PROMPT.md` too and run `python3 scripts/build-import-prompt.py`.
 - **What survives.** Anything that must outlive the browser, or be visible to an assistant during a refresh, goes
   through these files and not through localStorage.
 - **Merchant icons** are served from `app/public/icons/<domain>.png`. `scripts/fetch-icons.sh` downloads them from
@@ -338,7 +352,7 @@ read from it. Every field has a sentence or two saying what it is for and which 
 - **Tax state and city**: the only place the tax state is set. It is the same `taxState` key that Balances used to
   hold, so saved choices load unchanged. Other pages read it through `useTaxState`. Its info tip says that state tax for married filers is an estimate (see Tax engine).
 - **No partner fields.** The app plans around your own income.
-- Both keys are plain `ledger:` keys, so they travel in the settings export (`settings.local`) and come back on
+- Both keys are plain `ledger:` keys, so they travel in the exported `ledger-data.json` (`settings.local`) and come back on
   import like every other key. The sample data sets age 25 (as of 2026) and Single, with
   `retireAgeAuto: true` so its Retirement plan runs from 25. The lean e2e settings have neither key.
 - Hooks: `useAboutYouAge()` (`{ entry, age, setAge, clear }`) and `useFilingStatus()`, both in `shared/hooks`.
