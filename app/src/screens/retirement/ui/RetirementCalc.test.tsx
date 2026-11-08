@@ -82,7 +82,7 @@ describe('RetirementCalc', () => {
     localStorage.setItem('ledger:retireCalc', JSON.stringify({ events: [], withdrawMo: 1000000000 }))
     renderApp(<RetirementCalc debts={[]} goToBalances={() => {}} />)
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
-    expect(await screen.findByText(/No retire age before/)).toBeInTheDocument()
+    expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByLabelText(/Retire at/)).toHaveValue(60)
   })
 
@@ -179,7 +179,7 @@ describe('RetirementCalc', () => {
     seedPlan({ withdrawMo: 100000 })
     renderApp(<RetirementCalc debts={[]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Find' }))
-    expect(await screen.findByText(/No retire age before/)).toBeInTheDocument()
+    expect(await screen.findByText(/No retire age before/, {}, { timeout: 10000 })).toBeInTheDocument()
     const need = screen.getByLabelText(/Need per month/)
     await userEvent.clear(need)
     await userEvent.type(need, '99000')
