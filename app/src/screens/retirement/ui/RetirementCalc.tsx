@@ -79,6 +79,10 @@ import { useIncomeOverride } from '@/shared/hooks/useIncomeOverride'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { NeedPerMonthField } from '@/screens/retirement/ui/NeedPerMonthField'
+import { retireNeed } from '@/screens/retirement/utils/retireNeed'
+import { useBudgetPresets } from '@/screens/retirement/hooks/useBudgetPresets'
+import { useRetireNeedPreset } from '@/screens/retirement/hooks/useRetireNeedPreset'
 
 type RetirementCalcProps = {
   debts: Debt[]
@@ -112,6 +116,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const afterRows = portAfter.same ? port : portAfter.rows
   const [includeDebt, setIncludeDebt] = usePersistedState<boolean>('retireIncludeDebt', true, (v) => typeof v === 'boolean')
   const f = (k: NumericRetireKey) => (v: number) => setC({ ...c, [k]: v })
+  // Need per month: the typed number, or a picked Budget preset's expenses (see retireNeed)
+  const [needPreset, setNeedPreset] = useRetireNeedPreset()
+  const budgetPresets = useBudgetPresets()
+  const need = retireNeed(needPreset, budgetPresets.options, c.withdrawMo)
+  const needMo = need.monthly
   const { presets, save, remove } = usePresets<RetirePresetData>('retirement')
   // what pay periods can point at, by id so a rename does not break them
   const { presets: takeHomePresets } = usePresets<RawTakeHome>('takeHome', { ids: true })
@@ -232,7 +241,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       ? { payoffAge: payoffByDebt[d.id].age, freedMonthsInPayoffYear: 12 }
       : debtPayoffSchedule(d.balance, debtPayments[i], c.age),
   )
-  const autoTaxPct = gainsTaxPct(c.withdrawMo * 12, taxState)
+  const autoTaxPct = gainsTaxPct(needMo * 12, taxState)
   const taxPct = c.autoTax ? autoTaxPct : c.taxPct
   const weighted = (rows: PortfolioRow[]) => {
     const total = rows.reduce((s: number, x) => s + x.alloc, 0)
@@ -278,7 +287,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     // with a plan, a working year no period covers uses today's Take-home and Budget
     base401k: hasPlan ? autoContrib401k : baseContrib401k,
     contribSavings: hasPlan ? autoContribSavings : baseContribSavings, freed: freedPerYear,
-    withdrawMo: c.withdrawMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
+    withdrawMo: needMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
     // a debt payoff event counts only when it is the one that applies to its debt
     events: events.filter((e) => e.kind !== 'debt' || payoffByDebt[e.debtId ?? ''] === e),
   }
@@ -340,7 +349,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   return (
     <div>
       <p className="text-[13px] text-[var(--text-secondary)]">
-        You save until you retire, then take out {fmt0(c.withdrawMo * 12)} a year. Your 401k joins your
+        You save until you retire, then take out {fmt0(needMo * 12)} a year. Your 401k joins your
         savings at {c.accessAge}.
         Your funds earn {avgReturn.toFixed(2)}% a year while you work
         {portAfter.same ? '' : ` and ${avgReturnAfter.toFixed(2)}% after`}.
@@ -499,13 +508,20 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
           tip="What you need each month once you stop working, and the tax on what your regular investments earn. 401k money is not taxed here."
           gridClass="grid-cols-2"
         >
-          <ToolField label="Need per month" value={c.withdrawMo} onChange={f('withdrawMo')} step={250} suffix="$" />
+          <NeedPerMonthField
+            value={c.withdrawMo}
+            onChange={f('withdrawMo')}
+            need={need}
+            options={budgetPresets.options}
+            today={budgetPresets.today}
+            onPick={setNeedPreset}
+          />
           <AutoToolField
             label="Tax on investment gains"
             auto={!!c.autoTax}
             onToggleAuto={() => setC({ ...c, autoTax: !c.autoTax })}
             autoValue={autoTaxPct}
-            autoTip={`A guess based on living on ${fmt0(c.withdrawMo * 12)} a year in ${STATES[taxState]?.label}. It adds the federal rate on long-term gains to the state rate, since most states tax gains like income.`}
+            autoTip={`A guess based on living on ${fmt0(needMo * 12)} a year in ${STATES[taxState]?.label}. It adds the federal rate on long-term gains to the state rate, since most states tax gains like income.`}
             value={c.taxPct}
             onChange={f('taxPct')}
             step={1}
@@ -823,7 +839,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Withdrawals"
-                    tip={`What you take out each year. Once retired that is ${fmt0(c.withdrawMo)} a month${ssMonthly > 0 ? `, minus ${fmt0(ssMonthly)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.`}
+                    tip={`What you take out each year. Once retired that is ${fmt0(needMo)} a month${ssMonthly > 0 ? `, minus ${fmt0(ssMonthly)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.`}
                     right
                   />
                 </TableHead>

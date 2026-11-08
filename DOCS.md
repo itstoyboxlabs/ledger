@@ -574,7 +574,8 @@ The most model-heavy page: a year-by-year projection from current age to the end
   - Working years: 401k grows and gains the contribution. The savings pool gains the contribution plus after-tax
     growth. Year one's payroll 401k contribution is multiplied by 0.75, because eligibility starts about three
     months into a job.
-  - Retired years: withdrawals are monthly need times 12, from the savings pool only.
+  - Retired years: withdrawals are monthly need times 12, from the savings pool only. The need is typed or
+    comes from a Budget preset (see Need per month below).
   - **401k access age (60)**: at the end of that year the 401k balance rolls into the savings pool and its column
     shows a dash. The move shows in that year's Contributions. From then on new 401k money goes straight to
     savings, and if you are already past the access age the 401k starts in savings. Before that it compounds
@@ -609,6 +610,29 @@ The most model-heavy page: a year-by-year projection from current age to the end
 boxes). In balances mode each asset and debt is a checkbox, `startOff` holds the unchecked ids, savings start at
 included savings assets minus included debts, and the retirement account starts at included `401k` assets. Saves
 from before this existed read as `typed`, so numbers do not move. New users start on balances.
+
+### Need per month
+
+"Need per month" is typed, or it follows a saved Budget preset. A small Budget badge on the field (styled like
+the Auto badges) opens "Use a Budget preset": every Budget preset (key `expenses`) with its monthly total, then
+"Type it in".
+
+- **The amount** is what Budget would show as "Budgeted expenses" with that preset applied: `budgetExpensesOf`
+  on the preset's rows (`budgetPresetOptions`). Hidden rows and stopped subscriptions are skipped,
+  subscription rows use their live amount, live monthly subscriptions the preset has no row for are added,
+  and today's dismissed subscriptions are left out (a preset does not store them). Stacks count their stored
+  total, which Budget keeps equal to the sub items (week items are cost times times a week times 4). Debt
+  payment and savings rows count like any other row, because Budget counts them.
+- **With a preset picked** the field is read-only and a badge under it reads "From the <name> preset: $X a
+  month". The typed number is kept in `retireCalc.withdrawMo` for later.
+- **Live by name.** Presets have no id and names are unique, so the pick is the preset name, stored in
+  `ledger:retireNeedPreset` (`string` or `null`). Overwriting the preset on Budget moves the need the next time
+  Retirement opens. A deleted or renamed preset falls back to the typed number with the note "The <name>
+  preset is gone, so this uses your typed number." Typing a new number clears the pick.
+- **Old saves.** No key, or a bad value, reads as `null`: the typed number, exactly as before. Results only
+  change once a preset is picked.
+- **Sanity line**: "Your Budget today: $Y a month" sits under the field whenever Budget has rows of its own.
+- The pick is not part of Retirement presets.
 
 ### Pay and saving over time
 
