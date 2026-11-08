@@ -24,7 +24,8 @@ npm run typecheck     # TypeScript
 npm run lint          # oxlint
 npm run test:unit     # Vitest, one test file beside each source file
 npx playwright install chromium   # once
-npm run test:e2e      # Playwright, clicks through every page
+npm run test:e2e      # Playwright, clicks through every page, 10 browsers at once
+npm run test:all      # typecheck, lint, unit and browser tests all at the same time
 ```
 
 `npm test` runs the unit tests and the browser tests together. The browser tests use fake data in a throwaway

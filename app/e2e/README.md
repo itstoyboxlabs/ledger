@@ -11,7 +11,7 @@ npx playwright install chromium   # once
 npm run test:e2e
 ```
 
-`npm run test:e2e` starts its own dev server on port 5159 and stops it after. Set `LEDGER_TEST_PORT` to use another port.
+`npm run test:e2e` starts its own dev server on port 5159 and stops it after. Set `LEDGER_TEST_PORT` to use another port. Locally it runs 10 browsers at once (set `PW_WORKERS` to change that), and `npm run test:all` runs the typecheck, lint, unit tests and these at the same time.
 To reuse a Chromium you already have, set `PW_CHROMIUM` to its executable path.
 
 ## Your real data is never touched
