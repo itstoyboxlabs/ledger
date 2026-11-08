@@ -18,5 +18,4 @@ export const RETIRE_DEFAULTS: RetireState = {
   ss: { on: true, claimAge: 67, auto: true, monthly: 0 },
   events: [],
   pay: { periods: [] }, // the pay plan; no periods means today's pay every working year
-  extras: [], // extra yearly saving lines the user pencils in: { id, name, amount, unit: 'yr'|'mo', to: 'savings'|'401k' }
 }

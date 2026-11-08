@@ -5,6 +5,9 @@ import { seedStorage } from '@/test-utils/seedStorage'
 import { loadSampleData } from '@/test-utils/loadSampleData'
 import { RetirementCalc } from './RetirementCalc'
 import type { Debt } from '@/shared/types/Debt'
+import type { BudgetRow } from '@/shared/types/BudgetRow'
+import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
+import { fmt0 } from '@/shared/utils/fmt0'
 
 const stored = (k: string) => JSON.parse(localStorage.getItem(`ledger:${k}`) as string)
 
@@ -15,14 +18,14 @@ const BASE = {
   contrib401k: 5000, contribSavings: 20000, auto401k: false, autoSavings: false,
   withdrawMo: 1000, taxPct: 0, autoTax: false,
   ss: { on: false, claimAge: 67, auto: true, monthly: 0 },
-  events: [], extras: [],
+  events: [],
 }
 const seedPlan = (o: Record<string, unknown> = {}) => {
   localStorage.setItem('ledger:retireCalc', JSON.stringify({ ...BASE, ...o }))
   localStorage.setItem('ledger:retirePortfolio', JSON.stringify([{ name: 'Cash', alloc: 100, perf: 0 }]))
 }
 const debt = (o: Partial<Debt> = {}): Debt => ({ id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250, budgetRow: null, ...o })
-// the cells of one year in the table: age, phase, pay, 401k, contributions, growth, withdrawals, total
+// the cells of one year in the table: age, phase, 401k, contributions, growth, withdrawals, total
 const yearRow = (age: number) => {
   const table = screen.getByRole('region', { name: 'Year by year projection table' })
   const row = within(table).getAllByRole('row').find((r) => r.querySelector('td')?.textContent === String(age))
@@ -107,14 +110,14 @@ describe('RetirementCalc', () => {
   it('keeps 401k money paid in after the access age', () => {
     seedPlan({ age: 55, retireAge: 65, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0, withdrawMo: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[7]).toBe('$197,500')
-    expect(yearRow(61)[3]).toBe('—')
+    expect(yearRow(70)[6]).toBe('$197,500')
+    expect(yearRow(61)[2]).toBe('—')
   })
 
   it('opens the 401k from the start when already past the access age', () => {
     seedPlan({ age: 65, retireAge: 66, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[7]).toBe('$47,500')
+    expect(yearRow(70)[6]).toBe('$47,500')
     expect(chipText('Money lasts')).toContain('to 70+')
   })
 
@@ -129,7 +132,7 @@ describe('RetirementCalc', () => {
     seedPlan()
     renderApp(<RetirementCalc debts={[]} />)
     // 10,000 at 59, minus 12,000, plus the 58,750 401k
-    expect(yearRow(60).slice(4)).toEqual(['$58,750', '$0', '−$12,000', '$56,750'])
+    expect(yearRow(60).slice(3)).toEqual(['$58,750', '$0', '−$12,000', '$56,750'])
   })
 
   it('a payoff event outside the plan does not take the debt out of the hole', async () => {
@@ -143,13 +146,13 @@ describe('RetirementCalc', () => {
     seedPlan({ startFrom: 'balances', startOff: ['d1'] })
     renderApp(<RetirementCalc debts={[debt()]} />)
     // 1,000 at 250 a month clears in 4 months, which would free 2,000 in the first year
-    expect(yearRow(30)[4]).toBe('$23,750')
+    expect(yearRow(30)[3]).toBe('$23,750')
   })
 
   it('a ticked debt frees its payment into savings once cleared', () => {
     seedPlan({ startFrom: 'balances' })
     renderApp(<RetirementCalc debts={[debt()]} />)
-    expect(yearRow(30)[4]).toBe('$25,750')
+    expect(yearRow(30)[3]).toBe('$25,750')
   })
 
   // the debt's payment is the linked Budget row, so the caption about a missing payment
@@ -161,7 +164,7 @@ describe('RetirementCalc', () => {
     seedPlan({ autoSavings: true })
     renderApp(<RetirementCalc debts={[debt({ balance: 0, budgetRow: 'r1' })]} />)
     await budgetLoaded()
-    expect(yearRow(31)[4]).toBe('$5,000')
+    expect(yearRow(31)[3]).toBe('$5,000')
   })
 
   it('Auto savings never goes below zero when the Budget is overspent', async () => {
@@ -170,7 +173,7 @@ describe('RetirementCalc', () => {
     renderApp(<RetirementCalc debts={[debt({ balance: 0, budgetRow: 'r2' })]} />)
     await budgetLoaded()
     // 5,000 into the 401k plus the card's freed 1,200, and nothing taken for the overspend
-    expect(yearRow(31)[4]).toBe('$6,200')
+    expect(yearRow(31)[3]).toBe('$6,200')
   })
 
   it('clears the no safe age note when the inputs change', async () => {
@@ -194,12 +197,13 @@ describe('RetirementCalc', () => {
     expect(screen.getAllByText('Left over at 90')).toHaveLength(1)
   })
 
-  it('with no pay plan says today\'s pay holds and shows it in the Pay column', () => {
+  it('with no pay plan shows today\'s row in the one pay and saving card', () => {
     seedPlan()
     renderApp(<RetirementCalc debts={[]} />)
     expect(screen.getByText('Same pay until you retire. $80,000 a year from Take-home pay.')).toBeInTheDocument()
-    expect(yearRow(30)[2]).toBe('$80,000')
-    expect(yearRow(40)[2]).toBe('—')
+    expect(screen.getByText('Now, until you retire')).toBeInTheDocument()
+    expect(screen.queryByText('Saving each year')).toBeNull()
+    expect(screen.queryByRole('columnheader', { name: /^Pay/ })).toBeNull()
   })
 
   it('starts a pay plan from today\'s numbers', async () => {
@@ -207,38 +211,109 @@ describe('RetirementCalc', () => {
     renderApp(<RetirementCalc debts={[]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
     await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(2))
-    // typed 5,000 of 80,000 is 6.3%, typed savings carry over
-    expect(stored('retireCalc').pay.periods[0]).toMatchObject({ label: 'Now', fromAge: 30, toAge: 39, salary: 80000, k401: 6.3, savings: 20000 })
-    expect(stored('retireCalc').pay.periods[1]).toMatchObject({ fromAge: 39, toAge: 'retire' })
-    await userEvent.click(screen.getByRole('button', { name: 'Go back to the same pay' }))
+    // typed 401k and savings carry over as typed dollars
+    expect(stored('retireCalc').pay.periods[0]).toMatchObject({
+      label: 'Now', fromAge: 30, toAge: 39, takeHomeFrom: 'typed', k401: 5000, saveFrom: 'typed', savings: 20000,
+    })
+    expect(stored('retireCalc').pay.periods[1]).toMatchObject({ fromAge: 39, toAge: 'retire', takeHomeFrom: 'typed' })
+    expect(screen.queryByText('Now, until you retire')).toBeNull()
+    // the same numbers as before the plan
+    expect(yearRow(30)[3]).toBe('$23,750')
+    expect(yearRow(31)[3]).toBe('$25,000')
+    await userEvent.click(screen.getByRole('button', { name: 'Back to one period' }))
     await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(0))
+    expect(screen.getByText('Now, until you retire')).toBeInTheDocument()
   })
 
-  it('uses each period\'s pay, 401k and savings in the table', () => {
+  const P = { raisePct: 0, takeHomePreset: '', savePreset: '' }
+
+  it('uses each period\'s typed 401k and savings in the table, grown by its raise', () => {
     seedPlan({
       pay: {
         periods: [
-          { id: 'a', label: 'Now', fromAge: 30, toAge: 35, salary: 80000, raisePct: 0, k401: 0, savings: 20000 },
-          { id: 'b', label: 'Easier job', fromAge: 35, toAge: 'retire', salary: 50000, raisePct: 0, k401: 0, savings: 8000 },
+          { ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 35, takeHomeFrom: 'typed', k401: 4000, saveFrom: 'typed', savings: 20000 },
+          { ...P, id: 'b', label: 'Easier job', fromAge: 35, toAge: 'retire', raisePct: 10, takeHomeFrom: 'typed', k401: 0, saveFrom: 'typed', savings: 8000 },
         ],
       },
     })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(34).slice(2, 5)).toEqual(['$80,000', '$10,000', '$20,000'])
-    expect(yearRow(36).slice(2, 5)).toEqual(['$50,000', '$10,000', '$8,000'])
-    expect(screen.getByText(/These two only count for years no period covers/)).toBeInTheDocument()
+    expect(yearRow(34)[3]).toBe('$24,000')
+    expect(yearRow(35)[3]).toBe('$8,000')
+    expect(yearRow(36)[3]).toBe('$8,800')
+  })
+
+  it('takes the 401k from a Take-home preset and saving from a Budget preset', async () => {
+    await seedStorage({
+      budget: { rows: [{ id: 'r1', name: 'Rent', amount: 1000 }] },
+      presets: {
+        takeHome: [{ id: 'th1', name: 'Easier job', data: { salary: 50000, deductions: [] } }],
+        expenses: [{ id: 'b1', name: 'Frugal', data: [{ id: 'r1', name: 'Rent', amount: 500 }] }],
+      },
+    })
+    localStorage.setItem('ledger:budgetIncomeOverride', JSON.stringify({ active: 'manual', amount: 3000 }))
+    seedPlan({
+      pay: { periods: [{ ...P, id: 'a', label: 'Easier job', fromAge: 30, toAge: 'retire', takeHomeFrom: 'preset', takeHomePreset: 'th1', k401: 0, saveFrom: 'preset', savePreset: 'b1', savings: 0 }] },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    // no 401k line in the preset: nothing into the 401k. Savings are the 3,000 income less
+    // what the preset's rows cost (with live subscriptions, as on the Budget page), times 12.
+    const spent = budgetExpensesOf({ rows: [{ id: 'r1', name: 'Rent', amount: 500 } as BudgetRow] })
+    await waitFor(() => expect(yearRow(31).slice(2, 4)).toEqual(['$10,000', fmt0((3000 - spent) * 12)]))
+    expect(screen.getByRole('button', { name: 'Take-home preset for Easier job: Easier job' })).toBeInTheDocument()
+  })
+
+  it('a deleted preset falls back to the typed values with a note', async () => {
+    await seedStorage({ presets: {} })
+    seedPlan({
+      pay: { periods: [{ ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 'retire', takeHomeFrom: 'preset', takeHomePreset: 'gone', k401: 6000, saveFrom: 'typed', savings: 9000 }] },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText('Its Take-home preset was deleted, so it uses the typed 401k.')).toBeInTheDocument()
+    expect(yearRow(31)[3]).toBe('$15,000')
   })
 
   it('warns about a gap in the pay plan', () => {
     seedPlan({
       pay: {
         periods: [
-          { id: 'a', label: 'Now', fromAge: 30, toAge: 33, salary: 80000, raisePct: 0, k401: 'auto', savings: 'auto' },
-          { id: 'b', label: '', fromAge: 35, toAge: 'retire', salary: 80000, raisePct: 0, k401: 'auto', savings: 'auto' },
+          { ...P, id: 'a', label: 'Now', fromAge: 30, toAge: 33, takeHomeFrom: 'today', k401: 0, saveFrom: 'today', savings: 0 },
+          { ...P, id: 'b', label: '', fromAge: 35, toAge: 'retire', takeHomeFrom: 'today', k401: 0, saveFrom: 'today', savings: 0 },
         ],
       },
     })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(screen.getByText("No period covers ages 33 to 34. Those years use today's pay and saving.")).toBeInTheDocument()
+    expect(screen.getByText("No period covers ages 33 to 34. Those years use today's 401k and saving.")).toBeInTheDocument()
+  })
+
+  it('a Budget preset picked on today\'s row starts a plan', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    await seedStorage({ presets: { expenses: [{ id: 'b1', name: 'Frugal', data: [] }] } })
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Budget preset for Now: Typed' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Frugal' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(1))
+    expect(stored('retireCalc').pay.periods[0]).toMatchObject({ label: 'Now', fromAge: 30, toAge: 'retire', takeHomeFrom: 'typed', k401: 5000, saveFrom: 'preset', savePreset: 'b1', savings: 20000 })
+  })
+
+  it('typed savings on today\'s row switch back to today\'s Budget from the badge', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByLabelText(/Into savings per year/)).toHaveValue(20000)
+    await userEvent.click(screen.getByRole('button', { name: 'Budget preset for Now: Typed' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: "Today's Budget" }))
+    await waitFor(() => expect(stored('retireCalc').autoSavings).toBe(true))
+    expect(stored('retireCalc').pay.periods).toEqual([])
+  })
+
+  it('an old save with saving lines shows them as money-in events with the same numbers', () => {
+    seedPlan({ extras: [{ id: 'a', name: 'IRA', amount: 2000, unit: 'yr', to: '401k' }, { id: 'b', name: 'Side job', amount: 250, unit: 'mo', to: 'savings' }] })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getAllByPlaceholderText('Event name').map((x) => (x as HTMLInputElement).value)).toEqual(['IRA', 'Side job'])
+    // 10,000 + 3,750 + 2,000 in the 401k, and 20,000 + 3,000 into savings
+    expect(yearRow(30).slice(2, 4)).toEqual(['$15,750', '$28,750'])
+    expect(yearRow(40)[3]).toBe('—')
+    expect(screen.getAllByText('Until you retire')).toHaveLength(2)
   })
 })

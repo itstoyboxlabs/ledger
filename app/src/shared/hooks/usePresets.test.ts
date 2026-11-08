@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { usePresets } from './usePresets'
 import { seedStorage } from '@/test-utils/seedStorage'
 import { getPresets } from '@/shared/utils/getPresets'
+import { presetIdFor } from '@/shared/utils/presetIdFor'
 
 const saved = async (key: string) => (await getPresets())[key]
 
@@ -54,5 +55,38 @@ describe('usePresets', () => {
     await waitFor(() => expect(result.current.presets).toEqual([{ name: 'Old', data: { rent: 1 } }]))
     expect(localStorage.getItem('ledger:rentScenarioPresets')).toBeNull()
     await waitFor(async () => expect(await saved('rentScenario')).toEqual([{ name: 'Old', data: { rent: 1 } }]))
+  })
+
+  it('without ids, presets stay as they are', async () => {
+    const { result } = renderHook(() => usePresets('tool'))
+    await waitFor(() => expect(result.current.presets).toHaveLength(2))
+    expect(result.current.presets[0]).toEqual({ name: 'A', data: { x: 1 } })
+  })
+
+  it('with ids, old presets get a stable id from their name on first load, saved back', async () => {
+    const { result } = renderHook(() => usePresets('tool', { ids: true }))
+    await waitFor(() => expect(result.current.presets[0]).toEqual({ id: presetIdFor('A'), name: 'A', data: { x: 1 } }))
+    await waitFor(async () => expect((await saved('tool'))?.map((p) => p.id)).toEqual([presetIdFor('A'), presetIdFor('B')]))
+  })
+
+  it('with ids, a new preset gets an id and overwriting keeps it', async () => {
+    const { result } = renderHook(() => usePresets('tool', { ids: true }))
+    await waitFor(() => expect(result.current.presets).toHaveLength(2))
+    act(() => result.current.save('C', { x: 3 }))
+    const id = result.current.presets[2].id
+    expect(id).toMatch(/^pr/)
+    act(() => result.current.save('C', { x: 4 }))
+    expect(result.current.presets[2]).toEqual({ id, name: 'C', data: { x: 4 } })
+  })
+
+  it('rename keeps the id and data and refuses a name in use', async () => {
+    const { result } = renderHook(() => usePresets('tool', { ids: true }))
+    await waitFor(() => expect(result.current.presets[0].id).toBeTruthy())
+    const id = result.current.presets[0].id
+    act(() => result.current.rename('A', 'B'))
+    expect(result.current.presets[0].name).toBe('A')
+    act(() => result.current.rename('A', '  Lean  '))
+    expect(result.current.presets[0]).toEqual({ id, name: 'Lean', data: { x: 1 } })
+    await waitFor(async () => expect((await saved('tool'))?.[0]).toEqual({ id, name: 'Lean', data: { x: 1 } }))
   })
 })

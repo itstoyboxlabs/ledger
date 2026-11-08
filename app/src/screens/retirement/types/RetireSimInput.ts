@@ -5,8 +5,8 @@ import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
 // `startSavings` is after any Start in debt hole. `events` holds only the events that
 // count (a debt payoff event that does not apply is left out). `freed(age)` is what paid
 // off debts free up that working year, already split by the Budget allocation.
-// `salary` is today's gross pay, shown in the Pay column. `pay` is the pay plan; without
-// it every working year uses `base401k` and `contribSavings`, exactly as before the plan.
+// `pay` is the pay plan; without it every working year uses `base401k` and
+// `contribSavings`, exactly as before the plan.
 export interface RetireSimInput {
   age: number
   accessAge: number
@@ -14,7 +14,6 @@ export interface RetireSimInput {
   start401k: number
   startSavings: number
   base401k: number
-  extras401k: number
   contribSavings: number
   freed: (age: number) => number
   withdrawMo: number
@@ -23,7 +22,6 @@ export interface RetireSimInput {
   r: number
   rAfter: number
   taxPct: number
-  events: Pick<RetireEvent, 'kind' | 'age' | 'repeat' | 'amount' | 'years' | 'auto'>[]
-  salary?: number
+  events: Pick<RetireEvent, 'kind' | 'age' | 'repeat' | 'amount' | 'years' | 'auto' | 'to' | 'untilRetire'>[]
   pay?: RetireSimPay
 }

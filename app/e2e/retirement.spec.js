@@ -22,7 +22,7 @@ const BASE = {
   contrib401k: 5000, contribSavings: 20000, auto401k: false, autoSavings: false,
   withdrawMo: 1000, taxPct: 0, autoTax: false,
   ss: { on: false, claimAge: 67, auto: true, monthly: 0 },
-  events: [], extras: [],
+  events: [],
 }
 
 // Seed localStorage after the sample data is loaded, then reload and open Retirement.
@@ -56,7 +56,6 @@ const badge = (scope, label, name = 'Auto') =>
 const tableEl = (page) => page.locator('table').filter({ hasText: 'Total (liquid)' }).first()
 const chip = (page, label) => main(page).locator('div.rounded-lg', { hasText: label }).filter({ has: page.locator('div.tnum') }).first()
 const eventCards = (page) => main(page).locator('div.rounded-xl').filter({ has: page.getByPlaceholder('Event name') })
-const extraRows = (page) => main(page).locator('div.group').filter({ has: page.getByPlaceholder('Name, like IRA') })
 const portCard = (page) => main(page).locator('[data-slot=card]', { hasText: 'Investments' }).first()
 const intro = (page) => main(page).locator('p', { hasText: 'You save until you retire' }).first()
 const retireCalc = (page) => ls(page, 'retireCalc')
@@ -73,8 +72,8 @@ async function readTable(page) {
   const out = {}
   for (const c of t) {
     out[c[0]] = {
-      phase: c[1], pay: c[2] === '—' ? 0 : money(c[2]), k: money(c[3]), contrib: money(c[4]), growth: money(c[5]),
-      wd: Math.abs(money(c[6])), total: money(c[7]), hasK: c[3] !== '—',
+      phase: c[1], k: money(c[2]), contrib: money(c[3]), growth: money(c[4]),
+      wd: Math.abs(money(c[5])), total: money(c[6]), hasK: c[2] !== '—',
     }
   }
   return out
@@ -98,28 +97,26 @@ function evAmt(e, age) {
   if (e.repeat === '2year') return (age - e.age) % 2 === 0 ? e.amount : 0
   return e.amount
 }
-// The pay plan part of the model, for periods with a typed 401k percent and typed
-// savings (Auto savings depend on the tax engine, so they are checked in unit tests).
-// The later period wins where two overlap, a year no period covers keeps today's numbers,
-// and the first year of each period is a 75% 401k year. The 401k is capped at 24,500
-// and the employer adds `match` percent of it.
-const K401_CAP = 24500
-function planAt(periods, age, startAge, retireAge, planRetireAge) {
+// The pay plan part of the model, for periods with typed 401k and savings dollars
+// (preset values depend on the tax engine, so they are checked in unit tests). Periods
+// never overlap. A period covers its from age up to, not including, its until age. Each
+// year the period's amounts grow by its raise, the first year of each period is a 75%
+// 401k year, and a working year no period covers keeps today's numbers.
+function planAt(periods, age, startAge, retireAge) {
   for (let i = periods.length - 1; i >= 0; i--) {
     const p = periods[i]
     const from = Math.max(p.fromAge, startAge)
     const end = p.toAge === 'retire' ? retireAge : p.toAge
-    if (age < from || age >= end) continue
-    if (age >= retireAge && (p.toAge === 'retire' || p.toAge <= planRetireAge)) continue
-    return { gross: p.salary * (1 + p.raisePct / 100) ** (age - from), i }
+    if (age < from || age >= end || age >= retireAge) continue
+    return { grow: (1 + p.raisePct / 100) ** (age - from), i }
   }
   return null
 }
 function sim(o) {
   const c = {
     age: 30, retireAge: 40, accessAge: 60, endAge: 90, k0: 10000, s0: 50000, hole: 0,
-    base401k: 5000, x401k: 0, contribS: 20000, r: 0, rAfter: null, tax: 0, need: 1000,
-    ssMonthly: 0, claim: 67, events: [], freed: () => 0, periods: [], match: 0, ...o,
+    base401k: 5000, contribS: 20000, r: 0, rAfter: null, tax: 0, need: 1000,
+    ssMonthly: 0, claim: 67, events: [], freed: () => 0, periods: [], ...o,
   }
   let prevSeg = null
   const rows = {}
@@ -133,19 +130,18 @@ function sim(o) {
     const working = age < c.retireAge
     const open = age >= c.accessAge
     const rate = working ? c.r : (c.rAfter ?? c.r)
-    let cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) + c.x401k : 0
+    let cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) : 0
     let cS = working ? c.contribS + c.freed(age) : 0
     if (c.periods.length > 0 && working) {
-      const hit = planAt(c.periods, age, c.age, c.retireAge, c.retireAge)
+      const hit = planAt(c.periods, age, c.age, c.retireAge)
       const seg = hit ? hit.i : -1
       const first = seg !== prevSeg
       prevSeg = seg
-      if (!hit) cK = (first ? c.base401k * 0.75 : c.base401k) + c.x401k
+      if (!hit) cK = first ? c.base401k * 0.75 : c.base401k
       else {
         const p = c.periods[hit.i]
-        const own = Math.min(K401_CAP, hit.gross * p.k401 / 100)
-        cK = own * (1 + c.match / 100) * (first ? 0.75 : 1) + c.x401k
-        cS = p.savings + c.freed(age)
+        cK = p.k401 * hit.grow * (first ? 0.75 : 1)
+        cS = p.savings * hit.grow + c.freed(age)
       }
     }
     const ssNow = c.ssMonthly > 0 && age >= c.claim ? c.ssMonthly : 0
@@ -154,7 +150,15 @@ function sim(o) {
     const sG = s > 0 ? s * rate * (1 - c.tax / 100) : 0
     let inn = 0
     let out = 0
-    for (const e of c.events) { const v = evAmt(e, age); if (e.kind === 'in') inn += v; else out += v }
+    // money in can go to the retirement account (no first-year rule), and a line set to
+    // stop when you retire does, whatever its years
+    for (const e of c.events) {
+      if (e.untilRetire && !working) continue
+      const v = evAmt(e.untilRetire ? { ...e, years: Infinity } : e, age)
+      if (e.kind === 'in' && e.to === '401k') cK += v
+      else if (e.kind === 'in') inn += v
+      else out += v
+    }
     // from the access age on, new 401k money goes straight to savings and whatever the
     // 401k holds moves in at the end of the year, shown in Contributions
     k += kG + (open ? 0 : cK)
@@ -209,14 +213,17 @@ test.describe('new user defaults', () => {
     await expect(main(page).getByText(/Savings start at \$0\. Retirement account starts at \$0\./)).toBeVisible()
   })
 
-  test('both saving fields and the tax start on Auto', async ({ page }) => {
+  test('both saving fields follow today\'s Take-home and Budget, and the tax starts on Auto', async ({ page }) => {
     await expect(autoValue(main(page), 'Into 401k per year')).toHaveText('$3,200')
     await expect(autoValue(main(page), 'Into savings per year')).toHaveText('$33,142')
     // 60,000 a year less the 16,100 standard deduction stays in the 0% federal band in Texas
     await expect(autoValue(main(page), 'Tax on investment gains')).toHaveText('0%')
-    for (const l of ['Into 401k per year', 'Into savings per year', 'Tax on investment gains']) {
-      await expect(badge(main(page), l)).toHaveAttribute('aria-pressed', 'true')
-    }
+    // pay, 401k and savings pick their source from a menu, never an Auto badge
+    await expect(main(page).getByRole('button', { name: "Take-home preset for Now: Today's Take-home" })).toBeVisible()
+    await expect(main(page).getByRole('button', { name: "Take-home preset for Now: Today's Take-home" })).toBeVisible()
+    await expect(main(page).getByRole('button', { name: "Budget preset for Now: Today's Budget" })).toBeVisible()
+    await expect(main(page).locator('[data-slot=card]', { hasText: 'Pay and saving over time' }).getByRole('button', { name: 'Auto', exact: true })).toHaveCount(0)
+    await expect(badge(main(page), 'Tax on investment gains')).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('the table runs from the current age to the plan age, 35 to 95', async ({ page }) => {
@@ -553,15 +560,17 @@ test.describe('saving each year', () => {
 
   test('turning Auto off shows the last typed number again', async ({ page }) => {
     await setup(page, { retire: { autoSavings: true, contribSavings: 12345 } })
-    await badge(main(page), 'Into savings per year').click()
+    await main(page).getByRole('button', { name: "Budget preset for Now: Today's Budget" }).click()
+    await page.getByRole('menuitem', { name: 'Type it in' }).click()
     await expect(field(main(page), 'Into savings per year')).toHaveValue('12345')
     expect((await retireCalc(page)).autoSavings).toBe(false)
     await expectRow(page, 31, { contrib: 5000 + 12345 })
   })
 
-  test('turning Auto on saves the flag and hides the box', async ({ page }) => {
+  test('picking Today\'s Take-home for the 401k saves the flag and hides the box', async ({ page }) => {
     await setup(page)
-    await badge(main(page), 'Into 401k per year').click()
+    await main(page).getByRole('button', { name: 'Take-home preset for Now: Typed' }).click()
+    await page.getByRole('menuitem', { name: "Today's Take-home" }).click()
     await expect(autoValue(main(page), 'Into 401k per year')).toHaveText('$3,200')
     expect((await retireCalc(page)).auto401k).toBe(true)
     // the typed number is kept for later
@@ -598,79 +607,73 @@ test.describe('saving each year', () => {
   })
 })
 
-test.describe('your own saving lines', () => {
-  const addExtra = async (page, name, amount) => {
-    await page.getByRole('button', { name: 'Add your own saving' }).click()
-    const row = extraRows(page).last()
-    await row.getByPlaceholder('Name, like IRA').fill(name)
-    await row.locator('input[type=number]').fill(String(amount))
-    return row
+test.describe('money in for the retirement account', () => {
+  const addIn = async (page, name, amount, repeat) => {
+    await page.getByRole('button', { name: 'Add event' }).click()
+    const card = eventCards(page).last()
+    await card.getByPlaceholder('Event name').fill(name)
+    await field(card, 'Amount').fill(String(amount))
+    await pick(page, card, 'Money out', 'Money in')
+    await field(card, 'Starts at age').fill('30')
+    if (repeat) await pick(page, card, 'Once', repeat)
+    return card
   }
 
-  test('the plus button adds a line that defaults to a year, into savings', async ({ page }) => {
+  test('there is no separate saving lines list any more', async ({ page }) => {
     await setup(page)
-    await expect(extraRows(page)).toHaveCount(0)
-    await page.getByRole('button', { name: 'Add your own saving' }).click()
-    await expect(extraRows(page)).toHaveCount(1)
-    const row = extraRows(page).first()
-    await expect(row.getByRole('button', { name: 'a year' })).toBeVisible()
-    await expect(row.getByRole('button', { name: 'Savings (use anytime)' })).toBeVisible()
-    await expect(main(page).getByText(/Your own, on top of the above/)).toBeVisible()
-    const c = await retireCalc(page)
-    expect(c.extras).toHaveLength(1)
-    expect(c.extras[0]).toMatchObject({ name: '', amount: 0, unit: 'yr', to: 'savings' })
+    await expect(page.getByRole('button', { name: 'Add your own saving' })).toHaveCount(0)
+    await expect(main(page).getByPlaceholder('Name, like IRA')).toHaveCount(0)
   })
 
-  test('a yearly savings line adds to every working year of the savings pool', async ({ page }) => {
+  test('money in goes to savings unless set to the retirement account', async ({ page }) => {
     await setup(page)
-    await addExtra(page, 'Side job', 3000)
-    await expectRow(page, 30, { contrib: 23750 + 3000, k: 13750 })
-    await expectMatchesSim(page, sim({ contribS: 23000 }))
-  })
-
-  test('a monthly line counts twelve times', async ({ page }) => {
-    await setup(page)
-    const row = await addExtra(page, 'Roth', 100)
-    await pick(page, row, 'a year', 'a month')
-    await expectRow(page, 31, { contrib: 25000 + 1200 })
-    expect((await retireCalc(page)).extras[0]).toMatchObject({ unit: 'mo', amount: 100, name: 'Roth' })
-  })
-
-  test('a retirement account line goes into the locked pool with no 75% first year', async ({ page }) => {
-    await setup(page)
-    const row = await addExtra(page, 'IRA', 2000)
-    await pick(page, row, 'Savings (use anytime)', 'Retirement account (locked)')
+    const card = await addIn(page, 'IRA', 2000, 'Every year')
+    await field(card, 'For how many years').fill('10')
+    await expect(card.locator('button', { hasText: 'Savings (use anytime)' })).toBeVisible()
+    await expectRow(page, 30, { k: 13750, contrib: 23750 + 2000 })
+    await pick(page, card, 'Savings (use anytime)', 'Retirement account (locked)')
     // 10,000 + 5,000 x 0.75 + 2,000 in the first year, savings untouched
     await expectRow(page, 30, { k: 15750, total: 70000, contrib: 23750 + 2000 })
-    await expectMatchesSim(page, sim({ x401k: 2000 }))
-    expect((await retireCalc(page)).extras[0].to).toBe('401k')
+    const e = (await retireCalc(page)).events[0]
+    expect(e).toMatchObject({ kind: 'in', to: '401k', repeat: 'year', years: 10 })
+    await expectMatchesSim(page, sim({ events: [{ kind: 'in', to: '401k', amount: 2000, age: 30, repeat: 'year', years: 10 }] }))
   })
 
-  test('removing a line restores the old numbers', async ({ page }) => {
+  test('a repeating money-in event can stop when you retire', async ({ page }) => {
     await setup(page)
-    const row = await addExtra(page, 'Side job', 3000)
-    await expectRow(page, 31, { contrib: 28000 })
-    await row.hover()
-    await row.getByRole('button', { name: 'Remove' }).click()
-    await expect(extraRows(page)).toHaveCount(0)
-    await expectRow(page, 31, { contrib: 25000 })
-    expect((await retireCalc(page)).extras).toEqual([])
+    const card = await addIn(page, 'Side job', 3000, 'Every year')
+    await badge(card, 'For how many years', 'Until retire').click()
+    await expect(card.getByText('Until you retire')).toBeVisible()
+    expect((await retireCalc(page)).events[0].untilRetire).toBe(true)
+    await expectRow(page, 39, { contrib: 25000 + 3000 })
+    await expectRow(page, 40, { contrib: 0 })
+    await field(main(page), 'Retire at').fill('45')
+    await expectRow(page, 44, { contrib: 28000 })
   })
 
-  test('lines add on top of Auto too', async ({ page }) => {
-    await setup(page, { retire: { autoSavings: true } })
-    await addExtra(page, 'Bonus', 1000)
-    await expectRow(page, 31, { contrib: 5000 + 33142 + 1000 })
-  })
-
-  test('extras survive a reload', async ({ page }) => {
-    await setup(page)
-    await addExtra(page, 'Side job', 3000)
-    await expectRow(page, 31, { contrib: 28000 })
-    await page.reload()
-    await goTo(page, 'Retirement')
-    await expect(extraRows(page).first().getByPlaceholder('Name, like IRA')).toHaveValue('Side job')
-    await expectRow(page, 31, { contrib: 28000 })
+  test('an old save with saving lines loads them as money-in events with the same numbers', async ({ page }) => {
+    await setup(page, {
+      retire: {
+        extras: [
+          { id: 'a', name: 'Side job', amount: 3000, unit: 'yr', to: 'savings' },
+          { id: 'b', name: 'IRA', amount: 2000, unit: 'yr', to: '401k' },
+          { id: 'c', name: 'Roth', amount: 100, unit: 'mo', to: 'savings' },
+        ],
+      },
+    })
+    await expect(eventCards(page)).toHaveCount(3)
+    await expect(eventCards(page).first().getByPlaceholder('Event name')).toHaveValue('Side job')
+    // what the saving lines added before: 3,000 + 1,200 to savings and 2,000 to the 401k
+    await expectRow(page, 30, { k: 15750, contrib: 23750 + 3000 + 2000 + 1200 })
+    await expectRow(page, 39, { contrib: 25000 + 6200 })
+    await expectRow(page, 40, { contrib: 0 })
+    await expectMatchesSim(page, sim({
+      events: [
+        { kind: 'in', amount: 3000, age: 30, repeat: 'year', years: 10, untilRetire: true },
+        { kind: 'in', to: '401k', amount: 2000, age: 30, repeat: 'year', years: 10, untilRetire: true },
+        { kind: 'in', amount: 100, age: 30, repeat: 'month', years: 10, untilRetire: true },
+      ],
+    }))
   })
 })
 
@@ -915,7 +918,7 @@ test.describe('events', () => {
 
   test('starts with no events and a hint', async ({ page }) => {
     await setup(page)
-    await expect(main(page).getByText('No events yet. Add one for a big purchase, a bonus or a stock payout.')).toBeVisible()
+    await expect(main(page).getByText('No events yet. Add one for a big purchase, a bonus, an IRA or a stock payout.')).toBeVisible()
     await expect(eventCards(page)).toHaveCount(0)
   })
 
@@ -1299,91 +1302,174 @@ test.describe('year-by-year table', () => {
   })
 })
 
-test.describe('your pay over time', () => {
-  const period = (o) => ({ id: 'p', label: '', fromAge: 30, toAge: 'retire', salary: 80000, raisePct: 0, k401: 5, savings: 20000, ...o })
-  const card = (page) => main(page).locator('[data-slot=card]', { has: page.getByRole('heading', { name: 'Your pay over time' }) })
+test.describe('pay and saving over time', () => {
+  // a period with typed 401k and savings dollars, so the reference model can check it
+  const period = (o) => ({
+    id: 'p', label: '', fromAge: 30, toAge: 'retire', raisePct: 0,
+    takeHomeFrom: 'typed', takeHomePreset: '', k401: 5000, saveFrom: 'typed', savePreset: '', savings: 20000, ...o,
+  })
+  const card = (page) => main(page).locator('[data-slot=card]', { has: page.getByRole('heading', { name: 'Pay and saving over time' }) })
+  const todayRow = (page) => card(page).getByText('Now, until you retire')
+  const takeHomeCard = (page) => main(page).locator('[data-slot=card]').filter({ has: page.locator('h2', { hasText: 'Take-home pay' }) }).first()
 
-  test('with no plan, today\'s pay holds and fills the Pay column', async ({ page }) => {
+  test('with no plan, one card holds today\'s 401k and savings', async ({ page }) => {
     await setup(page)
     await expect(card(page)).toContainText('Same pay until you retire. $80,000 a year from Take-home pay.')
-    await expectRow(page, 30, { pay: 80000 })
-    await expectRow(page, 39, { pay: 80000 })
-    await expectRow(page, 40, { pay: 0 })
+    await expect(card(page)).toContainText('If your pay might change, like a raise or a lower paying job at a certain age, add another period.')
+    await expect(card(page)).toContainText('Save each as a preset, then pick those presets here.')
+    await expect(todayRow(page)).toBeVisible()
+    await expect(main(page).getByText('Saving each year')).toHaveCount(0)
+    await expect(card(page).getByText(/Pay per year/)).toHaveCount(0)
+    await expect(tableEl(page).locator('th', { hasText: /^Pay/ })).toHaveCount(0)
     expect((await retireCalc(page)).pay).toBeUndefined()
   })
 
-  test('add a change at 35: the Pay column drops and Money lasts updates', async ({ page }) => {
-    // Auto savings, so lower take-home pay saves less
-    await setup(page, { retire: { withdrawMo: 2000, autoSavings: true } })
+  test('add a change at 35: contributions follow it and Money lasts updates', async ({ page }) => {
+    await setup(page, { retire: { withdrawMo: 2000 } })
     const lasts = await chip(page, 'Money lasts').innerText()
     await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
     await expect(page.getByLabel(/From age for Now/)).toHaveValue('30')
-    await page.getByLabel(/From age for period 2/).fill('35')
+    await expect(todayRow(page)).toHaveCount(0)
     await page.getByLabel(/Until age for Now/).fill('35')
-    await page.getByLabel(/Pay per year for period 2/).fill('40000')
+    await page.getByLabel(/From age for period 2/).fill('35')
+    await page.getByLabel(/Into savings per year for period 2/).fill('2000')
+    await page.getByLabel(/Into 401k per year for period 2/).fill('0')
     await page.getByLabel(/Label for period 2/).fill('Easier job')
-    await expectRow(page, 34, { pay: 80000 })
-    await expectRow(page, 35, { pay: 40000 })
+    await expectRow(page, 34, { contrib: 25000 })
+    await expectRow(page, 35, { contrib: 2000 })
     await expect.poll(() => chip(page, 'Money lasts').innerText()).not.toBe(lasts)
     const saved = (await retireCalc(page)).pay.periods
-    expect(saved.map((x) => [x.label, x.fromAge, x.toAge, x.salary])).toEqual([['Now', 30, 35, 80000], ['Easier job', 35, 'retire', 40000]])
+    expect(saved.map((x) => [x.label, x.fromAge, x.toAge, x.takeHomeFrom, x.k401, x.saveFrom, x.savings])).toEqual([
+      ['Now', 30, 35, 'typed', 5000, 'typed', 20000], ['Easier job', 35, 'retire', 'typed', 0, 'typed', 2000],
+    ])
   })
 
-  test('the table matches the reference model with raises, a 401k percent and typed savings', async ({ page }) => {
+  test('the table matches the reference model with a raise and typed amounts', async ({ page }) => {
     const periods = [
-      period({ id: 'a', label: 'Now', toAge: 34, raisePct: 3, k401: 6 }),
-      period({ id: 'b', label: 'Easier job', fromAge: 34, salary: 50000, k401: 0, savings: 8000 }),
+      period({ id: 'a', label: 'Now', toAge: 34, raisePct: 3, k401: 6000 }),
+      period({ id: 'b', label: 'Easier job', fromAge: 34, k401: 0, savings: 8000, raisePct: 1 }),
     ]
     await setup(page, { retire: { taxPct: 15, endAge: 75, withdrawMo: 2000, pay: { periods } }, port: [{ name: 'Fund', alloc: 100, perf: 6 }] })
     await expectMatchesSim(page, sim({ r: 0.06, tax: 15, endAge: 75, need: 2000, periods }))
-    await expectRow(page, 33, { pay: Math.round(80000 * 1.03 ** 3) })
   })
 
-  test('the 401k is capped and the match follows the cap', async ({ page }) => {
-    const takeHome = { salary: 80000, deductions: [{ id: 'd401k', kind: '401k', unit: 'pct', amount: 4, match: 50 }] }
-    const periods = [period({ salary: 400000, k401: 10 })]
-    await setup(page, { retire: { pay: { periods } }, takeHome })
-    await expectMatchesSim(page, sim({ periods, match: 50 }))
-    // 24,500 plus half of it, after the first year's 75%
-    await expectRow(page, 31, { contrib: 36750 + 20000 })
-  })
-
-  test('part time after retiring lowers the withdrawals in those years only', async ({ page }) => {
-    const periods = [period({ id: 'a', label: 'Now' }), period({ id: 'b', label: 'Part time', fromAge: 42, toAge: 45, salary: 30000, k401: 0 })]
+  test('a period after retiring keeps saving in those years only', async ({ page }) => {
+    const periods = [period({ id: 'a', label: 'Now' }), period({ id: 'b', label: 'Part time', fromAge: 42, toAge: 45, k401: 0, savings: 6000 })]
     await setup(page, { retire: { pay: { periods } } })
     await expect(card(page)).toContainText('Keeps going after you retire at 40.')
-    await expectRow(page, 41, { wd: 12000, pay: 0 })
-    await expectRow(page, 42, { pay: 30000, phase: 'retired (pre-401k)' })
-    await expectRow(page, 45, { wd: 12000, pay: 0 })
-    const t = await readTable(page)
-    for (const a of [42, 43, 44]) {
-      // 30,000 of pay covers the 12,000 need and the rest is saved
-      expect(t[a].wd).toBe(0)
-      expect(t[a].contrib).toBeGreaterThan(0)
-    }
+    await expectRow(page, 41, { wd: 12000, contrib: 0 })
+    await expectRow(page, 42, { wd: 12000, contrib: 6000, phase: 'retired (pre-401k)' })
+    await expectRow(page, 45, { contrib: 0 })
   })
 
-  test('gaps, overlaps and periods after retiring say so', async ({ page }) => {
+  test('gaps and periods after retiring say so, and an old overlap is trimmed', async ({ page }) => {
     const periods = [
       period({ id: 'a', label: 'Now', toAge: 33 }),
       period({ id: 'b', label: 'Job two', fromAge: 35, toAge: 38 }),
-      period({ id: 'c', label: 'Job three', fromAge: 37, salary: 0 }),
+      period({ id: 'c', label: 'Job three', fromAge: 37, k401: 0, savings: 1000 }),
       period({ id: 'd', label: 'Late start', fromAge: 41 }),
     ]
     await setup(page, { retire: { pay: { periods } } })
-    await expect(card(page)).toContainText("No period covers ages 33 to 34. Those years use today's pay and saving.")
-    await expect(card(page)).toContainText('Overlaps Job three at age 37. The lower one wins there.')
-    await expect(card(page)).toContainText('No pay. These years count as time off.')
-    await expect(card(page)).toContainText('Starts after you retire at 40, so it never pays.')
-    // the gap keeps today's typed numbers, time off saves what the period says
-    await expectRow(page, 34, { pay: 80000, contrib: 25000 })
-    await expectRow(page, 38, { pay: 0, contrib: 20000 })
+    await expect(card(page)).toContainText("No period covers ages 33 to 34. Those years use today's 401k and saving.")
+    await expect(card(page)).toContainText('Starts after you retire at 40, so it never counts.')
+    // Job three overlapped Job two at 37, so it now starts at 38, where Job two ends
+    await expect(card(page)).not.toContainText('Overlaps')
+    await expect(page.getByLabel(/From age for Job three/)).toHaveValue('38')
+    await expectRow(page, 37, { contrib: 25000 })
+    await expectRow(page, 38, { contrib: 1000 })
+    // the gap uses today's Take-home 401k (3,200) and Budget saving (33,142)
+    await expectRow(page, 33, { contrib: 2400 + 33142 })
+    await expectRow(page, 34, { contrib: 3200 + 33142 })
   })
 
-  test('Go back to the same pay clears the plan and the numbers return', async ({ page }) => {
-    await setup(page, { retire: { pay: { periods: [period({ salary: 0, k401: 0, savings: 0 })] } } })
+  test('periods cannot overlap: the next one starts at the previous until age', async ({ page }) => {
+    await setup(page)
+    await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
+    // Now runs until 39 and period 2 picks up at 39
+    await expect(page.getByLabel(/Until age for Now/)).toHaveValue('39')
+    await expect(page.getByLabel(/From age for period 2/)).toHaveValue('39')
+    await expect(card(page).getByText(/For how many years/)).toHaveCount(0)
+    await page.getByLabel(/Until age for Now/).fill('35')
+    await page.getByLabel(/Until age for Now/).blur()
+    await expect(page.getByLabel(/From age for period 2/)).toHaveValue('39')
+    await page.getByLabel(/From age for period 2/).fill('35')
+    // a later until age pushes period 2 along
+    await page.getByLabel(/Until age for Now/).fill('37')
+    await page.getByLabel(/Until age for Now/).blur()
+    await expect(page.getByLabel(/From age for period 2/)).toHaveValue('37')
+    // and period 2 cannot start before Now ends
+    await page.getByLabel(/From age for period 2/).fill('33')
+    await page.getByLabel(/From age for period 2/).blur()
+    await expect(page.getByLabel(/From age for period 2/)).toHaveValue('37')
+    await expect.poll(async () => (await retireCalc(page)).pay.periods.map((x) => [x.fromAge, x.toAge])).toEqual([[30, 37], [37, 'retire']])
+  })
+
+  test('a period points at a Take-home preset, follows a rename and falls back when it is deleted', async ({ page }) => {
+    await setup(page)
+    // an easier job with no 401k, saved as a preset on the Take-home tool
+    await goTo(page, 'Tools')
+    const th = takeHomeCard(page)
+    await th.getByRole('button', { name: 'Remove' }).first().click()
+    await th.locator('label').filter({ hasText: /^\s*Salary per year/ }).locator('input').first().fill('50000')
+    await th.getByRole('button', { name: 'Presets' }).click()
+    await page.getByRole('menuitem', { name: 'Save as new preset' }).click()
+    await page.getByPlaceholder('Preset name').fill('Easier job')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(th.getByRole('button', { name: 'Easier job' })).toBeVisible()
+
+    await goTo(page, 'Retirement')
+    await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
+    await page.getByRole('button', { name: /^Take-home preset for period 2:/ }).click()
+    await page.getByRole('menuitem', { name: 'Easier job' }).click()
+    await expect(page.getByRole('button', { name: 'Take-home preset for period 2: Easier job' })).toBeVisible()
+    // period 2 runs from 39: nothing into the 401k
+    await expect.poll(async () => { const t = await readTable(page); return t[39].k - t[38].k }).toBe(0)
+    const stored = (await retireCalc(page)).pay.periods[1]
+    expect(stored).toMatchObject({ takeHomeFrom: 'preset', k401: 0 })
+    expect(stored.takeHomePreset).toMatch(/^pr/)
+
+    // a rename on the Take-home tool keeps the link
+    await goTo(page, 'Tools')
+    await th.getByRole('button', { name: 'Easier job' }).click()
+    await page.getByRole('button', { name: 'Rename preset "Easier job"' }).click({ force: true })
+    await page.getByLabel('New preset name').fill('Calmer job')
+    await page.getByRole('button', { name: 'Rename', exact: true }).click()
+    await goTo(page, 'Retirement')
+    await expect(page.getByRole('button', { name: 'Take-home preset for period 2: Calmer job' })).toBeVisible()
+
+    // deleting it falls back to the typed copy, with a note
+    await goTo(page, 'Tools')
+    await th.getByRole('button', { name: 'Calmer job' }).click()
+    await page.getByRole('button', { name: 'Delete preset "Calmer job"' }).click({ force: true })
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
+    await goTo(page, 'Retirement')
+    await expect(card(page)).toContainText('Its Take-home preset was deleted, so it uses the typed 401k.')
+    await expect(page.getByLabel(/Into 401k per year for period 2/)).toHaveValue('0')
+  })
+
+  test('a period saves by a Budget preset', async ({ page }) => {
+    await setup(page)
+    await goTo(page, 'Budget')
+    await main(page).getByRole('button', { name: 'Presets' }).click()
+    await page.getByRole('menuitem', { name: 'Save as new preset' }).click()
+    await page.getByPlaceholder('Preset name').fill('Today')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await goTo(page, 'Retirement')
+    await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
+    await page.getByRole('button', { name: /^Budget preset for period 2:/ }).click()
+    await page.getByRole('menuitem', { name: 'Today', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Budget preset for period 2: Today' })).toBeVisible()
+    const p2 = (await retireCalc(page)).pay.periods[1]
+    expect(p2.saveFrom).toBe('preset')
+    expect(p2.savePreset).toMatch(/^pr/)
+    // the same rows as the Budget: 33,142 a year, plus the typed 5,000 401k at 75% in a new period
+    await expectRow(page, 39, { contrib: 33142 + 3750 })
+  })
+
+  test('Back to one period clears the plan and the numbers return', async ({ page }) => {
+    await setup(page, { retire: { pay: { periods: [period({ toAge: 35, k401: 0, savings: 0 }), period({ id: 'q', fromAge: 35, k401: 0, savings: 0 })] } } })
     await expectRow(page, 31, { contrib: 0 })
-    await card(page).getByRole('button', { name: 'Go back to the same pay' }).click()
+    await card(page).getByRole('button', { name: 'Back to one period' }).click()
     await expectRow(page, 31, { contrib: 25000 })
     await expect.poll(async () => (await retireCalc(page)).pay.periods).toEqual([])
   })

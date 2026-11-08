@@ -1,13 +1,14 @@
 import { simulateRetirement } from './simulateRetirement'
 import type { RetireSimInput } from '@/screens/retirement/types/RetireSimInput'
 import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
-import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
-import { ssMonthlyBenefit } from '@/shared/utils/ssMonthlyBenefit'
+import { normalizeRetire } from './normalizeRetire'
+import type { SimPayPeriod } from '@/screens/retirement/types/SimPayPeriod'
+import { K401_DEFERRAL_LIMIT } from '@/shared/constants/K401_DEFERRAL_LIMIT'
 
 // 0% return, no tax, no Social Security, so every number can be checked by hand
 const plan = (o: Partial<RetireSimInput> = {}): RetireSimInput => ({
   age: 30, accessAge: 60, endAge: 90, start401k: 10000, startSavings: 50000,
-  base401k: 5000, extras401k: 0, contribSavings: 20000, freed: () => 0,
+  base401k: 5000, contribSavings: 20000, freed: () => 0,
   withdrawMo: 1000, ssMonthly: 0, ssClaimAge: 67, r: 0, rAfter: 0, taxPct: 0, events: [],
   ...o,
 })
@@ -69,14 +70,20 @@ describe('simulateRetirement', () => {
   })
 })
 
-// Pinned from the projection as it was before the pay plan existed. Old saves (no plan)
-// must keep producing exactly these numbers.
+// Pinned from the projection as it was before the pay plan existed, when this save had
+// a 1,200 a year retirement account saving line (`extras`). Old saves (no plan) must keep
+// producing exactly these numbers, with that line read back as a money-in event.
 describe('simulateRetirement with no pay plan (regression)', () => {
+  const migrated = normalizeRetire({
+    events: [], age: 35, retireAge: 55,
+    extras: [{ id: 'ira', name: 'IRA', amount: 1200, unit: 'yr', to: '401k' }],
+  }).events
   const input: RetireSimInput = {
     age: 35, accessAge: 60, endAge: 95, start401k: 40000, startSavings: 25000,
-    base401k: 6000, extras401k: 1200, contribSavings: 18000, freed: (a) => (a >= 38 ? 2400 : 0),
+    base401k: 6000, contribSavings: 18000, freed: (a) => (a >= 38 ? 2400 : 0),
     withdrawMo: 4500, ssMonthly: 1800, ssClaimAge: 67, r: 0.07, rAfter: 0.05, taxPct: 15,
     events: [
+      ...migrated,
       { kind: 'in', age: 40, repeat: 'once', amount: 20000, years: 1 },
       { kind: 'out', age: 50, repeat: 'year', amount: 5000, years: 4 },
       { kind: 'in', age: 53, repeat: 'year', amount: 3000, years: 3, auto: 'equity' },
@@ -102,77 +109,83 @@ describe('simulateRetirement with no pay plan (regression)', () => {
       }
       expect(res.runOutAge).toBeNull()
       expect(res.atRetirement).toEqual({ liquid: 833371.7954089935, locked: 444530.13190976065 })
-      expect(res.ssMonthly).toBe(1800)
       const early = simulateRetirement({ ...input, pay }, 45)
       expect(early.runOutAge).toBe(51)
       expect(row(early, 95).total).toBe(-1390445.1657454837)
     })
   }
+
+  it('reads an old savings line the same way: every working year, stopping at any retire age', () => {
+    const events = normalizeRetire({ events: [], age: 30, retireAge: 40, extras: [{ id: 'x', name: 'Side job', amount: 250, unit: 'mo', to: 'savings' }] }).events
+    const res = simulateRetirement(plan({ events }), 40)
+    expect(row(res, 30).contrib).toBe(5000 * 0.75 + 20000 + 3000)
+    expect(row(res, 39).contrib).toBe(25000 + 3000)
+    expect(row(res, 40).contrib).toBe(0)
+    // trying a later retire age keeps the line going until then
+    expect(row(simulateRetirement(plan({ events }), 45), 44).contrib).toBe(28000)
+  })
 })
 
-// a hand-checkable pay plan: take-home is 70% of pay, the 401k is 5% (or the typed
-// percent) capped at 20,000 and the employer adds half of it
-const math: RetireSimPay['math'] = (gross, k401) => {
-  if (!(gross > 0)) return { net: 0, own: 0, match: 0 }
-  const own = Math.min(20000, gross * (k401 === 'auto' ? 5 : k401) / 100)
-  return { net: gross * 0.7, own, match: own / 2 }
-}
-const period = (o: Partial<PayPeriod> = {}): PayPeriod => ({
-  id: 'p', label: '', fromAge: 30, toAge: 'retire', salary: 100000, raisePct: 0, k401: 'auto', savings: 'auto', ...o,
+describe('simulateRetirement money-in events into the retirement account', () => {
+  it('lock the money in the 401k with no first-year rule, until the access age', () => {
+    const res = simulateRetirement(plan({ events: [{ kind: 'in', to: '401k', age: 30, repeat: 'year', amount: 2000, years: 40 }] }), 40)
+    expect(row(res, 30)).toMatchObject({ k: 10000 + 3750 + 2000, total: 70000, contrib: 23750 + 2000 })
+    // retired before 60, the yearly event keeps going into the locked pool
+    expect(row(res, 41).k - row(res, 40).k).toBe(2000)
+    // from the access age on it lands in savings
+    expect(row(res, 61).total - row(res, 60).total).toBe(2000 - 12000)
+  })
 })
-const withPlan = (periods: PayPeriod[], o: Partial<RetireSimInput> = {}, p: Partial<RetireSimPay> = {}): RetireSimInput =>
+
+// a hand-checkable pay plan: 5,000 of your own into the 401k plus a 2,500 match, and
+// 20,000 into savings, unless a period says otherwise
+const period = (o: Partial<SimPayPeriod> = {}): SimPayPeriod => ({
+  fromAge: 30, toAge: 'retire', raisePct: 0, own: 5000, match: 2500, capOwn: true, saving: 20000, ...o,
+})
+const withPlan = (periods: SimPayPeriod[], o: Partial<RetireSimInput> = {}, p: Partial<RetireSimPay> = {}): RetireSimInput =>
   plan({
-    salary: 100000, base401k: 7500, contribSavings: 20000,
-    pay: { periods, planRetireAge: 40, todaySalary: 100000, math, budgetSavings: 20000, extrasSavings: 0, ssFromPlan: false, ...p },
+    base401k: 7500, contribSavings: 20000,
+    pay: { periods, planRetireAge: 40, ...p },
     ...o,
   })
 
 describe('simulateRetirement with a pay plan', () => {
-  it('one period at today\'s pay gives the same numbers as no plan', () => {
-    const a = simulateRetirement(withPlan([period()]), 40)
-    const b = simulateRetirement(withPlan([], {}), 40)
-    expect(a.rows).toEqual(b.rows)
-    expect(row(a, 30).pay).toBe(100000)
-    expect(row(a, 40).pay).toBe(0)
+  it('one period with today\'s numbers gives the same rows as no plan', () => {
+    expect(simulateRetirement(withPlan([period()]), 40).rows).toEqual(simulateRetirement(withPlan([]), 40).rows)
   })
 
-  it('compounds a raise and the 401k follows the pay', () => {
+  it('a raise grows the 401k and savings each year of the period', () => {
     const res = simulateRetirement(withPlan([period({ raisePct: 3 })], { endAge: 45 }), 45)
-    expect(row(res, 40).pay).toBeCloseTo(100000 * 1.03 ** 10, 6)
-    const prev = row(res, 39)
-    const k = 7500 * 1.03 ** 10
-    expect(row(res, 40).k - prev.k).toBeCloseTo(k, 6)
+    const g = 1.03 ** 10
+    expect(row(res, 40).k - row(res, 39).k).toBeCloseTo(7500 * g, 6)
+    expect(row(res, 40).s - row(res, 39).s).toBeCloseTo(20000 * g, 6)
   })
 
-  it('a pay cut lowers savings by the take-home difference, not the gross one', () => {
-    const res = simulateRetirement(withPlan([period({ toAge: 35 }), period({ id: 'b', fromAge: 35, salary: 60000 })]), 40)
-    // 40,000 less pay is 28,000 less take-home; the 401k drops from 7,500 to 4,500
+  it('a later period with no 401k and less saving takes over at its from age', () => {
+    const res = simulateRetirement(withPlan([period({ toAge: 35 }), period({ fromAge: 35, own: 0, match: 0, saving: 8000 })]), 40)
     expect(row(res, 34).contrib).toBe(7500 + 20000)
-    expect(row(res, 36).contrib).toBe(4500 + 20000 - 28000)
-  })
-
-  it('a year off saves nothing into the 401k, draws on savings and the 401k still grows', () => {
-    const res = simulateRetirement(withPlan([period({ toAge: 33 }), period({ id: 'off', fromAge: 33, toAge: 34, salary: 0 }), period({ id: 'c', fromAge: 34 })], { r: 0.05, rAfter: 0.05 }), 40)
-    const prevK = row(res, 32).k
-    expect(row(res, 33).pay).toBe(0)
-    expect(row(res, 33).k).toBeCloseTo(prevK * 1.05, 6)
-    // savings: 20,000 from the Budget less 70,000 of take-home that is gone
-    expect(row(res, 33).contrib).toBe(-50000)
-  })
-
-  it('each period can set its own 401k percent and savings', () => {
-    const res = simulateRetirement(withPlan([period({ toAge: 35 }), period({ id: 'b', fromAge: 35, salary: 80000, k401: 0, savings: 8000 })]), 40)
-    expect(row(res, 36).contrib).toBe(8000)
+    expect(row(res, 35).contrib).toBe(8000)
     expect(row(res, 36).k).toBe(row(res, 35).k)
   })
 
-  it('caps the 401k deferral and the match follows the capped amount', () => {
-    const res = simulateRetirement(withPlan([period({ salary: 500000, k401: 10 })], { start401k: 0 }), 40)
-    expect(row(res, 31).k - row(res, 30).k).toBe(30000)
+  it('a year with nothing saved still grows the 401k', () => {
+    const res = simulateRetirement(withPlan([period({ toAge: 33 }), period({ fromAge: 33, toAge: 34, own: 0, match: 0, saving: -5000 }), period({ fromAge: 34 })], { r: 0.05, rAfter: 0.05 }), 40)
+    expect(row(res, 33).k).toBeCloseTo(row(res, 32).k * 1.05, 6)
+    expect(row(res, 33).contrib).toBe(-5000)
+  })
+
+  it('a raise never takes your share past the deferral limit, and the match follows', () => {
+    const res = simulateRetirement(withPlan([period({ own: 24000, match: 12000, raisePct: 10 })], { start401k: 0 }), 40)
+    expect(row(res, 35).k - row(res, 34).k).toBe(K401_DEFERRAL_LIMIT * 1.5)
+  })
+
+  it('typed 401k dollars are not capped', () => {
+    const res = simulateRetirement(withPlan([period({ own: 40000, match: 0, capOwn: false })], { start401k: 0 }), 40)
+    expect(row(res, 31).k - row(res, 30).k).toBe(40000)
   })
 
   it('a new period starts with a 75% 401k year, a raise does not', () => {
-    const res = simulateRetirement(withPlan([period({ toAge: 35, raisePct: 2 }), period({ id: 'b', fromAge: 35 })], { start401k: 0 }), 40)
+    const res = simulateRetirement(withPlan([period({ toAge: 35, raisePct: 2 }), period({ fromAge: 35 })], { start401k: 0 }), 40)
     const add = (a: number) => row(res, a).k - row(res, a - 1).k
     expect(row(res, 30).k).toBe(7500 * 0.75)
     expect(add(31)).toBeCloseTo(7500 * 1.02, 6)
@@ -180,49 +193,29 @@ describe('simulateRetirement with a pay plan', () => {
     expect(add(36)).toBe(7500)
   })
 
-  it('part time from 62 to 66 after retiring at 60 lowers withdrawals in those years only', () => {
-    const periods = [period({ toAge: 60 }), period({ id: 'pt', fromAge: 62, toAge: 66, salary: 10000, k401: 0 })]
-    const res = simulateRetirement(withPlan(periods, { withdrawMo: 1000, endAge: 70, retireAge: 60 } as Partial<RetireSimInput>, { planRetireAge: 60 }), 60)
-    expect(row(res, 61).withdrawal).toBe(12000)
-    expect(row(res, 62).withdrawal).toBe(12000 - 7000)
-    expect(row(res, 65).withdrawal).toBe(5000)
-    expect(row(res, 66).withdrawal).toBe(12000)
-    expect(row(res, 62).pay).toBe(10000)
-    expect(row(res, 62).phase).toBe('retired')
-  })
-
-  it('pay after retiring beyond the need is saved', () => {
-    const periods = [period({ toAge: 50, k401: 0 })]
-    const res = simulateRetirement(withPlan(periods, { withdrawMo: 1000 }), 40)
-    // 100,000 pay is 70,000 take-home, 12,000 covers the need, 58,000 is saved
-    expect(row(res, 45)).toMatchObject({ withdrawal: 0, contrib: 58000 })
-    expect(row(res, 50)).toMatchObject({ withdrawal: 12000, contrib: 0 })
+  it('a period from 62 to 66 after retiring at 60 keeps saving in those years only', () => {
+    const periods = [period({ toAge: 60 }), period({ fromAge: 62, toAge: 66, own: 0, match: 0, saving: 6000 })]
+    const res = simulateRetirement(withPlan(periods, { withdrawMo: 1000, endAge: 70 }, { planRetireAge: 60 }), 60)
+    expect(row(res, 61)).toMatchObject({ contrib: 0, withdrawal: 12000 })
+    expect(row(res, 62)).toMatchObject({ contrib: 6000, withdrawal: 12000, phase: 'retired' })
+    expect(row(res, 66).contrib).toBe(0)
   })
 
   it('years no period covers keep today\'s numbers', () => {
-    const res = simulateRetirement(withPlan([period({ toAge: 33, salary: 50000 }), period({ id: 'b', fromAge: 36, salary: 50000 })]), 40)
-    expect(row(res, 34)).toMatchObject({ pay: 100000, contrib: 7500 + 20000 })
+    const res = simulateRetirement(withPlan([period({ toAge: 33, saving: 1000 }), period({ fromAge: 36, saving: 1000 })]), 40)
     // the first of those years is a new start for the 401k
     expect(row(res, 33).contrib).toBe(7500 * 0.75 + 20000)
+    expect(row(res, 34).contrib).toBe(7500 + 20000)
+    expect(row(res, 37).contrib).toBe(7500 + 1000)
   })
 
-  it('Social Security on Auto follows the plan\'s earnings', () => {
-    const ss = (periods: PayPeriod[]) =>
-      simulateRetirement(withPlan(periods, { age: 30, endAge: 90, ssClaimAge: 67 }, { ssFromPlan: true, planRetireAge: 65 }), 65).ssMonthly
-    const steady = ss([period()])
-    // 8 years before today plus 35 working years, all at 100,000
-    expect(steady).toBeCloseTo(ssMonthlyBenefit(100000, 67), 6)
-    expect(ss([period({ raisePct: 2 })])).toBeGreaterThan(steady)
-    expect(ss([period({ toAge: 40 }), period({ id: 'off', fromAge: 40, salary: 0 })])).toBeLessThan(steady)
-  })
-
-  it('a pay cut moves the earliest safe retire age later', () => {
-    const earliest = (periods: PayPeriod[]) => {
+  it('a smaller saving moves the earliest safe retire age later', () => {
+    const earliest = (periods: SimPayPeriod[]) => {
       const input = withPlan(periods, { r: 0.05, rAfter: 0.05, withdrawMo: 4000, startSavings: 0, start401k: 0 }, { planRetireAge: 60 })
       for (let a = 31; a < 90; a++) if (simulateRetirement(input, a).runOutAge === null) return a
       return null
     }
     const base = earliest([period()])!
-    expect(earliest([period({ toAge: 35 }), period({ id: 'b', fromAge: 35, salary: 70000 })])!).toBeGreaterThan(base)
+    expect(earliest([period({ toAge: 35 }), period({ fromAge: 35, saving: 5000 })])!).toBeGreaterThan(base)
   })
 })

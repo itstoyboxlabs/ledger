@@ -5,7 +5,6 @@ import type { DebtSchedule } from '@/screens/retirement/types/DebtSchedule'
 import type { PortfolioAfter } from '@/screens/retirement/types/PortfolioAfter'
 import type { PortfolioRow } from '@/screens/retirement/types/PortfolioRow'
 import type { RetireEvent } from '@/screens/retirement/types/RetireEvent'
-import type { RetireExtra } from '@/screens/retirement/types/RetireExtra'
 import type { RetirePhase } from '@/screens/retirement/types/RetirePhase'
 import type { RetirePresetData } from '@/screens/retirement/types/RetirePresetData'
 import type { RetireSimInput } from '@/screens/retirement/types/RetireSimInput'
@@ -32,7 +31,6 @@ import { DEBT_EVENT_TIP } from '@/screens/retirement/constants/DEBT_EVENT_TIP'
 import { DEFAULT_PORTFOLIO } from '@/screens/retirement/constants/DEFAULT_PORTFOLIO'
 import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { Dot } from '@/shared/ui/Dot'
-import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { EVENT_KINDS } from '@/screens/retirement/constants/EVENT_KINDS'
 import { FieldBadge } from '@/screens/retirement/ui/FieldBadge'
@@ -44,6 +42,11 @@ import { PortfolioTable } from '@/screens/retirement/ui/PortfolioTable'
 import { PayPlanCard } from '@/screens/retirement/ui/PayPlanCard'
 import { addPayPeriod } from '@/screens/retirement/utils/addPayPeriod'
 import { payBreakdown } from '@/screens/retirement/utils/payBreakdown'
+import { resolvePayPeriods } from '@/screens/retirement/utils/resolvePayPeriods'
+import { EVENT_POOLS } from '@/screens/retirement/constants/EVENT_POOLS'
+import { TodayPayRow } from '@/screens/retirement/ui/TodayPayRow'
+import type { BudgetFile } from '@/shared/types/BudgetFile'
+import type { RawTakeHome } from '@/shared/types/RawTakeHome'
 import { payPlanIssues } from '@/screens/retirement/utils/payPlanIssues'
 import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
 import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
@@ -110,6 +113,9 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const [includeDebt, setIncludeDebt] = usePersistedState<boolean>('retireIncludeDebt', true, (v) => typeof v === 'boolean')
   const f = (k: NumericRetireKey) => (v: number) => setC({ ...c, [k]: v })
   const { presets, save, remove } = usePresets<RetirePresetData>('retirement')
+  // what pay periods can point at, by id so a rename does not break them
+  const { presets: takeHomePresets } = usePresets<RawTakeHome>('takeHome', { ids: true })
+  const { presets: budgetPresets } = usePresets<BudgetRow[]>('expenses', { ids: true })
   const presetData: RetirePresetData = { c, port, portAfter, includeDebt }
   const applyPreset = (d: Partial<RetirePresetData> | null | undefined) => {
     // presets saved before Events, Social Security and the split portfolio are in the
@@ -155,6 +161,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // Josh already edits — matched by name, same convention as the Groceries/Uber
   // Eats/MTA weekly-input quirks (renaming a row loses the link).
   const [budgetRows, setBudgetRows] = useState<BudgetRow[] | null>(null)
+  // the whole Budget, for pay periods that save by a Budget preset or today's Budget
+  const [budgetFile, setBudgetFile] = useState<BudgetFile | null>(null)
   const debtPayments = debts.map((d) => debtPaymentOf(d, budgetRows))
   useEffect(() => {
     getBudget()
@@ -171,6 +179,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
         setSavingsShare(alloc.length > 0 ? leftoverShare(alloc, 'savings', leftover) : null)
         setSavingsPct(alloc.length > 0 ? Math.min(100, alloc.filter((a) => a.target === 'savings').reduce((t, a) => t + a.pct, 0)) : null)
         setBudgetRows(d.rows)
+        setBudgetFile(d)
       })
       .catch(() => {})
   }, [budgetMonthlyIncome])
@@ -178,16 +187,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // a paid-off debt's payment follows the Budget allocation: the savings share goes into
   // savings and the rest is spent. With no allocation set at all, all of it goes to savings.
   const freedToSavings = savingsPct == null ? 1 : savingsPct / 100
-  // extra lines the user added with the plus button, summed by where they go
-  const extraYearly = (x: RetireExtra) => (x.unit === 'mo' ? 12 : 1) * (Number(x.amount) || 0)
-  const extras401k = c.extras.filter((x) => x.to === '401k').reduce((t, x) => t + extraYearly(x), 0)
-  const extrasSavings = c.extras.filter((x) => x.to !== '401k').reduce((t, x) => t + extraYearly(x), 0)
   const baseContrib401k = c.auto401k ? autoContrib401k : c.contrib401k
-  const effectiveContrib401k = baseContrib401k + extras401k
-  const effectiveContribSavings = (c.autoSavings ? autoContribSavings : c.contribSavings) + extrasSavings
-  const patchExtra = (id: string, p: Partial<RetireExtra>) => setC({ ...c, extras: c.extras.map((x) => (x.id === id ? { ...x, ...p } : x)) })
-  const addExtra = () => setC({ ...c, extras: [...c.extras, { id: newId('x'), name: '', amount: 0, unit: 'yr', to: 'savings' }] })
-  const removeExtra = (id: string) => setC({ ...c, extras: c.extras.filter((x) => x.id !== id) })
+  const baseContribSavings = c.autoSavings ? autoContribSavings : c.contribSavings
   // events linked to the Equity payout tool take its net per year and its payout years
   // a "pay off a debt" event costs the debt's balance (or a typed amount) once, at its age
   const debtOf = (e: RetireEvent) => debts.find((d) => d.id === e.debtId)
@@ -258,48 +259,63 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       fromBalances && startOff.has(debts[i].id) ? sum : sum + freedFromDebt(sched, debtPayments[i], age), 0) * freedToSavings
   // the model itself is simulateRetirement; this is a function of retireAge so "Find"
   // (below) can replay it against candidate ages
-  // the pay plan: each period's pay, 401k and saving. Empty means today's numbers.
+  // the pay plan: each period points at a Take-home preset and a Budget preset, or uses
+  // today's, or typed numbers. Empty means today's numbers, exactly as before the plan.
   const periods = c.pay.periods
   const hasPlan = periods.length > 0
-  const payMath: RetireSimPay['math'] = (gross, k401) => payBreakdown(takeHome, taxState, gross, k401)
+  const resolved = resolvePayPeriods(periods, {
+    takeHome, takeHomePresets, budget: budgetFile, budgetPresets, taxState,
+    incomeOf: (th) => budgetIncomeFor(incomeOverride, th, taxState),
+  })
   const simPay: RetireSimPay | undefined = hasPlan
     ? {
-      periods, planRetireAge: c.retireAge, todaySalary: takeHomeSalary, math: payMath,
-      budgetSavings: c.autoSavings ? autoContribSavings : c.contribSavings, extrasSavings,
-      ssFromPlan: c.ss.on && c.ss.auto,
+      periods: resolved.map((x) => x.sim), planRetireAge: c.retireAge,
     }
     : undefined
   const simInput: RetireSimInput = {
-    age: c.age, accessAge: c.accessAge, endAge: c.endAge, salary: takeHomeSalary, pay: simPay,
+    age: c.age, accessAge: c.accessAge, endAge: c.endAge, pay: simPay,
     start401k: startK, startSavings: startS - (countDebt ? holeDebt : 0),
-    base401k: baseContrib401k, extras401k, contribSavings: effectiveContribSavings, freed: freedPerYear,
+    // with a plan, a working year no period covers uses today's Take-home and Budget
+    base401k: hasPlan ? autoContrib401k : baseContrib401k,
+    contribSavings: hasPlan ? autoContribSavings : baseContribSavings, freed: freedPerYear,
     withdrawMo: c.withdrawMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
     // a debt payoff event counts only when it is the one that applies to its debt
     events: events.filter((e) => e.kind !== 'debt' || payoffByDebt[e.debtId ?? ''] === e),
   }
   const simulate = (retireAge: number) => simulateRetirement(simInput, retireAge)
   // everything Find depends on; the "no safe age" note clears once any of it changes
-  const findKey = JSON.stringify({ ...simInput, takeHome: hasPlan ? takeHome : null, taxState, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
+  const findKey = JSON.stringify({ ...simInput, plan: hasPlan ? { takeHome, takeHomePresets, budgetPresets, budgetFile, incomeOverride } : null, taxState, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
   const findNotFound = findNotFoundFor === findKey
-  const { rows, runOutAge, atRetirement, ssMonthly: ssUsed } = simulate(c.retireAge)
-  const payIssues = payPlanIssues(periods, c.age, c.retireAge, c.endAge)
-  // Auto 401k and savings in a period's first year, as the projection works them out
-  const nowPeriodNet = (() => {
-    const first = periods.findLast((p) => Math.max(p.fromAge, c.age) <= c.age && (p.toAge === 'retire' ? c.retireAge : p.toAge) > c.age)
-    return first ? payMath(first.salary, first.k401).net : payMath(takeHomeSalary, 'auto').net
-  })()
-  const payPreview = (p: PayPeriod) => {
-    const m = payMath(p.salary, p.k401)
-    return { k401: m.own + m.match, savings: (c.autoSavings ? autoContribSavings : c.contribSavings) + m.net - nowPeriodNet }
-  }
-  // the percent a period's 401k starts at when its Auto is turned off: today's, from Take-home
-  const default401kPct = takeHomeSalary > 0 ? Math.round((k401Yearly / takeHomeSalary) * 1000) / 10 : 0
+  const { rows, runOutAge, atRetirement } = simulate(c.retireAge)
+  const payIssues = payPlanIssues(
+    periods.map((p, i) => ({ ...p, missingPay: resolved[i].missingPay, missingSave: resolved[i].missingSave })),
+    c.age, c.retireAge, c.endAge,
+  )
   const setPeriods = (next: PayPeriod[]) => setC({ ...c, pay: { periods: next } })
-  const addPeriod = () => setPeriods(addPayPeriod(periods, c.age, c.retireAge, {
-    salary: takeHomeSalary,
-    k401: c.auto401k || takeHomeSalary <= 0 ? 'auto' : Math.round((c.contrib401k / takeHomeSalary) * 1000) / 10,
-    savings: c.autoSavings ? 'auto' : c.contribSavings,
-  }))
+  // the first period starts from today's sources: Auto stays today's, typed carries over
+  const todaySources = {
+    takeHomeFrom: c.auto401k ? 'today' : 'typed', takeHomePreset: '',
+    k401: c.auto401k ? Math.round(autoContrib401k) : c.contrib401k,
+    saveFrom: c.autoSavings ? 'today' : 'typed', savePreset: '', savings: c.autoSavings ? Math.round(autoContribSavings) : c.contribSavings,
+  } as const
+  const addPeriod = () => setPeriods(addPayPeriod(periods, c.age, c.retireAge, todaySources))
+  // picking a preset (or typed pay) on today's row turns it into the plan's first period
+  const startPlan = (p: Partial<PayPeriod>) =>
+    setPeriods([{ id: newId('p'), label: 'Now', fromAge: c.age, toAge: 'retire', raisePct: 0, ...todaySources, ...p }])
+  const takeHomeChoices = takeHomePresets.map((x) => {
+    const m = payBreakdown(x.data, taxState)
+    return { id: x.id ?? '', name: x.name, k401: m.own + m.match }
+  })
+  const budgetChoices = budgetPresets.map((x) => ({ id: x.id ?? '', name: x.name }))
+  const debtNote = debts.length > 0 && (
+    <p className="col-span-2 mt-1 text-[11px] text-[var(--text-muted)]">
+      Once a debt from the Balances page is paid off, its monthly payment is split the way
+      you set up on the Budget page. For example, if you send 50% of what is left to savings
+      and 50% to something else, the freed payment is split 50 and 50 too. If you have not
+      set a split, all of it goes to savings.
+      {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
+    </p>
+  )
   // balance at a few milestone ages plus the end age, only the ones the projection reaches
   const milestones = [...new Set([60, 70, 80, 90, 100, c.endAge])]
     .sort((a, b) => a - b)
@@ -436,116 +452,47 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
 
         <PayPlanCard
           periods={periods}
+          resolved={resolved}
           issues={payIssues}
           todaySalary={takeHomeSalary}
           retireAge={c.retireAge}
-          default401kPct={default401kPct}
-          preview={payPreview}
+          takeHomePresets={takeHomeChoices}
+          budgetPresets={budgetChoices}
           onChange={setPeriods}
           onAdd={addPeriod}
-        />
-
-        <FieldGroup
-          label="Saving each year"
-          tip="How much you put away each year while you work. 401k is what you put in plus your employer's match, both set on the Take-home tool. Savings is everything else you set aside. Auto pulls these from the Tools and Budget pages so they stay in sync. Use the plus to add your own on top, like an IRA or a yearly bonus."
-          gridClass="grid-cols-2"
-          action={
-            <UITooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon-xs" aria-label="Add your own saving" onClick={addExtra}>
-                  <Plus className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Add your own saving on top of these</TooltipContent>
-            </UITooltip>
+          today={
+            <TodayPayRow
+              takeHomePresets={takeHomeChoices}
+              budgetPresets={budgetChoices}
+              onPickPay={(v) => {
+                const th = takeHomeChoices.find((x) => x.id === v)
+                if (th) startPlan({ takeHomeFrom: 'preset', takeHomePreset: th.id, k401: Math.round(th.k401) })
+              }}
+              k401={{
+                auto: c.auto401k,
+                autoValue: autoContrib401k,
+                autoTip: matchPct > 0
+                  ? `You put in ${fmt0(k401Yearly)} a year (from Take-home pay on the Tools page). Your employer adds ${fmt0(k401Match)} with a ${matchPct}% match. Change the salary, 401k or match there.`
+                  : `${fmt0(k401Yearly)} a year, from Take-home pay on the Tools page. Add an employer match on the 401k row there if your company adds to it.`,
+                value: c.contrib401k,
+                onToggleAuto: () => setC({ ...c, auto401k: !c.auto401k }),
+                onChange: f('contrib401k'),
+              }}
+              savings={{
+                auto: c.autoSavings,
+                autoValue: autoContribSavings,
+                autoTip: savingsShare !== null
+                  ? `Your Savings share of what is left on the Budget page (${fmt(savingsShare)} a month), times 12.`
+                  : `What your Budget leaves over each month (${fmt(budgetLeftover ?? 0)}), times 12. Add a Savings share under "What to do with what is left" on the Budget page to make this explicit.`,
+                value: c.contribSavings,
+                onChange: f('contribSavings'),
+                onAuto: (auto) => setC({ ...c, autoSavings: auto }),
+                onPickPreset: (id) => startPlan({ saveFrom: 'preset', savePreset: id }),
+              }}
+            />
           }
-        >
-          <AutoToolField
-            label="Into 401k per year"
-            auto={c.auto401k}
-            onToggleAuto={() => setC({ ...c, auto401k: !c.auto401k })}
-            autoValue={autoContrib401k}
-            autoTip={matchPct > 0
-              ? `You put in ${fmt0(k401Yearly)} a year (from Take-home pay on the Tools page). Your employer adds ${fmt0(k401Match)} with a ${matchPct}% match. Change the salary, 401k or match there.`
-              : `${fmt0(k401Yearly)} a year, from Take-home pay on the Tools page. Add an employer match on the 401k row there if your company adds to it.`}
-            value={c.contrib401k}
-            onChange={f('contrib401k')}
-            step={500}
-            suffix="$"
-          />
-          <AutoToolField
-            label="Into savings per year"
-            auto={c.autoSavings}
-            onToggleAuto={() => setC({ ...c, autoSavings: !c.autoSavings })}
-            autoValue={autoContribSavings}
-            autoTip={savingsShare !== null
-              ? `Your Savings share of what is left on the Budget page (${fmt(savingsShare)} a month), times 12.`
-              : `What your Budget leaves over each month (${fmt(budgetLeftover ?? 0)}), times 12. Add a Savings share under "What to do with what is left" on the Budget page to make this explicit.`}
-            value={c.contribSavings}
-            onChange={f('contribSavings')}
-            step={500}
-            suffix="$"
-          />
-          {hasPlan && (
-            <p className="col-span-2 text-[11px] text-[var(--text-muted)]">
-              Your pay plan sets the 401k and savings for each period. These two only count for years no period covers.
-            </p>
-          )}
-          {c.extras.length > 0 && (
-            <div className="col-span-2 mt-1 flex flex-col gap-2 border-t border-[var(--grid)] pt-3 show-spinners">
-              <div className="text-[12px] text-[var(--text-muted)]">Your own, on top of the above. Retirement account money stays locked until your 401k access age.</div>
-              {c.extras.map((x) => (
-                <div key={x.id} className="group flex flex-wrap items-center gap-2">
-                  <Input
-                    value={x.name}
-                    placeholder="Name, like IRA"
-                    spellCheck={false}
-                    onChange={(e) => patchExtra(x.id, { name: e.target.value })}
-                    className="h-8 min-w-[120px] flex-1 text-[13px]"
-                  />
-                  <div className="w-[112px]">
-                    <DraftNumberInput boxed suffix="$" step={500} min={0} value={x.amount} onChange={(v) => patchExtra(x.id, { amount: v })} className="h-8 text-[13px] tnum" />
-                  </div>
-                  <div className="w-[116px]">
-                    <Dropdown
-                      label="Per"
-                      hideLabel
-                      value={x.unit}
-                      onChange={(unit: string) => patchExtra(x.id, { unit: unit as RetireExtra['unit'] })}
-                      className="h-8 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 text-[13px] shadow-xs"
-                      options={[{ value: 'yr', label: 'a year' }, { value: 'mo', label: 'a month' }]}
-                    />
-                  </div>
-                  <div className="w-[210px]">
-                    <Dropdown
-                      label="Goes into"
-                      hideLabel
-                      value={x.to}
-                      onChange={(to: string) => patchExtra(x.id, { to: to as RetireExtra['to'] })}
-                      className="h-8 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 text-[13px] shadow-xs"
-                      options={[{ value: 'savings', label: 'Savings (use anytime)' }, { value: '401k', label: 'Retirement account (locked)' }]}
-                    />
-                  </div>
-                  <Button variant="ghost" size="icon-xs" aria-label="Remove"
-                    onClick={() => removeExtra(x.id)}
-                    className="text-[var(--text-muted)] opacity-0 hover:bg-transparent hover:text-[var(--bad)] focus-visible:opacity-100 group-hover:opacity-100"
-                  >
-                    <X className="size-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-          {debts.length > 0 && (
-            <p className="col-span-2 mt-1 text-[11px] text-[var(--text-muted)]">
-              Once a debt from the Balances page is paid off, its monthly payment is split the way
-              you set up on the Budget page. For example, if you send 50% of what is left to savings
-              and 50% to something else, the freed payment is split 50 and 50 too. If you have not
-              set a split, all of it goes to savings.
-              {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
-            </p>
-          )}
-        </FieldGroup>
+          footer={debtNote || undefined}
+        />
 
         <FieldGroup
           label="In retirement"
@@ -595,10 +542,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 label="Per month"
                 auto={c.ss.auto}
                 onToggleAuto={() => setC({ ...c, ss: { ...c.ss, auto: !c.ss.auto } })}
-                autoValue={hasPlan ? ssUsed : autoSsMonthly}
-                autoTip={hasPlan
-                  ? `From your pay plan: your 35 best years of pay, with years before today at today's pay. Claiming at ${c.ss.claimAge} that comes to ${fmt0(ssUsed)} a month. For the real number, check your statement at ssa.gov and type it in.`
-                  : SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
+                autoValue={autoSsMonthly}
+                autoTip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
                 tip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
                 value={c.ss.monthly}
                 onChange={(v) => setC({ ...c, ss: { ...c.ss, monthly: v } })}
@@ -611,7 +556,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
 
         <FieldGroup
           label="Events"
-          tip="Money that comes in or goes out at a certain age, on top of your regular saving. One time, like a down payment, or repeating, like a stock payout over four years."
+          tip="Money that comes in or goes out at a certain age, on top of your regular saving. One time, like a down payment, or repeating, like a stock payout over four years or an IRA you add to every year. Money in can go to savings or to a retirement account, which stays locked until your 401k access age."
           className="lg:col-span-2"
           gridClass="grid-cols-1 sm:grid-cols-2"
           action={
@@ -627,7 +572,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
         >
           {c.events.length === 0 && (
             <p className="col-span-full text-[12px] text-[var(--text-muted)]">
-              No events yet. Add one for a big purchase, a bonus or a stock payout.
+              No events yet. Add one for a big purchase, a bonus, an IRA or a stock payout.
             </p>
           )}
           {c.events.map((raw, i) => {
@@ -638,7 +583,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
             const setKind = (v: string) =>
               patchEvent(e.id, v === 'debt'
                 ? { kind: 'debt' as const, auto: undefined, repeat: 'once' as const, years: 1, debtId: raw.debtId || debts[0]?.id || '', custom: false }
-                : { kind: v as RetireEvent['kind'], ...(raw.kind === 'debt' ? { debtId: undefined, custom: undefined } : {}) })
+                : { kind: v as RetireEvent['kind'], ...(raw.kind === 'debt' ? { debtId: undefined, custom: undefined } : {}), ...(v !== 'in' ? { to: undefined, untilRetire: undefined } : {}) })
             return (
               <div key={e.id} className="rounded-xl bg-[var(--surface-2)] p-3 ring-1 ring-[var(--ring)]">
                 <div className="mb-2 flex items-center gap-2">
@@ -730,8 +675,45 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                       </UITooltip>
                     </Label>
                   ) : (
-                    <ToolField label="For how many years" value={raw.years} onChange={(v) => patchEvent(e.id, { years: Math.max(1, v) })} />
+                    <div className="relative">
+                      {e.kind === 'in' && raw.untilRetire ? (
+                        <Label className="block">
+                          <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-muted)]">
+                            For how many years
+                            <InfoTip tip={`Every year you work, until you retire at ${c.retireAge}. It follows the retire age if you change it.`} size={12} />
+                          </span>
+                          <div className="mt-1 rounded-lg bg-[var(--surface-1)] px-3 py-2 text-[13px] ring-1 ring-[var(--ring)]">Until you retire</div>
+                        </Label>
+                      ) : (
+                        <ToolField label="For how many years" value={raw.years} onChange={(v) => patchEvent(e.id, { years: Math.max(1, v) })} />
+                      )}
+                      {e.kind === 'in' && (
+                        <FieldBadge
+                          label="Until retire"
+                          active={!!raw.untilRetire}
+                          onClick={() => patchEvent(e.id, raw.untilRetire
+                            ? { untilRetire: undefined, years: Math.max(1, c.retireAge - raw.age) }
+                            : { untilRetire: true })}
+                          title="Stop when you retire, whatever the retire age."
+                        />
+                      )}
+                    </div>
                   ))}
+                  {e.kind === 'in' && !linked && (
+                    <Label className="block">
+                      <span className="text-[12px] text-[var(--text-muted)]">Goes into</span>
+                      <div className="mt-1">
+                        <Dropdown
+                          label="Goes into"
+                          hideLabel
+                          value={raw.to === '401k' ? '401k' : 'savings'}
+                          onChange={(v: string) => patchEvent(e.id, { to: v === '401k' ? '401k' : undefined })}
+                          className="h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs"
+                          options={EVENT_POOLS}
+                        />
+                      </div>
+                    </Label>
+                  )}
                 </div>
               </div>
             )
@@ -819,24 +801,15 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
-                    label="Pay"
-                    tip={hasPlan
-                      ? 'Your pay before tax that year, from Your pay over time. Years no period covers use today\'s pay.'
-                      : `Your pay before tax that year: ${fmt0(takeHomeSalary)} from Take-home pay until you retire. Add pay changes in Your pay over time.`}
-                    right
-                  />
-                </TableHead>
-                <TableHead className="pb-2 pr-3 text-right font-medium">
-                  <HeaderTip
                     label="401k"
-                    tip={`Your retirement account. ${hasPlan ? 'Your pay plan sets what goes in each year while you work' : `${fmt0(effectiveContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}`}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
+                    tip={`Your retirement account. ${hasPlan ? 'Your pay plan sets what goes in each year while you work' : `${fmt0(baseContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}`}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
                     right
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Contributions"
-                    tip={`New money in that year: 401k ${hasPlan ? 'plus savings, as your pay plan sets them' : `(${fmt0(effectiveContrib401k)}) plus savings (${fmt0(effectiveContribSavings)})`}, any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in${hasPlan ? ', and so is the first year of each pay period' : ''}.${hasPlan ? ' A year with less take-home pay than today can save less than nothing, which comes out of savings.' : ''} Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
+                    tip={`New money in that year: 401k ${hasPlan ? 'plus savings, as your pay plan sets them' : `(${fmt0(baseContrib401k)}) plus savings (${fmt0(baseContribSavings)})`}, any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in${hasPlan ? ', and so is the first year of each pay period' : ''}. Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
                     right
                   />
                 </TableHead>
@@ -850,7 +823,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Withdrawals"
-                    tip={`What you take out each year. Once retired that is ${fmt0(c.withdrawMo)} a month${ssUsed > 0 ? `, minus ${fmt0(ssUsed)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.${hasPlan ? ' Pay from work after you retire lowers it.' : ''}`}
+                    tip={`What you take out each year. Once retired that is ${fmt0(c.withdrawMo)} a month${ssMonthly > 0 ? `, minus ${fmt0(ssMonthly)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.`}
                     right
                   />
                 </TableHead>
@@ -879,7 +852,6 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                       {row.phase === 'working' ? 'working' : row.phase === 'early-retired' ? 'retired (pre-401k)' : 'retired'}
                     </span>
                   </TableCell>
-                  <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.pay > 0 ? fmt0(row.pay) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.k > 0 ? fmt0(row.k) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.contrib ? fmt0(row.contrib) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{fmt0(row.growth)}</TableCell>

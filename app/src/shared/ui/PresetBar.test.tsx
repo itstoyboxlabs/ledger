@@ -73,4 +73,28 @@ describe('PresetBar', () => {
     await userEvent.click(screen.getByRole('button', { name: /Presets/ }))
     expect(await screen.findByText('No presets yet')).toBeInTheDocument()
   })
+
+  it('has no rename button unless it can rename', async () => {
+    setup()
+    await userEvent.click(screen.getByRole('button', { name: /Presets/ }))
+    await screen.findByRole('menuitem', { name: 'Lean' })
+    expect(screen.queryByRole('button', { name: 'Rename preset "Lean"' })).toBeNull()
+  })
+
+  it('renames a preset and keeps it active', async () => {
+    localStorage.setItem('ledger:presetActive:default', '"Lean"')
+    const onRename = vi.fn()
+    setup({ onRename })
+    await userEvent.click(screen.getByRole('button', { name: /Lean/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Rename preset "Lean"' }))
+    const input = screen.getByLabelText('New preset name')
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Loose')
+    expect(screen.getByText('Another preset has that name.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Rename' })).toBeDisabled()
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Thin{Enter}')
+    expect(onRename).toHaveBeenCalledWith('Lean', 'Thin')
+    expect(localStorage.getItem('ledger:presetActive:default')).toBe('"Thin"')
+  })
 })
