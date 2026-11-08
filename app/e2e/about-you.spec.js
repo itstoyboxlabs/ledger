@@ -34,9 +34,9 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('page', () => {
-  test('sits in the sidebar right after Spending and explains itself', async ({ page }) => {
+  test('sits at the top of the sidebar and explains itself', async ({ page }) => {
     const names = await page.getByRole('complementary').getByRole('navigation', { name: 'Pages' }).getByRole('button').allInnerTexts()
-    expect(names.map((n) => n.trim()).slice(0, 3)).toEqual(['Spending', 'About you', 'Budget'])
+    expect(names.map((n) => n.trim()).slice(0, 3)).toEqual(['About you', 'Spending', 'Budget'])
     await expect(main(page)).toContainText('This is the starting point for planning')
     for (const t of ['Your age', 'Filing status', 'Tax state and city']) {
       await expect(main(page).getByRole('heading', { level: 2, name: new RegExp(t) })).toBeVisible()
@@ -146,16 +146,14 @@ test.describe('tax state', () => {
     await expect(main(page).getByRole('button', { name: /State\s*California/ })).toBeVisible()
   })
 
-  test('a new state taxes the tools and shows on Balances', async ({ page }) => {
+  test('a new state taxes the tools', async ({ page }) => {
     await main(page).getByRole('button', { name: /State/ }).click()
     await page.getByRole('menuitem', { name: 'New York' }).or(page.getByRole('option', { name: 'New York' })).first().click()
     expect(await ls(page, 'taxState')).toBe('ny')
     const th = await takeHome(page)
     await expect(th).toContainText('Taxed in New York.')
     await goTo(page, 'Balances')
-    await expect(main(page).getByText('Your tax state and filing status now live on the About you tab.')).toBeVisible()
-    await main(page).getByRole('button', { name: 'Open About you' }).click()
-    await expect(page.locator('h1', { hasText: 'About you' })).toBeVisible()
+    await expect(main(page).getByText(/Taxed in/)).toHaveCount(0)
   })
 })
 

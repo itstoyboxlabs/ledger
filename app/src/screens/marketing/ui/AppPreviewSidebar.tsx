@@ -8,16 +8,16 @@ export function AppPreviewSidebar() {
         <img src="/logo-mark.png" alt="" />
         Ledger
       </div>
-      <div className="nv on">
-        <Icon paths={['m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z']} />
-        Spending
-      </div>
       <div className="nv">
         <Icon>
           <circle cx="12" cy="8" r="5" />
           <path d="M20 21a8 8 0 0 0-16 0" />
         </Icon>
         About you
+      </div>
+      <div className="nv on">
+        <Icon paths={['m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z']} />
+        Spending
       </div>
       <div className="nv">
         <Icon>

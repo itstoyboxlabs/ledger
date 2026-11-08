@@ -1,6 +1,4 @@
-import { STATES } from '@/shared/constants/STATES'
 import { fmt } from '@/shared/utils/fmt'
-import { useTaxState } from '@/shared/hooks/useTaxState'
 import { Label } from '@/shared/ui/primitives/label'
 import { Input } from '@/shared/ui/primitives/input'
 import { Button } from '@/shared/ui/primitives/button'
@@ -9,47 +7,27 @@ import { Card } from '@/shared/ui/Card'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
-import { PresetBar } from '@/shared/ui/PresetBar'
 import { ToolField } from '@/shared/ui/ToolField'
 import { assetKind } from '@/shared/utils/assetKind'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/primitives/select'
 import { ASSET_KIND_OPTIONS } from '@/screens/balances/constants/ASSET_KIND_OPTIONS'
-import { isDebtList } from '@/shared/utils/isDebtList'
-import { isLegacyDebts } from '@/shared/utils/isLegacyDebts'
 import { newId } from '@/shared/utils/newId'
-import { normalizeDebts } from '@/shared/utils/normalizeDebts'
 import { sumBalances } from '@/shared/utils/sumBalances'
 import { useAssets } from '@/shared/hooks/useAssets'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useDebts } from '@/shared/hooks/useDebts'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
-import { usePresets } from '@/shared/hooks/usePresets'
 import { AssetKind } from '@/shared/enums/AssetKind'
 import { AssetPool } from '@/shared/enums/AssetPool'
 import type { Asset } from '@/shared/types/Asset'
 import type { Debt } from '@/shared/types/Debt'
-import type { PlanningPreset } from '@/screens/balances/types/PlanningPreset'
 
 // Balances: what you own and what you owe. Tools and Retirement read these.
-type BalancesViewProps = {
-  goToAboutYou?: () => void
-}
-
-export function BalancesView({ goToAboutYou }: BalancesViewProps) {
-  const [taxState, setTaxState] = useTaxState()
+export function BalancesView() {
   const [debts, setDebts] = useDebts()
   const [assets, setAssets] = useAssets()
   const [asOf, setAsOf] = usePersistedState('assetsAsOf', '', (v) => typeof v === 'string')
   const rows = useBudgetRows()
-  // Named snapshots of the state and debts, so they can be changed freely for what-if
-  // planning and restored in one click. Same backend key and shape as before.
-  const { presets, save, remove } = usePresets<PlanningPreset>('planningVariables')
-  const presetData: PlanningPreset = { taxState, debts: debts.map(({ linkName, ...d }) => d) } // eslint-disable-line no-unused-vars
-  const applyPreset = (data: unknown) => {
-    const d = data as Partial<PlanningPreset> | null | undefined
-    if (typeof d?.taxState === 'string' && d.taxState in STATES) setTaxState(d.taxState)
-    if (isDebtList(d?.debts) || isLegacyDebts(d?.debts)) setDebts(normalizeDebts(d?.debts))
-  }
   const owed = sumBalances(debts)
   const owned = assets.reduce((s, a) => s + a.balance, 0)
   const now = new Date()
@@ -81,34 +59,6 @@ export function BalancesView({ goToAboutYou }: BalancesViewProps) {
           </div>
         </Card>
       </div>
-
-      <Card className="p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[15px] font-semibold">Taxed in {STATES[taxState]?.label}</h2>
-          <PresetBar
-            presets={presets}
-            currentData={presetData}
-            onApply={applyPreset}
-            onSave={(name: string) => save(name, presetData)}
-            onDelete={remove}
-            scope="planningVariables"
-          />
-        </div>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[13px] text-[var(--text-secondary)]">
-            Your tax state and filing status now live on the About you tab.
-          </p>
-          {goToAboutYou && (
-            <Button variant="outline" size="sm" onClick={goToAboutYou}>
-              <Icon name="user" size={13} />
-              Open About you
-            </Button>
-          )}
-        </div>
-        <p className="mt-2 text-[12px] text-[var(--text-muted)]">
-          Presets here still save your tax state along with your debts, so a what-if move stays one click away.
-        </p>
-      </Card>
 
       <Card className="p-5">
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold">

@@ -161,7 +161,7 @@ so `dark:` variants apply.
 - **Sidebar**: wordmark, the pages from `NAV`, accounts, Notes, then one row of icon buttons named by tooltip
   (Export data, Download, Upload file when available, Tutorial, GitHub). `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
-- **Nav names and view ids**: Spending (`actuals`), About you (`about`), Budget (`budget`), Log (`log`), Tools
+- **Nav names and view ids**: About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
   (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
 - **Accounts in the sidebar**: each row toggles the `accounts` filter. Rows are grouped under a muted bank
   header (none when `bank` is empty) and show name, last four digits and a dot on the right (filled is on, hollow
@@ -314,7 +314,7 @@ Statement reality. Everything derives from the statements data.
 
 ## Page: About you (view id `about`)
 
-A sidebar page (`about`, user icon) right after Spending. It is the starting point of planning: the few facts
+A sidebar page (`about`, user icon) at the very top of the sidebar, above Spending. It is the starting point of planning: the few facts
 about you that several pages share, set once. A short intro says what the page is for and that the other pages
 read from it. Every field has a sentence or two saying what it is for and which pages use it.
 
@@ -326,8 +326,8 @@ read from it. Every field has a sentence or two saying what it is for and which 
   app always worked. It changes federal brackets, the standard deduction, the long-term gains bands, the
   investment income tax and Additional Medicare thresholds, so it moves Take-home pay, Budget income from the
   tool, Rent scenarios, Hourly, Equity payout and the whole Retirement projection.
-- **Tax state and city**: the same `taxState` key and picker that used to be on Balances, so saved choices load
-  unchanged. Its info tip says that state tax for married filers is an estimate (see Tax engine).
+- **Tax state and city**: the only place the tax state is set. It is the same `taxState` key that Balances used to
+  hold, so saved choices load unchanged. Other pages read it through `useTaxState`. Its info tip says that state tax for married filers is an estimate (see Tax engine).
 - **No partner fields.** The app plans around your own income.
 - Both keys are plain `ledger:` keys, so they travel in the settings export (`settings.local`) and come back on
   import like every other key. The sample data sets age 25 (as of 2026) and Single, with
@@ -615,11 +615,10 @@ estimates, 2026 figures.
 
 ## Page: Balances
 
-A sidebar page (`balances`, landmark icon). Cards: totals owed and owned, "Taxed in <state>" (a pointer, with a
-PresetBar), "What you owe" and "What you have".
+A sidebar page (`balances`, landmark icon). Cards: totals owed and owned, "What you owe" and "What you have". The
+Presets menu sits in the page header row.
 
-- **Tax state moved.** The state picker now lives on About you. Balances keeps a "Taxed in <state>" card with
-  the line "Your tax state and filing status now live on the About you tab" and an "Open About you" button.
+- **No tax state here.** The tax state lives only on About you. Balances does not show, read or write it.
 
 - **Debts** live in the `debts` key as `[{ id, name, balance, apr, payment, budgetRow }]`. `payment` is typed
   unless `budgetRow` links a Budget row by id, whose amount is then the payment ("Payment comes from" dropdown,
@@ -633,9 +632,10 @@ PresetBar), "What you owe" and "What you have".
   and Roth are locked until the 401k access age, so picking a type also writes the matching `pool` (`savings` or
   `401k`). Saves without `kind` read through `assetKind`: a `401k` pool asset is pre-tax, anything else regular,
   so old data loads unchanged.
-- **Presets** use the key `planningVariables` and save `{ taxState, debts }`, unchanged, so a what-if move is
-  still one click. Applying one sets the shared tax state. Old presets with debts as an object are converted on
-  apply. Filing status is not part of the preset.
+- **Presets** use the key `planningVariables` and save `{ debts }` only (`BalancesPresets`, shown in the page header), so a
+  what-if move is still one click. Old presets that still carry a `taxState` keep loading: the field is ignored on
+  apply and dropped the next time the preset is saved. Old presets with debts as an object are converted on
+  apply (`presetDebts`). Neither the tax state nor the filing status is part of the preset.
 - Debt payoff, Rent scenarios and Retirement's debt logic all read this list.
 
 ---

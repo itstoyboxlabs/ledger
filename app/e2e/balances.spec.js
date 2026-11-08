@@ -160,26 +160,16 @@ test.describe('what you have', () => {
   })
 })
 
-test.describe('taxed in', () => {
-  test('the state picker moved to About you, and Balances points there', async ({ page }) => {
-    await expect(main(page).getByRole('heading', { level: 2, name: 'Taxed in Texas' })).toBeVisible()
-    await expect(main(page).getByText('Your tax state and filing status now live on the About you tab.')).toBeVisible()
-    await expect(main(page).getByRole('button', { name: /State\s*Texas/ })).toHaveCount(0)
-    await main(page).getByRole('button', { name: 'Open About you' }).click()
-    await expect(page.locator('h1', { hasText: 'About you' })).toBeVisible()
-  })
-
-  test('a state picked on About you shows here', async ({ page }) => {
-    await goTo(page, 'About you')
-    await main(page).getByRole('button', { name: /State/ }).click()
-    await page.getByRole('menuitem', { name: 'New York' }).or(page.getByRole('option', { name: 'New York' })).first().click()
-    await goTo(page, 'Balances')
-    await expect(main(page).getByRole('heading', { level: 2, name: 'Taxed in New York' })).toBeVisible()
+test.describe('tax state', () => {
+  test('Balances has no tax state card or picker, it lives on About you', async ({ page }) => {
+    await expect(main(page).getByText(/Taxed in/)).toHaveCount(0)
+    await expect(main(page).getByRole('button', { name: 'Open About you' })).toHaveCount(0)
+    await expect(main(page).getByRole('button', { name: /State/ })).toHaveCount(0)
   })
 })
 
 test.describe('presets', () => {
-  test('saving and applying a preset restores the state and the debts', async ({ page }) => {
+  test('saving and applying a preset restores the debts', async ({ page }) => {
     await addDebt(page, { name: 'Loans', balance: 8000, payment: 200 })
     await main(page).getByRole('button', { name: 'Presets' }).click()
     await page.getByRole('menuitem', { name: 'Save as new preset' }).click()
