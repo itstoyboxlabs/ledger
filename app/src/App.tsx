@@ -47,6 +47,7 @@ import { useDebtLinkMigration } from '@/shared/hooks/useDebtLinkMigration'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { migrateEmployerMatch } from '@/shared/utils/migrateEmployerMatch'
 import { lazyNamed } from '@/shared/utils/lazyNamed'
+import { prefetchChunks } from '@/shared/utils/prefetchChunks'
 
 // each page is its own chunk, loaded the first time it is opened
 const AboutYouView = lazyNamed(() => import('@/screens/about-you/ui/AboutYouView'), 'AboutYouView')
@@ -60,6 +61,19 @@ const NotesModal = lazyNamed(() => import('@/screens/notes/ui/NotesModal'), 'Not
 const RetirementView = lazyNamed(() => import('@/screens/retirement/ui/RetirementView'), 'RetirementView')
 const ToolsView = lazyNamed(() => import('@/screens/tools/ui/ToolsView'), 'ToolsView')
 const TrendsChart = lazyNamed(() => import('@/screens/spending/ui/TrendsChart'), 'TrendsChart')
+
+// downloaded while the browser is idle so the first visit to a tab or chart does not blank the page
+const IDLE_CHUNKS = [
+  () => import('@/screens/spending/ui/Donut'),
+  () => import('@/screens/spending/ui/TrendsChart'),
+  () => import('@/screens/spending/ui/CashFlowChart'),
+  () => import('@/screens/budget/ui/BudgetView'),
+  () => import('@/screens/log/ui/LogView'),
+  () => import('@/screens/tools/ui/ToolsView'),
+  () => import('@/screens/retirement/ui/RetirementView'),
+  () => import('@/screens/balances/ui/BalancesView'),
+  () => import('@/screens/notes/ui/NotesModal'),
+]
 
 
 // runs once when the app loads: moves an old saved employer match onto the 401k deduction
@@ -124,6 +138,8 @@ export default function App() {
 
   // budgeted monthly total, for the Spending KPI's "over / under budget" line
   const [budgetTotal, setBudgetTotal] = useState<number | null>(null)
+  useEffect(() => prefetchChunks(IDLE_CHUNKS), [])
+
   useEffect(() => {
     if (view !== 'actuals') return
     getBudget()
