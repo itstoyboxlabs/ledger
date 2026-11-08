@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Button } from '@/shared/ui/primitives/button'
 
 /* ---------- tools ---------- */
@@ -12,15 +13,46 @@ import { Button } from '@/shared/ui/primitives/button'
 // the browser's native spinner (which is a white OS widget and looks out of place).
 type StepperProps = { value: number; step?: number; onChange: (value: number) => void }
 
+const HOLD_DELAY_MS = 400 // how long you hold before it starts repeating
+const HOLD_INTERVAL_MS = 70 // time between repeats while you keep holding
+
 export function Stepper({ value, step = 1, onChange }: StepperProps) {
-  const bump = (dir: number) => onChange(Math.round((Number(value) + dir * step) * 1e6) / 1e6)
+  // the repeat timer must always read the newest value and onChange, not the ones from when it started
+  const latest = useRef({ value, step, onChange })
+  latest.current = { value, step, onChange }
+  const timers = useRef<{ delay?: ReturnType<typeof setTimeout>; repeat?: ReturnType<typeof setInterval> }>({})
+  const bump = (dir: number) => {
+    const { value: v, step: st, onChange: change } = latest.current
+    change(Math.round((Number(v) + dir * st) * 1e6) / 1e6)
+  }
+  const stop = () => {
+    clearTimeout(timers.current.delay)
+    clearInterval(timers.current.repeat)
+  }
+  useEffect(() => stop, [])
+  // holding a chevron steps once right away, then keeps stepping until you let go
+  const start = (dir: number) => {
+    stop()
+    bump(dir)
+    timers.current.delay = setTimeout(() => {
+      timers.current.repeat = setInterval(() => bump(dir), HOLD_INTERVAL_MS)
+    }, HOLD_DELAY_MS)
+  }
   const btn = (dir: number, d: string) => (
     <Button variant="ghost"
       type="button"
       tabIndex={-1}
       aria-label={dir > 0 ? 'Increase' : 'Decrease'}
       onMouseDown={(e) => e.preventDefault()} // keep focus (and the draft) where it is
-      onClick={() => bump(dir)}
+      onPointerDown={(e) => {
+        if (e.button === 0) start(dir)
+      }}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onClick={(e) => {
+        if (e.detail === 0) bump(dir) // a keyboard or programmatic click: a mouse press already stepped on pointer down
+      }}
       className="h-[13px] w-5 rounded-[4px] p-0 text-[var(--text-muted)] hover:text-white"
     >
       <svg width="9" height="9" viewBox="0 0 10 10">
