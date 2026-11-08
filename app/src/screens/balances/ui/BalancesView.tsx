@@ -11,7 +11,9 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import { ToolField } from '@/shared/ui/ToolField'
-import { assetPool } from '@/shared/utils/assetPool'
+import { assetKind } from '@/shared/utils/assetKind'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/primitives/select'
+import { ASSET_KIND_OPTIONS } from '@/screens/balances/constants/ASSET_KIND_OPTIONS'
 import { isDebtList } from '@/shared/utils/isDebtList'
 import { isLegacyDebts } from '@/shared/utils/isLegacyDebts'
 import { newId } from '@/shared/utils/newId'
@@ -22,6 +24,7 @@ import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useDebts } from '@/shared/hooks/useDebts'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
+import { AssetKind } from '@/shared/enums/AssetKind'
 import { AssetPool } from '@/shared/enums/AssetPool'
 import type { Asset } from '@/shared/types/Asset'
 import type { Debt } from '@/shared/types/Debt'
@@ -223,15 +226,21 @@ export function BalancesView() {
                   className="tnum"
                 />
               </div>
-              <div className="w-[200px]">
-                <Dropdown
-                  label="Kind"
-                  hideLabel
-                  value={assetPool(a)}
-                  onChange={(pool: string) => patchAsset(a.id, { pool: pool as AssetPool })}
-                  className="h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 text-[13px] shadow-xs"
-                  options={[{ value: 'savings', label: 'Savings (use anytime)' }, { value: '401k', label: 'Retirement account (locked)' }]}
-                />
+              <div className="w-[230px]">
+                {/* the account type decides how Retirement taxes it; `pool` is kept in step for older readers */}
+                <Select
+                  value={assetKind(a)}
+                  onValueChange={(v) => patchAsset(a.id, { kind: v as AssetKind, pool: v === AssetKind.regular ? AssetPool.savings : AssetPool.k401 })}
+                >
+                  <SelectTrigger aria-label={`Account type for ${a.name || 'this asset'}`} className="h-9 w-full rounded-lg bg-[var(--surface-1)] text-[13px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {ASSET_KIND_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value} className="text-[13px]">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button
                 variant="ghost"

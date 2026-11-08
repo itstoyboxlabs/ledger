@@ -28,6 +28,12 @@ describe('normalizeRetire', () => {
     expect(out.events[1]).toMatchObject({ kind: 'debt', debtId: '', custom: false, auto: 'equity', repeat: '2year', years: 3 })
     expect(out.events).toHaveLength(2)
   })
+  it('taxes 401k withdrawals unless the save turned it off', () => {
+    expect(normalizeRetire({ events: [] }).tax401k).toBe(true)
+    expect(normalizeRetire({ events: [], tax401k: false }).tax401k).toBe(false)
+    expect(normalizeRetire({ events: [], tax401k: 'no' }).tax401k).toBe(true)
+    expect(normalizeRetire({ age: 30 }).tax401k).toBe(true)
+  })
   it('keeps startFrom balances', () => {
     expect(normalizeRetire({ events: [], startFrom: 'balances' }).startFrom).toBe('balances')
   })

@@ -42,6 +42,18 @@ describe('BalancesView', () => {
     expect(screen.getByDisplayValue('Savings')).toBeInTheDocument()
   })
 
+  it('shows the account type of each asset, reading old 401k assets as pre-tax', () => {
+    seed('assets', [
+      { id: 'a1', name: 'Checking', balance: 2500 },
+      { id: 'a2', name: 'Old 401k', balance: 1000, pool: '401k' },
+      { id: 'a3', name: 'Roth IRA', balance: 500, pool: '401k', kind: 'roth' },
+    ])
+    renderApp(<BalancesView />)
+    expect(screen.getByRole('combobox', { name: 'Account type for Checking' })).toHaveTextContent('Savings (use anytime)')
+    expect(screen.getByRole('combobox', { name: 'Account type for Old 401k' })).toHaveTextContent('Pre-tax 401k or IRA (locked)')
+    expect(screen.getByRole('combobox', { name: 'Account type for Roth IRA' })).toHaveTextContent('Roth 401k or IRA (locked)')
+  })
+
   it('removes an asset and updates the total', async () => {
     seed('assets', [{ id: 'a1', name: 'Savings', balance: 2500 }])
     renderApp(<BalancesView />)

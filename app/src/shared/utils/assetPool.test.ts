@@ -7,4 +7,9 @@ describe('assetPool', () => {
     expect(assetPool({ pool: 'cash' as AssetPool })).toBe('savings')
     expect(assetPool({})).toBe('savings')
   })
+  it('locks pre-tax and Roth accounts and frees regular ones', () => {
+    expect(assetPool({ kind: 'pretax' })).toBe('401k')
+    expect(assetPool({ kind: 'roth' })).toBe('401k')
+    expect(assetPool({ kind: 'regular', pool: '401k' })).toBe('savings')
+  })
 })
