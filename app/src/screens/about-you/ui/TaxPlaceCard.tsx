@@ -1,16 +1,15 @@
 import { Card } from '@/shared/ui/Card'
 import { Dropdown } from '@/shared/ui/Dropdown'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import { InfoTip } from '@/shared/ui/InfoTip'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { STATES } from '@/shared/constants/STATES'
 import { FilingStatus } from '@/shared/enums/FilingStatus'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
-import { usePersistedState } from '@/shared/hooks/usePersistedState'
 
 // Where you pay state (and New York City) income tax. Same `taxState` key the Balances page
 // used, so a saved choice carries over unchanged.
 export function TaxPlaceCard() {
-  const [taxState, setTaxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [taxState, setTaxState] = useTaxState()
   const [filing] = useFilingStatus()
   return (
     <Card className="p-5">
