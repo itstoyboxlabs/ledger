@@ -36,3 +36,15 @@ describe('equityPayout', () => {
   })
   it('treats years below 1 as 1', () => expect(equityPayout({ ...rsu, years: 0 }, 'wy')).toMatchObject({ years: 1, slice: 50000 }))
 })
+
+describe('equityPayout by filing status', () => {
+  const iso: StockInputs = { ...rsu, type: 'iso', heldOver: true }
+  it('is unchanged for single filers', () => {
+    for (const c of [rsu, iso, { ...iso, heldOver: false }]) expect(equityPayout(c, 'ny', 'single')).toEqual(equityPayout(c, 'ny'))
+  })
+  it('taxes each kind on the joint tables', () => {
+    expect(equityPayout(rsu, 'wy', 'mfj').tax).toEqual(taxOnExtra(100000, 25000, 'wy', 'mfj'))
+    expect(equityPayout(iso, 'wy', 'mfj').tax).toEqual(ltcgOnExtra(100000, 20000, 'wy', 'mfj'))
+    expect(equityPayout({ ...iso, heldOver: false }, 'wy', 'mfj').tax).toEqual(incomeTaxOnExtra(100000, 20000, 'wy', 'mfj'))
+  })
+})

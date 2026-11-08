@@ -15,7 +15,7 @@ export function resolvePayPeriods(periods: PayPeriod[], ctx: PayContext): Resolv
     const missingPay = p.takeHomeFrom === 'preset' && !thPreset
     const typedPay = p.takeHomeFrom === 'typed' || missingPay
     const th = thPreset?.data ?? ctx.takeHome
-    const m = typedPay ? null : payBreakdown(th, ctx.taxState)
+    const m = typedPay ? null : payBreakdown(th, ctx.taxState, ctx.filing)
     const rowsPreset = p.saveFrom === 'preset' ? ctx.budgetPresets.find((x) => x.id === p.savePreset) : undefined
     const missingSave = p.saveFrom === 'preset' && !rowsPreset
     const rows = p.saveFrom === 'today' ? ctx.budget?.rows : rowsPreset?.data

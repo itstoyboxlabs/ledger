@@ -48,3 +48,15 @@ describe('takeHomeBreakdown', () => {
     expect(r.lines.map((l) => l.yearly)).toEqual([5000, 1200])
   })
 })
+
+describe('takeHomeBreakdown by filing status', () => {
+  it('is unchanged for single filers', () => {
+    for (const s of ['wy', 'ca', 'ny-nyc']) expect(takeHomeBreakdown(th, s, 'single')).toEqual(takeHomeBreakdown(th, s))
+  })
+  it('takes home more as a joint filer on the same salary', () => {
+    const single = takeHomeBreakdown(th, 'wy')
+    const mfj = takeHomeBreakdown(th, 'wy', 'mfj')
+    expect(mfj.net).toBeGreaterThan(single.net)
+    expect(mfj.fed).toBeCloseTo(taxOn(100000 - 10000 - 2400, 'wy', 'mfj').fed, 8)
+  })
+})

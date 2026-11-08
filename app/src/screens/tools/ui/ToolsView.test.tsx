@@ -24,36 +24,36 @@ const list = { id: 'l1', title: 'Gifts', description: 'For mom', items: [{ id: '
 
 describe('ToolsView', () => {
   it('shows every built-in tool by default', () => {
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     for (const id of ['takehome', 'cash', 'rentscenarios', 'renttoincome', 'rentalcost', 'debt', 'hourly', 'stock', 'vacation']) {
       expect(screen.getByTestId(`tool-${id}`)).toBeInTheDocument()
     }
   })
   it('only shows the saved selection', () => {
     localStorage.setItem('ledger:toolsShown', JSON.stringify(['cash', 'debt']))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByTestId('tool-cash')).toBeInTheDocument()
     expect(screen.getByTestId('tool-debt')).toBeInTheDocument()
     expect(screen.queryByTestId('tool-hourly')).toBeNull()
   })
   it('says so when nothing is selected', () => {
     localStorage.setItem('ledger:toolsShown', '[]')
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByText(/Nothing selected/)).toBeInTheDocument()
   })
   it('wide tools span two columns and a lone tool does too', () => {
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByTestId('tool-cash').parentElement?.className).toContain('lg:col-span-2')
     expect(screen.getByTestId('tool-debt').parentElement?.className).not.toContain('lg:col-span-2')
   })
   it('a single visible tool is full width', () => {
     localStorage.setItem('ledger:toolsShown', JSON.stringify(['debt']))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByTestId('tool-debt').parentElement?.className).toContain('lg:col-span-2')
   })
   it('shows the user lists and edits their items', async () => {
     localStorage.setItem('ledger:lists', JSON.stringify([list]))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Gifts' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Add item/ }))
     expect(JSON.parse(localStorage.getItem('ledger:lists') as string)[0].items).toHaveLength(2)
@@ -61,7 +61,7 @@ describe('ToolsView', () => {
   it('turns on a list that was added after the selection was saved', () => {
     localStorage.setItem('ledger:toolsShown', JSON.stringify(['cash']))
     localStorage.setItem('ledger:lists', JSON.stringify([list]))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Gifts' })).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('ledger:toolsShown') as string)).toEqual(['cash', 'l1'])
   })
@@ -69,12 +69,12 @@ describe('ToolsView', () => {
     localStorage.setItem('ledger:toolsShown', JSON.stringify(['cash']))
     localStorage.setItem('ledger:toolsSeen', JSON.stringify(['l1']))
     localStorage.setItem('ledger:lists', JSON.stringify([list]))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     expect(screen.queryByRole('heading', { name: 'Gifts' })).toBeNull()
   })
   it('edits a list title from the pencil button', async () => {
     localStorage.setItem('ledger:lists', JSON.stringify([list]))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     await userEvent.click(screen.getByTitle('Edit title and description'))
     expect(screen.getByText('Edit list')).toBeInTheDocument()
     await userEvent.type(screen.getByDisplayValue('Gifts'), ' 2026')
@@ -84,7 +84,7 @@ describe('ToolsView', () => {
   })
   it('deleting a list asks first, then removes it everywhere', async () => {
     localStorage.setItem('ledger:lists', JSON.stringify([list]))
-    renderApp(<ToolsView goToBalances={() => {}} />)
+    renderApp(<ToolsView goToAboutYou={() => {}} />)
     await userEvent.click(screen.getByTitle('Delete list'))
     expect(screen.getByText(/Are you sure you want to delete "Gifts"/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))

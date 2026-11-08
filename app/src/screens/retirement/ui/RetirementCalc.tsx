@@ -86,6 +86,9 @@ import { NeedPerMonthField } from '@/screens/retirement/ui/NeedPerMonthField'
 import { retireNeed } from '@/screens/retirement/utils/retireNeed'
 import { budgetPresetOptions } from '@/screens/retirement/utils/budgetPresetOptions'
 import { useRetireNeedPreset } from '@/screens/retirement/hooks/useRetireNeedPreset'
+import { useRetireAge } from '@/screens/retirement/hooks/useRetireAge'
+import { CurrentAgeField } from '@/screens/retirement/ui/CurrentAgeField'
+import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 
 type RetirementCalcProps = {
   debts: Debt[]
@@ -105,8 +108,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     (v) => isObj(v),
   )
   // normalize on read; the stored value is only rewritten when something is edited
-  const c = useMemo(() => normalizeRetire(rawC), [rawC])
-  const setC = (next: RetireState) => setRawC(normalizeRetire(next))
+  const typedC = useMemo(() => normalizeRetire(rawC), [rawC])
+  // current age can come from About you (Auto); the typed age stays saved underneath it
+  const ageSrc = useRetireAge(typedC.age)
+  const c = useMemo(() => ({ ...typedC, age: ageSrc.age }), [typedC, ageSrc.age])
+  const setC = (next: RetireState) => setRawC(normalizeRetire(ageSrc.auto ? { ...next, age: typedC.age } : next))
   // the inputs Find last failed on; the note shows only while they are unchanged
   const [findNotFoundFor, setFindNotFoundFor] = useState<string | null>(null)
   const validRows = (v: unknown): boolean => Array.isArray(v) && v.every((r) => typeof r?.alloc === 'number' && typeof r?.perf === 'number')
@@ -123,11 +129,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // what pay periods and Need per month can point at, by id so a rename does not break them
   const { presets: takeHomePresets } = usePresets<RawTakeHome>('takeHome', { ids: true })
   const { presets: budgetPresets, loaded: budgetPresetsLoaded } = usePresets<BudgetRow[]>('expenses', { ids: true })
-  const presetData: RetirePresetData = { c, port, portAfter, includeDebt }
+  const presetData: RetirePresetData = { c: typedC, port, portAfter, includeDebt }
   const applyPreset = (d: Partial<RetirePresetData> | null | undefined) => {
     // presets saved before Events, Social Security and the split portfolio are in the
     // old shape; normalizeRetire reads them the way the old code did
-    if (d?.c) setC(d.c)
+    if (d?.c) setRawC(normalizeRetire(d.c))
     if (Array.isArray(d?.port)) setPort(d.port)
     if (d?.portAfter && typeof d.portAfter.same === 'boolean' && Array.isArray(d.portAfter.rows)) setPortAfter(d.portAfter)
     else setPortAfter({ same: true, rows: [] })
@@ -139,9 +145,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // income-override salary if that toggle is on. Budgeting IS the planning source of
   // truth here, so both fields track it instead of a separately-set number.
   const [taxState] = usePersistedState<string>('taxState', DEFAULT_STATE, (v) => String(v) in STATES)
+  const [filing] = useFilingStatus()
   const [incomeOverride] = useIncomeOverride()
   const [takeHome] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
-  const budgetMonthlyIncome = budgetIncomeFor(incomeOverride, takeHome, taxState)
+  const budgetMonthlyIncome = budgetIncomeFor(incomeOverride, takeHome, taxState, filing)
   // 401k needs a GROSS salary to apply the deferral % to: the Take-home pay calc's
   // salary input is that number (always populated, whichever income source the Budget
   // page is on), not the take-home income figure above. The employer match lives on
@@ -153,7 +160,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // options payout / yr auto source: the Tools tab's Stock options exit planner,
   // same shared key ('stockCalc2') and math it uses for "Net per year"
   const [stockCalc] = useToolState('stockCalc2', STOCK_DEFAULTS)
-  const stockPayout = equityPayout(stockCalc, taxState)
+  const stockPayout = equityPayout(stockCalc, taxState, filing)
   const autoOptAmt = stockPayout.slice - stockPayout.tax.total
   // Social Security: monthly benefit estimated from the Take-home salary
   const takeHomeSalary = Number(normalizeTakeHome(takeHome).salary) || 0
@@ -250,7 +257,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       ? { payoffAge: payoffByDebt[d.id].age, freedMonthsInPayoffYear: 12 }
       : debtPayoffSchedule(d.balance, debtPayments[i], c.age),
   )
-  const autoTaxPct = gainsTaxPct(needMo * 12, taxState)
+  const autoTaxPct = gainsTaxPct(needMo * 12, taxState, filing)
   const taxPct = c.autoTax ? autoTaxPct : c.taxPct
   const weighted = (rows: PortfolioRow[]) => {
     const total = rows.reduce((s: number, x) => s + x.alloc, 0)
@@ -267,7 +274,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // tax on 401k withdrawals: pre-tax money is taxed as income on the way out, Roth is not.
   // Typed in, the 401k box is pre-tax. With the tax off, Roth joins the 401k as before.
   const taxed = c.tax401k
-  const incomeTax = (gross: number) => incomeTaxOnExtra(0, gross, taxState).total
+  const incomeTax = (gross: number) => incomeTaxOnExtra(0, gross, taxState, filing).total
   const kindSum = (kind: string) => incAssets.filter((a) => assetPool(a) === '401k' && assetKind(a) === kind).reduce((t, a) => t + a.balance, 0)
   const startRoth = fromBalances ? kindSum('roth') : 0
   const startK = fromBalances ? kindSum('pretax') + (taxed ? 0 : startRoth) : c.start401k
@@ -288,8 +295,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const periods = c.pay.periods
   const hasPlan = periods.length > 0
   const resolved = resolvePayPeriods(periods, {
-    takeHome, takeHomePresets, budget: budgetFile, budgetPresets, taxState,
-    incomeOf: (th) => budgetIncomeFor(incomeOverride, th, taxState),
+    takeHome, takeHomePresets, budget: budgetFile, budgetPresets, taxState, filing,
+    incomeOf: (th) => budgetIncomeFor(incomeOverride, th, taxState, filing),
   })
   const simPay: RetireSimPay | undefined = hasPlan
     ? {
@@ -309,7 +316,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   }
   const simulate = (retireAge: number) => simulateRetirement(simInput, retireAge)
   // everything Find depends on; the "no safe age" note clears once any of it changes
-  const findKey = JSON.stringify({ ...simInput, plan: hasPlan ? { takeHome, takeHomePresets, budgetPresets, budgetFile, incomeOverride } : null, taxIn: taxed ? taxState : null, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
+  const findKey = JSON.stringify({ ...simInput, plan: hasPlan ? { takeHome, takeHomePresets, budgetPresets, budgetFile, incomeOverride } : null, taxIn: taxed ? taxState + filing : null, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
   const findNotFound = findNotFoundFor === findKey
   const { rows, runOutAge, atRetirement } = simulate(c.retireAge)
   const payIssues = payPlanIssues(
@@ -332,7 +339,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const startPlan = (p: Partial<PayPeriod>) =>
     setPeriods([{ id: newId('p'), label: 'Now', fromAge: c.age, toAge: 'retire', ...todaySources, ...p }])
   const takeHomeChoices = takeHomePresets.map((x) => {
-    const m = payBreakdown(x.data, taxState)
+    const m = payBreakdown(x.data, taxState, filing)
     return { id: x.id ?? '', name: x.name, k401: m.own + m.match }
   })
   const budgetChoices = budgetPresets.map((x) => ({ id: x.id ?? '', name: x.name }))
@@ -390,7 +397,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       {/* variables, grouped so related inputs read together */}
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <FieldGroup label="Timeline">
-          <ToolField label="Current age" value={c.age} onChange={f('age')} />
+          <CurrentAgeField typed={typedC.age} onChange={f('age')} />
           <div className="relative">
             <ToolField label="Retire at" value={c.retireAge} onChange={f('retireAge')} />
             <FieldBadge

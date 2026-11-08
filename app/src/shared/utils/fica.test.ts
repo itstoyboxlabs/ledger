@@ -25,3 +25,14 @@ describe('fica', () => {
     expect(atCap).toBeCloseTo(0.062 * 184500 + 0.0145 * 184500, 2)
   })
 })
+
+describe('fica by filing status', () => {
+  it('is unchanged for single filers', () => {
+    for (const g of [0, 50000, 200000, 210000, 300000]) expect(fica(g, 'single')).toBe(fica(g))
+  })
+  it('starts Additional Medicare at 250k for joint filers', () => {
+    expect(fica(250000, 'mfj')).toBeCloseTo(0.062 * 184500 + 0.0145 * 250000, 5)
+    expect(fica(300000, 'mfj')).toBeCloseTo(16239, 5)
+    expect(fica(220000, 'mfj')).toBeLessThan(fica(220000))
+  })
+})

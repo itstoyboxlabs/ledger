@@ -36,6 +36,7 @@ to use.
 ## What you get
 
 - **Spending**: your real income and spending by month and category, with trends and cash flow.
+- **About you**: your age, filing status and tax state, set once for every page that plans.
 - **Budget**: a plan for the month, compared against what you actually spent. Subscriptions fill in on their own.
 - **Log**: a running count of what you spend between statements, so you know if you are on track.
 - **Tools**: calculators for take-home pay, rent, debt payoff, vacations and more.

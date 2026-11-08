@@ -38,6 +38,8 @@ async function setup(page, { retire = {}, raw, port = FLAT, portAfter, includeDe
   if (retire !== null || raw !== undefined) state.retirePortfolio = port
   if (portAfter) state.retirePortfolioAfter = portAfter
   if (retire !== null || raw !== undefined) state.retireIncludeDebt = includeDebt
+  // a seeded plan keeps its own typed age even if a test adds an About you age
+  if (retire !== null || raw !== undefined) state.retireAgeAuto = false
   if (debts) state.debts = debts
   if (assets) state.assets = assets
   if (takeHome) state.takeHome = takeHome
@@ -281,6 +283,7 @@ test.describe('new user defaults', () => {
   })
 
   test('starting fields are 35, 60, 60, 95 and 5,000 a month', async ({ page }) => {
+    // the e2e start has no About you age, so this is the typed default
     await expect(field(main(page), 'Current age')).toHaveValue('35')
     await expect(field(main(page), 'Retire at')).toHaveValue('60')
     await expect(field(main(page), '401k access age')).toHaveValue('60')

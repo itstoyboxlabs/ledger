@@ -22,3 +22,14 @@ describe('taxOnExtra', () => {
     expect(taxOnExtra(200000, 50000, 'tx').effective).toBeGreaterThan(taxOnExtra(30000, 50000, 'tx').effective)
   })
 })
+
+describe('taxOnExtra by filing status', () => {
+  it('is unchanged for single filers', () => {
+    expect(taxOnExtra(100000, 50000, 'ny', 'single')).toEqual(taxOnExtra(100000, 50000, 'ny'))
+  })
+  it('stacks on the joint brackets', () => {
+    const got = taxOnExtra(100000, 50000, 'wy', 'mfj')
+    expect(got.total).toBeCloseTo(taxOn(150000, 'wy', 'mfj').total - taxOn(100000, 'wy', 'mfj').total, 8)
+    expect(got.total).toBeLessThan(taxOnExtra(100000, 50000, 'wy').total)
+  })
+})

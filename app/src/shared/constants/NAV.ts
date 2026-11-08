@@ -3,6 +3,7 @@ import type { NavEntry } from '@/shared/types/NavEntry'
 // beneath it. Pinned to exactly 2 lines regardless of viewport width.
 export const NAV: readonly NavEntry[] = [
   ['actuals', 'Spending', 'dollar', 'Your real spending and income from your bank statements.'],
+  ['about', 'About you', 'user', 'Your age, filing status and tax state. The planning pages read them from here.'],
   ['budget', 'Budget', 'wallet', 'Your monthly plan and how the real numbers compare.'],
   ['log', 'Log', 'receipt', 'A running log of what you spend between statements.'],
   ['tools', 'Tools', 'calc', 'Calculators for the money questions that come up, like what an apartment really costs, what a salary takes home, or how much cash you need until the next paycheck.'],

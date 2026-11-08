@@ -31,7 +31,11 @@ import type { Debt } from '@/shared/types/Debt'
 import type { PlanningPreset } from '@/screens/balances/types/PlanningPreset'
 
 // Balances: what you own and what you owe. Tools and Retirement read these.
-export function BalancesView() {
+type BalancesViewProps = {
+  goToAboutYou?: () => void
+}
+
+export function BalancesView({ goToAboutYou }: BalancesViewProps) {
   const [taxState, setTaxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
   const [debts, setDebts] = useDebts()
   const [assets, setAssets] = useAssets()
@@ -80,7 +84,7 @@ export function BalancesView() {
 
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[15px] font-semibold">Taxed in</h2>
+          <h2 className="text-[15px] font-semibold">Taxed in {STATES[taxState]?.label}</h2>
           <PresetBar
             presets={presets}
             currentData={presetData}
@@ -90,18 +94,20 @@ export function BalancesView() {
             scope="planningVariables"
           />
         </div>
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-          <div className="text-[13px] text-[var(--text-secondary)]">
-            Where do you plan on living? Tools tax accordingly
-            <span className="text-[var(--text-muted)]"> (federal + FICA + state{taxState === 'ny-nyc' ? ' + NYC local' : ''}, single filer, estimates)</span>
-          </div>
-          <Dropdown
-            label="State"
-            value={taxState}
-            onChange={setTaxState}
-            options={Object.entries(STATES).map(([value, s]) => ({ value, label: s.label }))}
-          />
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            Your tax state and filing status now live on the About you tab.
+          </p>
+          {goToAboutYou && (
+            <Button variant="outline" size="sm" onClick={goToAboutYou}>
+              <Icon name="user" size={13} />
+              Open About you
+            </Button>
+          )}
         </div>
+        <p className="mt-2 text-[12px] text-[var(--text-muted)]">
+          Presets here still save your tax state along with your debts, so a what-if move stays one click away.
+        </p>
       </Card>
 
       <Card className="p-5">

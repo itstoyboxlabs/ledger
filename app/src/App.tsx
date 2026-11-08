@@ -47,6 +47,7 @@ import { migrateEmployerMatch } from '@/shared/utils/migrateEmployerMatch'
 import { lazyNamed } from '@/shared/utils/lazyNamed'
 
 // each page is its own chunk, loaded the first time it is opened
+const AboutYouView = lazyNamed(() => import('@/screens/about-you/ui/AboutYouView'), 'AboutYouView')
 const BalancesView = lazyNamed(() => import('@/screens/balances/ui/BalancesView'), 'BalancesView')
 const BudgetView = lazyNamed(() => import('@/screens/budget/ui/BudgetView'), 'BudgetView')
 const CashFlowChart = lazyNamed(() => import('@/screens/spending/ui/CashFlowChart'), 'CashFlowChart')
@@ -77,7 +78,7 @@ export default function App() {
   )
   const [view, setView] = usePersistedState(
     'view', 'actuals',
-    (v) => typeof v === 'string' && ['actuals', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
+    (v) => typeof v === 'string' && ['actuals', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
   )
   const [showNotes, setShowNotes] = useState(false)
   const [showExport, setShowExport] = useState(false)
@@ -280,9 +281,10 @@ export default function App() {
         />
       )}
       {view === 'log' && <LogView />}
-      {view === 'tools' && <ToolsView goToBalances={() => setView('balances')} />}
+      {view === 'about' && <AboutYouView />}
+      {view === 'tools' && <ToolsView goToAboutYou={() => setView('about')} />}
       {view === 'retirement' && <RetirementView goToBalances={() => setView('balances')} />}
-      {view === 'balances' && <BalancesView />}
+      {view === 'balances' && <BalancesView goToAboutYou={() => setView('about')} />}
 
       {view === 'actuals' && (
       <>

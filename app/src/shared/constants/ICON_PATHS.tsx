@@ -61,6 +61,12 @@ export const ICON_PATHS = {
       <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
     </>
   ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="5" />
+      <path d="M20 21a8 8 0 0 0-16 0" />
+    </>
+  ),
   landmark: (
     <>
       <path d="M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7" />

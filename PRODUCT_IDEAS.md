@@ -13,16 +13,15 @@ docs. Where they differ it is noted.
 
 ## 1. Top recommendations
 
-Ranked by value per effort. The year-by-year pay plan, the tax on 401k withdrawals and the Budget preset for the
-monthly need have shipped and are not listed.
+Ranked by value per effort. The year-by-year pay plan, the tax on 401k withdrawals, the Budget preset for the
+monthly need and the About you tab have shipped and are not listed.
 
 | # | Idea | Why | Effort |
 | --- | --- | --- | --- |
-| 1 | **About you: age and filing status** | One shared card for your age, single or married, and tax state and city. No partner details: the app plans around your own income. Married filing jointly changes the brackets and the standard deduction, so for many households every tax figure is off today. Retirement, Debt payoff and every tax tool would read from it. | Medium |
-| 2 | **Inflation after you retire** | Pay keeps pace with prices while you work, but nothing raises your savings once you stop. One optional input that only touches the retired years, with returns turned into real returns. | Small |
-| 3 | **Bad-years stress test** | Every year earns the same return, so the verdict ignores sequence risk. A second "Money lasts" chip that replays the plan with a crash in the first two years of retirement shows how fragile the plan is. | Small |
-| 4 | **Healthcare and long-term care templates** | Insurance before Medicare is one of the biggest costs of retiring early. Event templates with sensible defaults make it one click. | Small |
-| 5 | **Cross-page scenarios** | A move to another city changes tax state, rent, salary and the retirement plan at once. A named scenario that snapshots the per-page presets together is mostly glue over presets. | Medium |
+| 1 | **Inflation after you retire** | Pay keeps pace with prices while you work, but nothing raises your savings once you stop. One optional input that only touches the retired years, with returns turned into real returns. | Small |
+| 2 | **Bad-years stress test** | Every year earns the same return, so the verdict ignores sequence risk. A second "Money lasts" chip that replays the plan with a crash in the first two years of retirement shows how fragile the plan is. | Small |
+| 3 | **Healthcare and long-term care templates** | Insurance before Medicare is one of the biggest costs of retiring early. Event templates with sensible defaults make it one click. | Small |
+| 4 | **Cross-page scenarios** | A move to another city changes tax state, rent, salary and the retirement plan at once. A named scenario that snapshots the per-page presets together is mostly glue over presets. | Medium |
 
 ---
 
@@ -72,8 +71,6 @@ The same fact typed in more than one place.
   401k and Social Security. If the tool is a hypothetical job, the 401k and the savings leftover describe two
   different lives. Show a one-line warning when the tool's net pay and the statement income differ by more than
   10%.
-- **Filing status.** The tax engine is single filer only and there is no setting. A married user gets wrong tax
-  on every page. Add a shared filing status next to tax state.
 - **Tax on gains while working** is guessed from the retirement spending level (`withdrawMo * 12`), not the
   salary. While working, the gains bracket should come from the salary.
 - **Inflation.** No page has one. See recommendation 1.
@@ -84,25 +81,22 @@ The same fact typed in more than one place.
 
 Results that cannot be sent where they obviously belong.
 
-1. **A shared "About you" card on Balances.** Age, filing status and tax state. Balances
-   already owns tax state and its preset is literally called `planningVariables`. Retirement reads age from it,
-   Debt payoff shows "debt free at 41", the tax engine reads filing status.
-2. **Log into Remaining this month.** Budget's Remaining this month counts undated rows in full even when the
+1. **Log into Remaining this month.** Budget's Remaining this month counts undated rows in full even when the
    Log shows half of Groceries is already spent. Subtract this month's Log entries per row. Same for Cash between
    two days.
-3. **Rent scenarios to Budget.** Picking a scenario row should offer "Use this rent" that writes the linked rent
+2. **Rent scenarios to Budget.** Picking a scenario row should offer "Use this rent" that writes the linked rent
    row, or saves a Budget preset, so the what-if becomes the plan in one click.
-4. **Hourly to Take-home.** "Use as my salary" sends rate times hours times 52 to Take-home pay.
-5. **Spending averages into Budget.** Next to a manual row's amount, a quiet "last 3 months: $412" from its
+3. **Hourly to Take-home.** "Use as my salary" sends rate times hours times 52 to Take-home pay.
+4. **Spending averages into Budget.** Next to a manual row's amount, a quiet "last 3 months: $412" from its
    `match`. The matching code already exists for Compare to actual.
-6. **Retirement events back to Budget.** A house down payment event with no change to housing cost is half a
+5. **Retirement events back to Budget.** A house down payment event with no change to housing cost is half a
    plan. A "Housing changes at age" event (see gaps) closes it.
-7. **Annual subscriptions into a sinking fund.** They are left out of Budget on purpose, but nothing saves for
+6. **Annual subscriptions into a sinking fund.** They are left out of Budget on purpose, but nothing saves for
    them. A single derived line "Yearly charges, set aside $X a month" or a Cash between two days warning when
    one is due in range.
-8. **Balances "as of" date in Retirement.** Starting balances are only as fresh as Balances. Show "Balances from
+7. **Balances "as of" date in Retirement.** Starting balances are only as fresh as Balances. Show "Balances from
    Mar 2" under Starting balances and nudge when it is over 90 days old.
-9. **Cross-page scenarios.** Presets are per page. A move to another city changes tax state, rent, salary and
+8. **Cross-page scenarios.** Presets are per page. A move to another city changes tax state, rent, salary and
    the retirement plan at once. A named scenario that snapshots the per-page presets together is mostly glue
    over `usePresets`.
 
@@ -124,7 +118,7 @@ From `screens/retirement` (the simulation is `utils/simulateRetirement.ts`).
   federal, state and city brackets. Savings are spent first, then pre-tax, then Roth.
 - The monthly need is typed or follows a Budget preset, minus Social Security from the claim age.
 - Events: money in, money out or pay off a debt, with repeats. Equity events stop when you retire.
-- Still missing: inflation, filing status, healthcare, flat returns only.
+- Still missing: inflation, healthcare, flat returns only.
 
 ### Gaps
 
@@ -172,5 +166,3 @@ Impact means how much the gap can move "Money lasts" or the earliest safe age fo
 - **Budget suggestion from Spending.** A dotted hint under manual rows with the last 3 months' average.
 - **Log meters in Remaining this month.** Subtract what is already logged.
 - **Scenario snapshots** that bundle the per-page presets under one name.
-- **Filing status** in the tax engine: married filing jointly brackets and standard deduction. It is the most
-  common reason the tax figures will be wrong for a real household.

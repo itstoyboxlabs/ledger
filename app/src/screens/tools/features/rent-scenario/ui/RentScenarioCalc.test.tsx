@@ -113,4 +113,17 @@ describe('RentScenarioCalc', () => {
     const saved = JSON.parse(localStorage.getItem('ledger:rentScenarioOverrides') as string)
     expect(saved).toEqual({ food: 300 })
   })
+  it('says when it uses Married filing jointly from About you', async () => {
+    localStorage.setItem('ledger:filingStatus', '"mfj"')
+    const go = vi.fn()
+    renderApp(<RentScenarioCalc debts={[]} goToAboutYou={go} />)
+    expect(await screen.findByText(/Using Married filing jointly from About you/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }))
+    expect(go).toHaveBeenCalled()
+  })
+  it('shows no filing note for a single filer', async () => {
+    renderApp(<RentScenarioCalc debts={[]} />)
+    expect(await screen.findByText('Rent scenarios')).toBeInTheDocument()
+    expect(screen.queryByText(/Married filing jointly/)).not.toBeInTheDocument()
+  })
 })

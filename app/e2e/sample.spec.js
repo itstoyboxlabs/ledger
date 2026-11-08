@@ -35,4 +35,14 @@ test.describe('rich sample data', () => {
     await goTo(page, 'Log')
     await expect(main(page).getByText('Farmers market')).toBeVisible()
   })
+
+  test('About you has age 35 and Single, and Retirement keeps the plan\'s typed age', async ({ page }) => {
+    await goTo(page, 'About you')
+    await expect(main(page).getByLabel('Your age')).toHaveValue('35')
+    await expect(main(page).getByRole('combobox', { name: 'Filing status' })).toHaveText('Single')
+    await goTo(page, 'Retirement')
+    const ageField = main(page).locator('div.relative').filter({ has: page.locator('span:text-is("Current age")') }).first()
+    await expect(ageField.getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'false')
+    await expect(ageField.locator('input')).toHaveValue('34')
+  })
 })

@@ -1,7 +1,7 @@
 import { STATES } from '@/shared/constants/STATES'
 import { Button } from '@/shared/ui/primitives/button'
 
-// "Taxed in <state>. Change" caption: the state is set once on the Balances page
+// "Taxed in <state>. Change" caption: the state is set once on the About you page
 type TaxedInCaptionProps = {
   state: string
   onChange: () => void

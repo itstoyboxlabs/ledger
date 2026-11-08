@@ -24,4 +24,10 @@ describe('readLocalKeys', () => {
     localStorage.setItem('ledger:a', '1')
     expect(readLocalKeys()).toEqual({})
   })
+  it('includes the About you keys next to the tax state', () => {
+    localStorage.setItem('ledger:taxState', '"ca"')
+    localStorage.setItem('ledger:filingStatus', '"mfj"')
+    localStorage.setItem('ledger:age', JSON.stringify({ age: 40, asOf: 2026 }))
+    expect(readLocalKeys()).toEqual({ 'ledger:taxState': 'ca', 'ledger:filingStatus': 'mfj', 'ledger:age': { age: 40, asOf: 2026 } })
+  })
 })

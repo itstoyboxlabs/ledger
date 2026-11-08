@@ -161,19 +161,20 @@ test.describe('what you have', () => {
 })
 
 test.describe('taxed in', () => {
-  test('defaults to Texas and the choice is remembered', async ({ page }) => {
-    await expect(main(page).getByRole('button', { name: /State\s*Texas/ })).toBeVisible()
-    await main(page).getByRole('button', { name: /State/ }).click()
-    await page.getByRole('menuitem', { name: 'New York' }).or(page.getByRole('option', { name: 'New York' })).first().click()
-    await page.reload()
-    await expect(main(page).getByRole('button', { name: /State\s*New York/ })).toBeVisible()
+  test('the state picker moved to About you, and Balances points there', async ({ page }) => {
+    await expect(main(page).getByRole('heading', { level: 2, name: 'Taxed in Texas' })).toBeVisible()
+    await expect(main(page).getByText('Your tax state and filing status now live on the About you tab.')).toBeVisible()
+    await expect(main(page).getByRole('button', { name: /State\s*Texas/ })).toHaveCount(0)
+    await main(page).getByRole('button', { name: 'Open About you' }).click()
+    await expect(page.locator('h1', { hasText: 'About you' })).toBeVisible()
   })
 
-  test('the Tools page says where you are taxed', async ({ page }) => {
+  test('a state picked on About you shows here', async ({ page }) => {
+    await goTo(page, 'About you')
     await main(page).getByRole('button', { name: /State/ }).click()
     await page.getByRole('menuitem', { name: 'New York' }).or(page.getByRole('option', { name: 'New York' })).first().click()
-    await goTo(page, 'Tools')
-    await expect(main(page)).toContainText('Taxed in New York')
+    await goTo(page, 'Balances')
+    await expect(main(page).getByRole('heading', { level: 2, name: 'Taxed in New York' })).toBeVisible()
   })
 })
 

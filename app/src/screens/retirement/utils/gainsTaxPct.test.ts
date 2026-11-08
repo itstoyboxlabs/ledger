@@ -29,3 +29,15 @@ describe('gainsTaxPct', () => {
     expect(Number.isInteger(gainsTaxPct(inc, 'ny') * 10)).toBe(true)
   })
 })
+
+describe('gainsTaxPct by filing status', () => {
+  it('is unchanged for single filers', () => {
+    for (const g of [0, 40000, 60000, 100000, 600000]) expect(gainsTaxPct(g, 'ny', 'single')).toBe(gainsTaxPct(g, 'ny'))
+  })
+  it('uses the joint zero band after the joint deduction', () => {
+    // taxable 67,800 is under 98,900 for joint filers, but 83,900 is over 49,450 single
+    expect(gainsTaxPct(100000, 'wy', 'mfj')).toBe(0)
+    expect(gainsTaxPct(100000, 'wy')).toBe(15)
+    expect(gainsTaxPct(200000, 'wy', 'mfj')).toBe(15)
+  })
+})

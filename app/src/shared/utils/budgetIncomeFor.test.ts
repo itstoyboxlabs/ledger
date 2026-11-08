@@ -46,3 +46,16 @@ describe('budgetIncomeFor', () => {
     expect(budgetIncomeFor({ active: false }, th, 'wy')).toBe(8200)
   })
 })
+
+describe('budgetIncomeFor by filing status', () => {
+  const th: RawTakeHome = { salary: 120000, deductions: [] }
+  it('is unchanged for single filers', () => {
+    expect(budgetIncomeFor({ active: true }, th, 'ca', 'single')).toBe(budgetIncomeFor({ active: true }, th, 'ca'))
+  })
+  it('uses the joint take-home figure from the tool', () => {
+    expect(budgetIncomeFor({ active: true }, th, 'wy', 'mfj')).toBe(takeHomeMonthly(th, 'wy', 'mfj'))
+  })
+  it('ignores the filing status for a manual amount', () => {
+    expect(budgetIncomeFor({ active: 'manual', amount: 3500 }, th, 'wy', 'mfj')).toBe(3500)
+  })
+})
