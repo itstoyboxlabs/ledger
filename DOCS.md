@@ -181,8 +181,8 @@ so `dark:` variants apply.
 
 ### Shell and layout
 
-- **Sidebar**: wordmark, the pages from `NAV`, accounts, Notes, then one row of icon buttons named by tooltip
-  (Export data, Download, Upload file when available, Tutorial, GitHub). `PageHeader` has the big title, a
+- **Sidebar**: wordmark, the pages from `NAV`, accounts, then one row of icon buttons named by tooltip
+  (Export data, Upload file when available, Tutorial, GitHub), then Notes at the very bottom. `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
 - **Nav names and view ids**: About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
   (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
@@ -319,9 +319,7 @@ Statement reality. Everything derives from the statements data.
 - **Drill-down**: category, then subcategory, then merchant. Click slices or rows. A breadcrumb goes back and the
   path persists. Sub-levels use lightness shades of the parent color. Level tables show count, total and percent.
 - **Transactions table**: every row in the current drill scope, sortable by date and amount, with merchant icons
-  and the statement description under the merchant name. The income table sits below. The sidebar Download
-  saves a CSV of every transaction in the month scope on the switched-on accounts, transfers included at their
-  real amount.
+  and the statement description under the merchant name. The income table sits below.
 - **Subscriptions table**: only active subscriptions. A short footer sentence and an "N not seen recently" toggle
   list the hidden ones so nothing vanishes silently. Every column header sorts (`ledger:subsSort2`).
   - "Bills on" is the billing day of the month, taken from observed charge dates. A `~` marks a single-observation
