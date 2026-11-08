@@ -199,9 +199,9 @@ export function PayPlanCard({ periods, resolved, issues, todaySalary, retireAge,
                     )}
                     <SourceBadge title={PAY_SOURCE_LABELS.budget} owner={name} value={saveValue} short={r.missingSave ? PAY_SOURCE_LABELS.typed : short(saveValue, budgetPresets, PAY_SOURCE_LABELS.saveToday)} options={saveOptions} onPick={pickSave} />
                   </div>
-                  <ToolField label={<>Raise a year{sr}</>} value={p.raisePct} step={0.5} suffix="%"
+                  <ToolField label={<>Contributions grow a year{sr}</>} value={p.raisePct} step={0.5} suffix="%"
                     onChange={(v) => patch(p.id, { raisePct: v })}
-                    tip="How much the 401k and savings grow each year inside this period. Everything is in today's dollars, so this is growth above inflation." />
+                    tip="Your 401k and savings both grow by this percent each year. Use it for a raise. Savings can grow faster than a raise if your spending stays flat." />
                 </div>
                 {notes.length > 0 && (
                   <ul className="mt-2 flex flex-col gap-0.5 text-[11px]">

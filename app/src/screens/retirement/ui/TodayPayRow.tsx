@@ -15,7 +15,7 @@ type TodayPayRowProps = {
   // a Take-home preset id
   onPickPay: (value: string) => void
   k401: { auto: boolean; autoValue: number; autoTip: string; value: number; onToggleAuto: () => void; onChange: (v: number) => void }
-  // Raise a year, the same field the plan periods have
+  // Contributions grow a year, the same field the plan periods have
   raise: { value: number; onChange: (v: number) => void }
   savings: { auto: boolean; autoValue: number; autoTip: string; value: number; onChange: (v: number) => void; onAuto: (auto: boolean) => void; onPickPreset: (id: string) => void }
 }
@@ -80,8 +80,8 @@ export function TodayPayRow({ takeHomePresets, budgetPresets, onPickPay, k401, r
             onPick={(v) => (v === 'today' || v === 'typed' ? savings.onAuto(v === 'today') : savings.onPickPreset(v))}
           />
         </div>
-        <ToolField label="Raise a year" value={raise.value} step={0.5} suffix="%" onChange={raise.onChange}
-          tip="How much the 401k and savings grow each year until you retire. Everything is in today's dollars, so this is growth above inflation." />
+        <ToolField label="Contributions grow a year" value={raise.value} step={0.5} suffix="%" onChange={raise.onChange}
+          tip="Your 401k and savings both grow by this percent each year. Use it for a raise. Savings can grow faster than a raise if your spending stays flat." />
       </div>
     </div>
   )

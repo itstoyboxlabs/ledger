@@ -126,7 +126,7 @@ describe('simulateRetirement with no pay plan (regression)', () => {
   })
 })
 
-describe('simulateRetirement Raise a year with no plan', () => {
+describe('simulateRetirement Contributions grow a year with no plan', () => {
   it('0 or missing changes nothing', () => {
     expect(simulateRetirement(plan({ raisePct: 0 }), 40).rows).toEqual(simulateRetirement(plan(), 40).rows)
   })

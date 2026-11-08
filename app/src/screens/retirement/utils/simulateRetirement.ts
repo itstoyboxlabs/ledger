@@ -36,7 +36,7 @@ export function simulateRetirement(c: RetireSimInput, retireAge: number): Retire
     let contribK: number
     let contribS: number
     if (!pay) {
-      // Raise a year with no plan grows today's 401k and savings; 0 leaves them as they were
+      // Contributions grow a year with no plan grows today's 401k and savings; 0 leaves them as they were
       const grow = c.raisePct ? Math.pow(1 + c.raisePct / 100, age - c.age) : 1
       // first year: 401k eligibility starts 3 months into employment -> 9/12 of the contribution
       contribK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k * grow) : 0

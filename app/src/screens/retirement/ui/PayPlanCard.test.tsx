@@ -56,7 +56,7 @@ describe('PayPlanCard', () => {
     expect(screen.queryByLabelText(/Until age for period 2/)).toBeNull()
     expect(screen.getAllByText('$5,700')).toHaveLength(2)
     expect(screen.getAllByText('$12,000')).toHaveLength(2)
-    expect(screen.getByLabelText(/Raise a year for Now/)).toHaveValue(0)
+    expect(screen.getByLabelText(/Contributions grow a year for Now/)).toHaveValue(0)
     expect(screen.queryByText(/Pay per year/)).toBeNull()
     expect(screen.queryByText(/For how many years/)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Auto' })).toBeNull()

@@ -1466,20 +1466,20 @@ test.describe('pay and saving over time', () => {
     await expectRow(page, 39, { contrib: 33142 + 3750 })
   })
 
-  test('Raise a year works with no plan and carries into periods and back', async ({ page }) => {
+  test('Contributions grow a year works with no plan and carries into periods and back', async ({ page }) => {
     await setup(page)
-    await expect(field(card(page), 'Raise a year')).toHaveValue('0')
-    await field(card(page), 'Raise a year').fill('3')
+    await expect(field(card(page), 'Contributions grow a year')).toHaveValue('0')
+    await field(card(page), 'Contributions grow a year').fill('3')
     // 5,000 into the 401k and 20,000 into savings, 3% more each year
     await expectRow(page, 30, { contrib: 23750 })
     await expectRow(page, 32, { contrib: 25000 * 1.03 ** 2 })
     expect((await retireCalc(page)).raisePct).toBe(3)
     await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
-    await expect(page.getByLabel(/Raise a year for Now/)).toHaveValue('3')
-    await expect(page.getByLabel(/Raise a year for period 2/)).toHaveValue('3')
+    await expect(page.getByLabel(/Contributions grow a year for Now/)).toHaveValue('3')
+    await expect(page.getByLabel(/Contributions grow a year for period 2/)).toHaveValue('3')
     await expectRow(page, 32, { contrib: 25000 * 1.03 ** 2 })
     await card(page).getByRole('button', { name: 'Back to one period' }).click()
-    await expect(field(card(page), 'Raise a year')).toHaveValue('3')
+    await expect(field(card(page), 'Contributions grow a year')).toHaveValue('3')
     await expect.poll(async () => (await retireCalc(page)).pay.periods).toEqual([])
   })
 

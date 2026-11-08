@@ -22,7 +22,7 @@ export interface RetireState {
   ss: RetireSs
   events: RetireEvent[]
   pay: RetirePay
-  // Raise a year on the no-plan row: grows today's 401k and savings each working year.
+  // Contributions grow a year on the no-plan row: grows today's 401k and savings each working year.
   // Plan pay changes copies it into the periods, Back to one period copies it back.
   raisePct: number
 }

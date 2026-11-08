@@ -8,7 +8,7 @@ type Today = Omit<PayPeriod, 'id' | 'label' | 'fromAge' | 'toAge' | 'raisePct'> 
 // with today's sources, then a change. A new period starts where the last one ends, or
 // some years after it starts when it runs until you retire (the last one then ends there,
 // so the two never overlap). It copies the last period's sources, typed values and raise.
-// The "Now" period takes the no-plan Raise a year.
+// The "Now" period takes the no-plan Contributions grow a year.
 export function addPayPeriod(periods: PayPeriod[], age: number, retireAge: number, today: Today): PayPeriod[] {
   const list = periods.length > 0
     ? periods

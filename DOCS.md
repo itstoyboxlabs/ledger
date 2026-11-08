@@ -655,7 +655,7 @@ pay tool and its presets. Logic is in `utils/resolvePayPeriods.ts`, `utils/tidyP
     employer match.
   - Today's Budget: the Budget `savings` leftover share, times 12. The leftover never goes below zero. With no
     allocation at all the whole leftover counts. Once there is one, only its savings share does.
-  - Raise a year (`retireCalc.raisePct`, default 0): the same field as on a plan period. It grows today's 401k
+  - Contributions grow a year (`retireCalc.raisePct`, default 0): the same field as on a plan period. It grows today's 401k
     and savings by that percent for each working year after the first (freed debt payments are not grown). 0
     leaves the numbers exactly as before. "Plan pay changes" copies it into the new periods, and clearing the
     plan ("Back to one period", or removing the last period) copies the first period's raise back.
@@ -686,7 +686,7 @@ takeHomePreset, k401, saveFrom, savePreset, savings }] }`. `takeHomeFrom` and `s
 period points at them rather than holding numbers. A period has no pay of its own.
 
 - **Fields**: label, From age, Ends ("When I retire" or "At an age" with an Until age), Into 401k per year,
-  Into savings per year and Raise a year.
+  Into savings per year and Contributions grow a year.
 - **Plan pay changes** starts a "Now" period from today with today's sources (typed values carry over), plus a
   second period ten years on. Each later period starts where the last one ends and copies its sources. With more
   than one period, "Back to one period" in the card header clears the plan. Removing the last period does too.
@@ -705,7 +705,7 @@ period points at them rather than holding numbers. A period has no pay of its ow
   preset, the split and dismissed subscriptions from today's Budget. Income follows the Budget's income rules:
   from statements or a typed amount it stays the same, and when the Budget uses the Take-home tool it is the
   take-home pay of the period's Take-home source.
-- **Raise a year** grows both amounts by that percent for each year into the period. Your share of the 401k stays
+- **Contributions grow a year** grows both amounts by that percent for each year into the period. Your share of the 401k stays
   under the yearly deferral limit (`K401_DEFERRAL_LIMIT`) and the match follows it; typed dollars are not capped.
   The first year of each period is a 75% 401k year (new job). A raise inside a period is not.
 - **Picking a source copies its numbers into the typed fields**, so a deleted preset falls back to the last

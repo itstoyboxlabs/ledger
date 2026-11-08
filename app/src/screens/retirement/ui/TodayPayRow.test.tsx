@@ -65,9 +65,9 @@ describe('TodayPayRow', () => {
     expect(onPickPay).not.toHaveBeenCalled()
   })
 
-  it('has the same Raise a year field as the plan periods', async () => {
+  it('has the same Contributions grow a year field as the plan periods', async () => {
     const { onRaise } = setup()
-    const raise = screen.getByLabelText(/Raise a year/)
+    const raise = screen.getByLabelText(/Contributions grow a year/)
     expect(raise).toHaveValue(0)
     await userEvent.clear(raise)
     await userEvent.type(raise, '3')
