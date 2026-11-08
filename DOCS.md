@@ -542,8 +542,12 @@ a PresetBar), "What you owe" and "What you have".
 - Older saves were `{ loans, card, taxes }`. `useDebts` rewrites them as three entries on first read, and
   `useDebtLinkMigration` turns an old name-based hint into a row id only when a row with that exact name exists.
   Otherwise the debt migrates unlinked with payment 0, so no number changes.
-- **Assets** live in `assets` (`[{ id, name, balance }]`) with an "as of" date in `assetsAsOf`. Each asset has a
-  `pool`, `savings` or `401k`, used by Retirement.
+- **Assets** live in `assets` (`[{ id, name, balance, pool?, kind? }]`) with an "as of" date in `assetsAsOf`.
+  `kind` is the account type, picked in an "Account type" select: `regular` (Savings, use anytime), `pretax`
+  (a traditional 401k or IRA, taxed as income on the way out) or `roth` (taxed going in, tax free out). Pre-tax
+  and Roth are locked until the 401k access age, so picking a type also writes the matching `pool` (`savings` or
+  `401k`). Saves without `kind` read through `assetKind`: a `401k` pool asset is pre-tax, anything else regular,
+  so old data loads unchanged.
 - **Presets** use the key `planningVariables` and save `{ taxState, debts }`. Old presets with debts as an object
   are converted on apply.
 - Debt payoff, Rent scenarios and Retirement's debt logic all read this list.
@@ -563,14 +567,36 @@ The most model-heavy page: a year-by-year projection from current age to the end
   - Working years: 401k grows and gains the contribution. The savings pool gains the contribution plus after-tax
     growth. Year one's payroll 401k contribution is multiplied by 0.75, because eligibility starts about three
     months into a job.
-  - Retired years: withdrawals are monthly need times 12, from the savings pool only. The need is typed or
-    comes from a Budget preset (see Need per month below).
+  - Retired years: withdrawals are monthly need times 12, from the savings pool only (with the tax on 401k
+    withdrawals on, see below, the open 401k pools cover what savings cannot). The need is typed or comes from a
+    Budget preset (see Need per month below).
   - **401k access age (60)**: at the end of that year the 401k balance rolls into the savings pool and its column
     shows a dash. The move shows in that year's Contributions. From then on new 401k money goes straight to
     savings, and if you are already past the access age the 401k starts in savings. Before that it compounds
     untouched. Early withdrawal is not modeled as available.
   - **Start in debt** toggle: the pool starts at savings now minus the shared debts, and contributions dig out
     of the hole first. Negative balances earn no returns.
+- **Tax on 401k withdrawals** (`retireCalc.tax401k`, on by default, saves without it read as on): the toggle
+  under "In retirement". When on, the simulation keeps three pools: regular savings, pre-tax (the typed "401k
+  now" box, or `pretax` assets on Balances, plus all 401k contributions and retirement account lines) and Roth
+  (`roth` assets). Pre-tax and Roth grow at the full rate and stay locked until the access age, as before. At
+  the access age they do not merge into savings: they open as their own pools, count in Total (liquid) from
+  then on (their balance shows in that year's Contributions, as the move did), and new 401k money keeps adding
+  to the pre-tax pool.
+  - **Withdrawal order**: regular savings first. Only when savings go below zero does `drawFromPools` cover the
+    gap: the pre-tax pool, then Roth last (it grows tax free the longest). A shortfall left after both is the
+    run-out, as before.
+  - **Gross-up**: to spend a net amount N from the pre-tax pool you take out G with `G - tax(G) = N`. `tax` is
+    `incomeTaxOnExtra(0, G, taxState)`: federal brackets after the 16,100 standard deduction plus the state and
+    city brackets from the Balances `taxState`, no FICA. It is progressive, so a bigger year reaches higher
+    brackets. `grossUp` solves it by bisection. The tax shows in the year table's Tax column, and each row adds
+    up as `last Total + Contributions + Growth - Withdrawals - Tax = Total`.
+  - **Simplified on purpose**: Social Security is not counted as taxable income (in reality up to 85% of it
+    can be), savings gains are not stacked on top, today's brackets apply every year, early withdrawal before
+    the access age is not modeled and payroll Roth 401k money (the Take-home `roth401k` kind) still goes into
+    the pre-tax pool.
+  - With the toggle off, or with no pre-tax or Roth money, the numbers are exactly the untaxed model (a unit
+    test checks this). Off, Roth assets join the 401k as before.
 - **Returns**: editable portfolio tables, each fund with an allocation percent and a lifetime performance
   percent, giving a weighted average. It weights strictly by the allocation column. The 401k grows at the full
   rate. The savings pool grows at the rate times (1 minus tax on returns).
@@ -587,7 +613,7 @@ The most model-heavy page: a year-by-year projection from current age to the end
 - **The Growth column is liquid growth only**, so each row's arithmetic is self-contained:
   `last Total + Contributions + Growth - Withdrawals = this Total`. This holds from the access age on, the
   move included. Before it, Contributions also counts the 401k money that goes into the locked pool.
-- **Headline chips**: liquid at retirement (with the locked 401k shown separately, and the starting balances when
+- **Headline chips** (all from the taxed result when the tax is on): liquid at retirement (with the locked 401k shown separately, and the starting balances when
   you retire at today's age), the money-lasts verdict (the first liquid-negative retirement year) and the total
   at 60, 70, 80, 90 and 100 plus the end age, each only once and only inside the plan.
 - **Header tooltips are dynamic.** They embed the current input values, so they restate the assumptions.

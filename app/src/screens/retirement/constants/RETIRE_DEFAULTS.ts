@@ -15,6 +15,7 @@ export const RETIRE_DEFAULTS: RetireState = {
   contrib401k: 0, contribSavings: 0,
   auto401k: true, autoSavings: true,
   withdrawMo: 5000, taxPct: 15, autoTax: true,
+  tax401k: true, // the pre-tax 401k is taxed as income on the way out
   ss: { on: true, claimAge: 67, auto: true, monthly: 0 },
   events: [],
   extras: [], // extra yearly saving lines the user pencils in: { id, name, amount, unit: 'yr'|'mo', to: 'savings'|'401k' }
