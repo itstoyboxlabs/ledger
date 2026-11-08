@@ -156,17 +156,6 @@ test.describe('transactions table', () => {
     const spend = data.filter((t) => t.kind === 'expense').reduce((s, t) => s + t.amount, 0) - data.filter((t) => t.kind === 'refund').reduce((s, t) => s + t.amount, 0)
     expect(spend).toBeCloseTo(19766.16, 1)
   })
-
-  test('CSV download follows the month filter', async ({ page }) => {
-    await chooseMonth(page, 'Oct 2026')
-    const [dl] = await Promise.all([
-      page.waitForEvent('download'),
-      page.getByRole('complementary').getByRole('button', { name: 'Download' }).click(),
-    ])
-    const lines = fs.readFileSync(await dl.path(), 'utf8').trim().split('\n').slice(1)
-    expect(lines.length).toBeGreaterThan(10)
-    expect(lines.every((l) => l.startsWith('"2026-10'))).toBe(true)
-  })
 })
 
 test.describe('income table', () => {

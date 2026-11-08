@@ -33,8 +33,6 @@ import { SubscriptionsTable } from '@/screens/spending/ui/SubscriptionsTable'
 import { ToolPicker } from '@/screens/tools/ui/ToolPicker'
 import { TxnTable } from '@/screens/spending/ui/TxnTable'
 import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
-import { exportCsv } from '@/screens/spending/utils/exportCsv'
-import { scopeLabel } from '@/screens/spending/utils/scopeLabel'
 import { scopeMonthsFor } from '@/screens/spending/utils/scopeMonthsFor'
 import { scopedTxns } from '@/screens/spending/utils/scopedTxns'
 import { inDrillPath } from '@/screens/spending/utils/inDrillPath'
@@ -178,11 +176,6 @@ export default function App() {
         setAccounts={setAccounts}
         onNotes={() => setShowNotes(true)}
         onExport={() => setShowExport(true)}
-        onCsv={() => exportCsv(scoped, `ledger-${month}.csv`)}
-        csvLabel={
-          (month === 'all' ? 'All transactions' : `Transactions for ${scopeLabel(month)}`) +
-          (allAccounts ? '' : ' on the selected accounts')
-        }
         onUpload={isLocal() ? null : () => uploadRef.current?.click()}
       />
       {!isLocal() && (

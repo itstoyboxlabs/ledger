@@ -12,7 +12,7 @@ beforeAll(() => {
 beforeEach(() => loadSampleData())
 
 const setup = (props: Partial<ComponentProps<typeof Sidebar>> = {}) => {
-  const fns = { setView: vi.fn(), setAccounts: vi.fn(), onNotes: vi.fn(), onExport: vi.fn(), onCsv: vi.fn() }
+  const fns = { setView: vi.fn(), setAccounts: vi.fn(), onNotes: vi.fn(), onExport: vi.fn() }
   render(<TooltipProvider><Sidebar view="actuals" accounts={['chk']} {...fns} {...props} /></TooltipProvider>)
   return fns
 }
@@ -52,20 +52,18 @@ describe('Sidebar', () => {
     expect(setAccounts).toHaveBeenLastCalledWith([])
   })
 
-  it('fires the notes, export and csv actions', async () => {
-    const { onNotes, onExport, onCsv } = setup()
+  it('fires the notes and export actions', async () => {
+    const { onNotes, onExport } = setup()
     await userEvent.click(desktop().getByRole('button', { name: 'Notes' }))
     await userEvent.click(desktop().getByRole('button', { name: 'Export data' }))
-    await userEvent.click(desktop().getByRole('button', { name: 'Download' }))
     expect(onNotes).toHaveBeenCalled()
     expect(onExport).toHaveBeenCalled()
-    expect(onCsv).toHaveBeenCalled()
   })
 
-  it('says Export data saves one ledger-data.json file', async () => {
+  it('says Export data downloads one ledger-data.json file', async () => {
     setup({ onUpload: vi.fn() })
     await userEvent.hover(desktop().getByRole('button', { name: 'Export data' }))
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('save everything to one ledger-data.json file')
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('download everything as one ledger-data.json')
   })
 
   it('says Upload file takes your ledger-data.json and replaces what is stored', async () => {

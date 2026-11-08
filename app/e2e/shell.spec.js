@@ -78,10 +78,10 @@ test.describe('sidebar', () => {
     await expect(page.getByText('290 transactions').first()).toBeVisible()
   })
 
-  test('icon row has export, download, upload, tutorial and github', async ({ page }) => {
+  test('icon row has export, upload, tutorial and github', async ({ page }) => {
     await openApp(page)
     const aside = page.getByRole('complementary')
-    for (const n of ['Export data', 'Download', 'Upload file']) await expect(aside.getByRole('button', { name: n })).toBeVisible()
+    for (const n of ['Export data', 'Upload file']) await expect(aside.getByRole('button', { name: n })).toBeVisible()
     await expect(aside.getByRole('link', { name: 'Tutorial' })).toHaveAttribute('href', /tutorial/)
     await expect(aside.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', /.+/)
   })
@@ -99,20 +99,6 @@ test.describe('sidebar', () => {
     expect(file.transactions.length).toBeGreaterThan(100)
     expect(Object.keys(file.accounts).length).toBeGreaterThan(0)
     expect(Array.isArray(file.settings.budget.rows)).toBe(true)
-  })
-})
-
-test.describe('csv download', () => {
-  test('Download saves the scoped transactions as a CSV', async ({ page }) => {
-    await openApp(page)
-    const [dl] = await Promise.all([
-      page.waitForEvent('download'),
-      page.getByRole('complementary').getByRole('button', { name: 'Download' }).click(),
-    ])
-    expect(dl.suggestedFilename()).toMatch(/\.csv$/)
-    const lines = fs.readFileSync(await dl.path(), 'utf8').split('\n')
-    expect(lines[0]).toBe('date,merchant,description,category,subcategory,account,kind,amount')
-    expect(lines.length).toBeGreaterThan(100)
   })
 })
 

@@ -45,7 +45,6 @@ export const ICON_PATHS = {
       <rect width="18" height="18" x="3" y="4" rx="2" />
     </>
   ),
-  share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />,
   more: <path d="M5 12h.01M12 12h.01M19 12h.01" strokeWidth="3.2" />,
   card: (
     <>
