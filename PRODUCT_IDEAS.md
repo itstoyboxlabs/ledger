@@ -11,21 +11,18 @@ docs. Where they differ it is noted.
 
 ---
 
-## 1. Top 5 recommendations
+## 1. Top recommendations
 
-Ranked by value per effort.
+Ranked by value per effort. The year-by-year pay plan, the tax on 401k withdrawals and the Budget preset for the
+monthly need have shipped and are not listed.
 
 | # | Idea | Why | Effort |
 | --- | --- | --- | --- |
-| 1 | **Inflation input and real returns** | The page says "today's dollars" but the fund table asks for each fund's lifetime performance, which is a nominal number. A 10% fund against a flat need per month quietly assumes zero inflation for 40 years. That overstates the end balance by more than half. One input fixes it. | Small |
-| 2 | **Year-by-year income plan** | Pay is one flat number from today to retirement. Raises, a pay cut, a career change, a sabbatical and part-time work all change the answer, and none can be entered. Full spec in section 4. | Medium |
-| 3 | **Tax on 401k withdrawals** | The 401k moves into savings untaxed at the access age. For most people it is pre-tax money, so every dollar out of it owes income tax. The tax engine already exists. | Small |
-| 4 | **Need per month from Budget** | Retirement asks for a monthly need that the Budget already knows. An Auto badge (Budget expenses minus debt payments and savings rows) plus a line showing the last 12 months of real spending. | Small |
-| 5 | **Bad-years stress test** | Every year earns the same return, so the verdict ignores sequence risk. A second "Money lasts" chip that replays the plan with a crash in the first two years of retirement shows how fragile the plan is. | Small |
-
-Numbers 1, 3, 4 and 5 are each a day or two. Number 2 is the one bigger feature and it makes several other
-gaps (raises, match on the new salary, Social Security from real earnings, part-time retirement) fall out of
-one data shape.
+| 1 | **About you: age and filing status** | One shared card for your age, single or married, and tax state and city. No partner details: the app plans around your own income. Married filing jointly changes the brackets and the standard deduction, so for many households every tax figure is off today. Retirement, Debt payoff and every tax tool would read from it. | Medium |
+| 2 | **Inflation after you retire** | Pay keeps pace with prices while you work, but nothing raises your savings once you stop. One optional input that only touches the retired years, with returns turned into real returns. | Small |
+| 3 | **Bad-years stress test** | Every year earns the same return, so the verdict ignores sequence risk. A second "Money lasts" chip that replays the plan with a crash in the first two years of retirement shows how fragile the plan is. | Small |
+| 4 | **Healthcare and long-term care templates** | Insurance before Medicare is one of the biggest costs of retiring early. Event templates with sensible defaults make it one click. | Small |
+| 5 | **Cross-page scenarios** | A move to another city changes tax state, rent, salary and the retirement plan at once. A named scenario that snapshots the per-page presets together is mostly glue over presets. | Medium |
 
 ---
 
@@ -87,7 +84,7 @@ The same fact typed in more than one place.
 
 Results that cannot be sent where they obviously belong.
 
-1. **A shared "About you" card on Balances.** Birth year, filing status, tax state and an optional partner. Balances
+1. **A shared "About you" card on Balances.** Age, filing status and tax state. Balances
    already owns tax state and its preset is literally called `planningVariables`. Retirement reads age from it,
    Debt payoff shows "debt free at 41", the tax engine reads filing status.
 2. **Log into Remaining this month.** Budget's Remaining this month counts undated rows in full even when the
@@ -115,21 +112,19 @@ Results that cannot be sent where they obviously belong.
 
 ### What the model does today
 
-From `RetirementCalc.tsx` (the live simulation is inline there; `utils/simulateRetirement.ts` is a pure copy
-that nothing imports yet).
+From `screens/retirement` (the simulation is `utils/simulateRetirement.ts`).
 
 - One year per row from current age to plan-to age. Working before the retire age, retired from it.
-- Contributions are flat for every working year: 401k (Take-home deferral plus match, or typed) plus your own
-  extra lines, and savings (Budget savings share times 12, or typed) plus freed debt payments. The first year's
-  payroll 401k is 75%.
-- One weighted return while working and one after. The 401k grows at the full rate. Savings grow at the rate
-  times (1 minus tax on gains). Negative balances earn nothing.
-- The 401k joins savings at the access age (default 60) with no tax.
-- Withdrawals are need per month times 12, minus Social Security from the claim age.
-- Social Security assumes 35 years at today's Take-home salary.
-- Events: money in, money out or pay off a debt. Once, monthly, yearly or every two years, for a set number of
-  years. Equity events stop when you retire.
-- No inflation, no salary change, no withdrawal tax, single person, flat returns.
+- Pay and saving come from periods by age. Each period picks a Take-home preset for the 401k and a Budget preset
+  for savings (or typed amounts) and can grow by a percent a year. Money-in events can go to savings or the locked
+  retirement account.
+- One weighted return while working and one after. Savings grow at the rate times (1 minus tax on gains).
+  Negative balances earn nothing.
+- Each account has a type: savings, pre-tax or Roth. Pre-tax withdrawals are grossed up and taxed with the
+  federal, state and city brackets. Savings are spent first, then pre-tax, then Roth.
+- The monthly need is typed or follows a Budget preset, minus Social Security from the claim age.
+- Events: money in, money out or pay off a debt, with repeats. Equity events stop when you retire.
+- Still missing: inflation, filing status, healthcare, flat returns only.
 
 ### Gaps
 
@@ -137,27 +132,19 @@ Impact means how much the gap can move "Money lasts" or the earliest safe age fo
 
 | Gap | Impact | How it fits | Smallest useful first version |
 | --- | --- | --- | --- |
-| Inflation and real vs nominal | High | New input in the Investments card | One "Inflation" input (default 2.5%). Simulate on real returns: `(1 + r) / (1 + i) - 1`. Label the result "in today's dollars". |
-| Raises and salary growth | High | Income plan | A "Raises per year" percent on each pay period. |
-| Pay changes by year (pay cut, career change at 45, sabbatical) | High | Income plan | Section 4. |
-| Part-time or phased retirement | High | Income plan | A pay period that runs past the retire age lowers withdrawals instead of adding contributions. |
-| Tax on 401k withdrawals | High | Change the unlock step | Keep a pre-tax pool after the access age. Each withdrawal from it is grossed up with `taxOn` at the retirement income level. Cheaper still: move the 401k in at `1 - effective rate`. |
 | Healthcare before Medicare | High for early retirees | Event template | A "Health insurance until 65" template: monthly, from retire age, ends at 65. Default amount with a tip to check a marketplace quote. |
 | Sequence of returns risk | High | New result chip | "If markets drop" chip: replay with -25% and 0% in the first two retired years. Monte Carlo later. |
 | Partner income, ages and Social Security | High for couples | Shared "About you" plus a second person | Partner age, salary and claim age. Spousal benefit is at least 50% of the higher earner's full amount. Household need stays one number. |
-| Roth vs traditional | Medium | New asset pool and extra line pool | Add a `roth` pool. Locked like the 401k, but no tax on the way out. |
 | Spending that changes with age (the retirement smile) | Medium | Per-phase need | Three optional needs: until 75, 75 to 85, after 85. Default all equal to today's need. Events can fake it today but nobody will think of it. |
 | Long-term care | Medium | Event template | "Care in late life": monthly, 3 years, from 85. |
 | Housing: mortgage payoff vs rent, home equity | Medium | New event kind | "Housing cost changes" event: from age X the need per month goes up or down by Y. Equity stays out of the liquid total on purpose, shown as a note. |
 | One-time goals (house, kids, college) | Medium | Event templates | A template picker on the plus button: down payment, car, college (4 years), wedding. Same event shape. |
-| Employer match on the new salary | Medium | Income plan | Match is a percent of your share, so it follows each period's salary for free. |
-| Social Security from real earnings | Medium | Income plan plus a typed override | Average the highest 35 years of the plan (past years at today's salary). The typed monthly amount already covers someone with an SSA statement. |
+| Social Security from real earnings | Medium | Pay plan plus a typed override | Average the highest 35 years of the plan (past years at today's salary). The typed monthly amount already covers someone with an SSA statement. |
 | Social Security shortfall | Medium | Toggle in the Social Security card | "Plan for a cut" multiplies the benefit by 0.8 from a set year. |
 | Fees | Medium | New column in the fund table | Expense ratio per fund, subtracted from its performance. |
 | Cash vs invested savings | Medium | Asset pool | A `cash` pool that earns a cash rate. Today an emergency fund in checking earns the stock return. |
 | Pensions and annuities | Medium for those who have one | New repeat option | "For life" repeat on monthly money-in events, so they run to the plan-to age. |
 | 401k access rules (59 and a half, Rule of 55) | Medium | Hint on the access age input | Tip: "Leave a job at 55 or later and that employer's 401k opens at 55." Default access age to 60 stays. |
-| Deferral limit growth and catch-up at 50 | Low | Income plan | Cap each year's deferral at the limit, plus catch-up from 50. Constant already exists. |
 | Required minimum distributions | Low | Tax step | Skip until withdrawal tax exists. Then force a minimum from the pre-tax pool from 73 or 75. |
 | Windfalls and inheritance | Low | Already possible | A money-in event once. Add it to the template list so people see it. |
 | Returns by asset class, glide path | Low | Already close | Two fund tables already exist. A glide path is false precision for this app. |
@@ -166,106 +153,7 @@ Impact means how much the gap can move "Money lasts" or the earliest safe age fo
 
 ---
 
-## 4. Mini spec: year-by-year income plan
-
-### User story
-
-As someone planning a long career, I want to say how my pay changes over time (raises, a pay cut, a switch to
-an easier job at 45, a year off, part-time work in my sixties) so the retirement plan saves what I will really
-save, matches what my employer will really add and pays the Social Security I will really earn.
-
-### UI sketch
-
-- A new card, **"Your pay over time"**, inside the Saving each year group, above the 401k and savings fields.
-- Closed by default it reads one line: "Same pay until you retire. $95,000 a year from Take-home pay." with an
-  "Add a change" button.
-- Each change is a row: **From age**, **Pay per year**, **401k percent**, **Raises a year**, **Kind** (Full time,
-  Part time, Time off). Time off hides pay and 401k.
-- The first row is "Now", from current age, with Auto badges on pay and 401k percent that read the Take-home
-  tool. It cannot be deleted.
-- Rows sort by From age. A period ends where the next one starts, or at the retire age.
-- A Part time row may start at or after the retire age. It shows "keeps going after you retire, until" with an
-  age input.
-- The year table gets a **Pay** column. A small sparkline of pay by age sits in the card header.
-- When any change exists, the 401k and savings fields read "from your pay plan" instead of their usual Auto tip.
-
-### Data shape
-
-Stored in `retireCalc` so presets and export pick it up with no extra work.
-
-```ts
-// retireCalc.pay
-interface RetirePay {
-  periods: PayPeriod[]   // empty means today's behavior, exactly
-}
-interface PayPeriod {
-  id: string
-  fromAge: number
-  toAge?: number         // only for part time past the retire age
-  kind: 'full' | 'part' | 'off'
-  salary: number         // gross, today's dollars; ignored for 'off'
-  auto: boolean          // first row only: read salary from Take-home
-  k401Pct: number        // of salary; match comes from the Take-home 401k line
-  raisePct: number       // per year inside this period, compounding from fromAge
-}
-```
-
-`normalizeRetire` fills `pay: { periods: [] }` for old saves, so no number moves.
-
-### How the simulation changes
-
-Move the inline simulation into the pure `simulateRetirement` first (it exists but is not used yet), then add
-one function the loop calls each year: `payAt(age) -> { gross, kind }`.
-
-For each working year:
-
-1. **Gross pay** is the period's salary times `(1 + raisePct) ^ (age - fromAge)`.
-2. **401k** is `min(gross * k401Pct, deferral limit)` plus the match percent of that. The 75% first-year rule
-   applies to the first year of each new full-time period (new employer), not only the current age.
-3. **Savings** keeps Budget as the source of truth for spending. Today's savings figure stays the base. Each
-   year adds the change in net pay: `net(gross_this_year) - net(gross_today)`, with `net` from
-   `takeHomeBreakdown`. A raise raises savings. A pay cut lowers them. A year off makes savings negative, which
-   the model already handles as drawing on the pool. Spending stays the Budget plan unless an event says
-   otherwise.
-4. **Part time after the retire age**: its net pay lowers that year's withdrawal (floor at zero, any extra goes
-   into savings). No 401k unless `k401Pct` is set.
-5. **Social Security**: the auto benefit averages the highest 35 years of gross pay from the plan, with years
-   before the current age at today's salary, capped at the wage base each year.
-6. **Find earliest safe age** works as before. Full-time periods stop at the candidate age. Part-time periods
-   with their own `toAge` keep going.
-
-### Edge cases
-
-- Two periods with the same From age: the later row in the list wins and the earlier one shows a warning.
-- A period that starts after the retire age and is full time: shown greyed with "starts after you retire".
-- From age before the current age: clamp to the current age.
-- Salary 0 on a full-time row: treat as Time off.
-- Take-home tool changed while the first row is on Auto: the plan follows. Off Auto: it keeps the typed value.
-- Budget income from statements and a different first-row salary: the net pay delta is still measured against
-  the first row, so today's savings stay what Budget says.
-- Inflation (recommendation 1) on: salaries are in today's dollars and raises are real raises. Say so in the
-  raises tip.
-- Equity events still stop at the retire age, not at a Time off period.
-- Deferral limit with a 50 plus catch-up: use the existing constant and add the catch-up as its own constant.
-
-### Tests
-
-- Empty `periods` gives exactly the same rows as today for the sample data (a snapshot of the current output).
-- A 3% raise compounds: year 10 of a period is `salary * 1.03^10`.
-- A pay cut at 45 lowers savings contributions by the net pay difference from 45 on, not the gross difference.
-- A Time off year has zero 401k, negative savings contribution and still grows the 401k balance.
-- The 401k deferral never exceeds the limit, and the match follows the capped amount.
-- The first year of a new full-time period gets the 75% 401k rule. A raise inside a period does not.
-- Part time from 62 to 66 after retiring at 60 lowers withdrawals in those years only.
-- Social Security auto rises when the plan has higher pay in more than 35 years and falls with long time off.
-- Find earliest safe age moves later when a pay cut is added.
-- `normalizeRetire` on a save without `pay` returns `periods: []`. A preset saved before the feature applies
-  without changing any number.
-- Browser test: add a change at 45, see the Pay column drop and "Money lasts" update.
-
----
-
-## 5. Smaller ideas
+## 4. Smaller ideas
 
 - **"What changed" line on Retirement.** When an Auto value moves because another page changed (Budget leftover,
   Take-home salary), show "Savings went from $9,600 to $12,000 a year after your Budget changed". Makes the
