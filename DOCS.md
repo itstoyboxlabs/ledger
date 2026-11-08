@@ -48,8 +48,29 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   a Student loan row) with a leftover plan, three Budget presets (`Today`, `Leaner (easier job)`, `Retirement`),
   Log entries, Notes, and `local` keys for Balances (`ledger:debts` linked to the loan rows, `ledger:assets` in the
   savings and 401k pools, planning-variables presets), the Retirement plan, portfolio, presets and the Budget preset
-  it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists. Take-home pay is
-  left at its defaults. Browser tests use `app/e2e/lean-settings.json` (the sample's settings before this was added)
+  it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists.
+  - **The story it tells**: a 25 year old (About you age 25, Single, Texas) with a corporate job until 40, then an
+    easier, lower paying job until retiring at 62. It shows the pay plan end to end: one Budget preset and one
+    Take-home preset per phase of life, picked by age on Retirement.
+  - **Take-home pay**: three presets (key `takeHome`, ids `th-corporate`, `th-easier`, `th-parttime`): `Corporate
+    job` ($105,000, 6% 401k with a 50% match, $150 a month health insurance), `Easier job` ($62,000, 0% 401k, no
+    match) and `Part-time` ($30,000, 0% 401k). The tool itself (`ledger:takeHome`) matches Corporate job, so that
+    preset shows as active. The Budget takes its income from the tool (`ledger:budgetIncomeOverride` is
+    `{ active: true }`): $6,376 a month, so each period's Take-home preset also sets the income its Budget preset
+    saves from.
+  - **Budget presets** have ids (`bp-today`, `bp-leaner`, `bp-retirement`). With the live subscriptions, Today is
+    $3,654 a month, Leaner (easier job) $2,949 and Retirement $4,174. Leaner is affordable on the Easier job's
+    $4,213 a month, so its Auto savings stay positive.
+  - **Retirement plan** (`retireCalc.pay`): `Corporate job` from 25 until 40 (Take-home preset Corporate job, Budget
+    preset Today, growing 3% a year: $9,450 into the 401k and $19,602 into savings a year to start) and
+    `Easier job` from 40 until you retire (Easier job and Leaner (easier job), 0% growth: nothing into the 401k and
+    $9,098 into savings). Retire at 62, Need per month follows the Retirement preset, Current age is on Auto. Events
+    are a $300 a month Roth IRA from 25 for 15 years, replacing the car at 40 and a family gift at 50. The
+    Retirement presets (retire at 62, 58 and 67) carry the same plan.
+  - **Balances** fit a 25 year old: $25,200 owed (car loan, student loan, credit card) and $48,700 owned, of which
+    $28,200 is savings, so the starting savings stay positive after debts ($3,000).
+  - Statements, Budget rows and the leftover split are unchanged.
+  Browser tests use `app/e2e/lean-settings.json` (the sample's settings before this was added)
   unless a test passes `openApp(page, { rich: true })`, so most specs still start from a bare plan.
 - **Tests**: Vitest unit tests sit beside each source file (`npm run test:unit`). Playwright browser tests live in
   `app/e2e` and click through every page with fake data in a throwaway browser (`npm run test:e2e`). See
@@ -199,6 +220,9 @@ Balances (`planningVariables`) and Retirement (`retirement`).
 - **Rename**: when `onRename` is given (Budget and Take-home), hovering a row also shows a pencil that opens a
   rename dialog. The id and data stay, a name already in use is refused, and the active preset follows the
   new name.
+- **Hint**: `hint` puts a short muted line at the top of the menu. Budget and Take-home use it to say that a
+  preset can stand for a phase of your life and that Retirement picks one for each period by age
+  (`BUDGET_PRESET_HINT`, `TAKE_HOME_PRESET_HINT`).
 
 - `PresetBar` is one `DropdownMenu`. The trigger shows the active preset name, or "Presets" when none, with a
   small amber dot when the current values differ from it.
@@ -303,8 +327,8 @@ read from it. Every field has a sentence or two saying what it is for and which 
   unchanged. Its info tip says that state tax for married filers is an estimate (see Tax engine).
 - **No partner fields.** The app plans around your own income.
 - Both keys are plain `ledger:` keys, so they travel in the settings export (`settings.local`) and come back on
-  import like every other key. The sample data sets age 35 (as of 2026) and Single, with
-  `retireAgeAuto: false` so its Retirement plan keeps the typed age 34. The lean e2e settings have neither key.
+  import like every other key. The sample data sets age 25 (as of 2026) and Single, with
+  `retireAgeAuto: true` so its Retirement plan runs from 25. The lean e2e settings have neither key.
 - Hooks: `useAboutYouAge()` (`{ entry, age, setAge, clear }`) and `useFilingStatus()`, both in `shared/hooks`.
 
 ---
@@ -537,7 +561,7 @@ estimates, 2026 figures.
   employer match lives on the 401k deduction (`match`, percent of your contribution) and is not deducted from
   pay. Calibration tip, also in its tooltip: tune the medical input until the paycheck matches a real pay stub,
   and other salaries inherit the accuracy. Presets (key `takeHome`, with ids) save a salary and its deductions
-  under a name, like "Now" or "Easier job". The Retirement pay plan uses them. The tool's own saved values
+  under a name, like "Now" or "Easier job". The Retirement pay plan uses them, and the preset menu says so. The tool's own saved values
   (`ledger:takeHome`) are untouched by presets, so old saves load as before.
 - **Hourly calculator**: hours a week times rate gives weekly, times 52 gives annual gross. It assumes a full
   year, with no months-worked input. Taxes the annual total in the shared state as W-2 wages (employee FICA
@@ -723,7 +747,15 @@ the Auto badges) opens "Use a Budget preset": every Budget preset (key `expenses
 ### Pay and saving over time
 
 One card holds everything you put away each year while you work, with or without a plan. There is no separate
-Saving each year card. It only deals in what goes into the 401k and savings: what you earn lives in the Take-home
+Saving each year card.
+
+- **The idea it teaches**: presets are saved versions of your Budget and your Take-home pay for different parts of
+  your life. You set each one up once on its own tab and pick them here by age. The info tip says this, the no-plan
+  hint says to save that part of your life as a Budget preset and a Take-home preset first, and a "How this works"
+  disclosure under the header (a ghost button with `aria-expanded` and `aria-controls`, closed by default, shown with
+  or without a plan) explains it in four sentences plus a worked example: a corporate job from 25 until 40 on the
+  Corporate job and Today presets growing 3% a year, then an easier job from 40 on the Easier job and Leaner budget
+  presets. The sample data is that example. It only deals in what goes into the 401k and savings: what you earn lives in the Take-home
 pay tool and its presets. Logic is in `utils/resolvePayPeriods.ts`, `utils/tidyPayPeriods.ts`, `utils/periodAt.ts`,
 `utils/payPlanIssues.ts` and `simulateRetirement`.
 

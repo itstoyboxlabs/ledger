@@ -4120,6 +4120,7 @@
   "presets": {
    "expenses": [
     {
+     "id": "bp-today",
      "name": "Today",
      "data": [
       {
@@ -4266,6 +4267,7 @@
      ]
     },
     {
+     "id": "bp-leaner",
      "name": "Leaner (easier job)",
      "data": [
       {
@@ -4404,6 +4406,7 @@
      ]
     },
     {
+     "id": "bp-retirement",
      "name": "Retirement",
      "data": [
       {
@@ -4590,7 +4593,7 @@
        {
         "id": "d1",
         "name": "Car loan",
-        "balance": 11800,
+        "balance": 9600,
         "apr": 6.4,
         "payment": 385,
         "budgetRow": "b009"
@@ -4598,7 +4601,7 @@
        {
         "id": "d2",
         "name": "Student loan",
-        "balance": 17500,
+        "balance": 14800,
         "apr": 4.5,
         "payment": 210,
         "budgetRow": "b010"
@@ -4606,7 +4609,7 @@
        {
         "id": "d3",
         "name": "Credit card",
-        "balance": 1200,
+        "balance": 800,
         "apr": 22.9,
         "payment": 150,
         "budgetRow": null
@@ -4622,7 +4625,7 @@
        {
         "id": "d1",
         "name": "Car loan",
-        "balance": 11800,
+        "balance": 9600,
         "apr": 6.4,
         "payment": 385,
         "budgetRow": "b009"
@@ -4630,7 +4633,7 @@
        {
         "id": "d2",
         "name": "Student loan",
-        "balance": 17500,
+        "balance": 14800,
         "apr": 4.5,
         "payment": 210,
         "budgetRow": "b010"
@@ -4638,7 +4641,7 @@
        {
         "id": "d3",
         "name": "Credit card",
-        "balance": 1200,
+        "balance": 800,
         "apr": 22.9,
         "payment": 150,
         "budgetRow": null
@@ -4652,7 +4655,7 @@
      "name": "Retire at 62",
      "data": {
       "c": {
-       "age": 34,
+       "age": 25,
        "retireAge": 62,
        "accessAge": 60,
        "endAge": 95,
@@ -4667,6 +4670,8 @@
        "withdrawMo": 4000,
        "taxPct": 15,
        "autoTax": true,
+       "tax401k": true,
+       "raisePct": 0,
        "ss": {
         "on": true,
         "claimAge": 67,
@@ -4674,6 +4679,16 @@
         "monthly": 0
        },
        "events": [
+        {
+         "id": "e3",
+         "name": "Roth IRA",
+         "amount": 300,
+         "kind": "in",
+         "age": 25,
+         "repeat": "month",
+         "years": 15,
+         "to": "401k"
+        },
         {
          "id": "e1",
          "name": "Replace the car",
@@ -4693,15 +4708,36 @@
          "years": 1
         }
        ],
-       "extras": [
-        {
-         "id": "x1",
-         "name": "Roth IRA",
-         "amount": 500,
-         "unit": "mo",
-         "to": "401k"
-        }
-       ]
+       "pay": {
+        "periods": [
+         {
+          "id": "p1",
+          "label": "Corporate job",
+          "fromAge": 25,
+          "toAge": 40,
+          "raisePct": 3,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-corporate",
+          "k401": 9450,
+          "saveFrom": "preset",
+          "savePreset": "bp-today",
+          "savings": 19602
+         },
+         {
+          "id": "p2",
+          "label": "Easier job",
+          "fromAge": 40,
+          "toAge": "retire",
+          "raisePct": 0,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-easier",
+          "k401": 0,
+          "saveFrom": "preset",
+          "savePreset": "bp-leaner",
+          "savings": 9098
+         }
+        ]
+       }
       },
       "port": [
        {
@@ -4737,7 +4773,7 @@
      "name": "Retire early at 58",
      "data": {
       "c": {
-       "age": 34,
+       "age": 25,
        "retireAge": 58,
        "accessAge": 60,
        "endAge": 95,
@@ -4752,6 +4788,8 @@
        "withdrawMo": 4000,
        "taxPct": 15,
        "autoTax": true,
+       "tax401k": true,
+       "raisePct": 0,
        "ss": {
         "on": true,
         "claimAge": 67,
@@ -4759,6 +4797,16 @@
         "monthly": 0
        },
        "events": [
+        {
+         "id": "e3",
+         "name": "Roth IRA",
+         "amount": 300,
+         "kind": "in",
+         "age": 25,
+         "repeat": "month",
+         "years": 15,
+         "to": "401k"
+        },
         {
          "id": "e1",
          "name": "Replace the car",
@@ -4778,15 +4826,36 @@
          "years": 1
         }
        ],
-       "extras": [
-        {
-         "id": "x1",
-         "name": "Roth IRA",
-         "amount": 500,
-         "unit": "mo",
-         "to": "401k"
-        }
-       ]
+       "pay": {
+        "periods": [
+         {
+          "id": "p1",
+          "label": "Corporate job",
+          "fromAge": 25,
+          "toAge": 40,
+          "raisePct": 3,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-corporate",
+          "k401": 9450,
+          "saveFrom": "preset",
+          "savePreset": "bp-today",
+          "savings": 19602
+         },
+         {
+          "id": "p2",
+          "label": "Easier job",
+          "fromAge": 40,
+          "toAge": "retire",
+          "raisePct": 0,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-easier",
+          "k401": 0,
+          "saveFrom": "preset",
+          "savePreset": "bp-leaner",
+          "savings": 9098
+         }
+        ]
+       }
       },
       "port": [
        {
@@ -4822,7 +4891,7 @@
      "name": "Work to 67",
      "data": {
       "c": {
-       "age": 34,
+       "age": 25,
        "retireAge": 67,
        "accessAge": 60,
        "endAge": 95,
@@ -4837,6 +4906,8 @@
        "withdrawMo": 4000,
        "taxPct": 15,
        "autoTax": true,
+       "tax401k": true,
+       "raisePct": 0,
        "ss": {
         "on": true,
         "claimAge": 67,
@@ -4844,6 +4915,16 @@
         "monthly": 0
        },
        "events": [
+        {
+         "id": "e3",
+         "name": "Roth IRA",
+         "amount": 300,
+         "kind": "in",
+         "age": 25,
+         "repeat": "month",
+         "years": 15,
+         "to": "401k"
+        },
         {
          "id": "e1",
          "name": "Replace the car",
@@ -4863,15 +4944,36 @@
          "years": 1
         }
        ],
-       "extras": [
-        {
-         "id": "x1",
-         "name": "Roth IRA",
-         "amount": 500,
-         "unit": "mo",
-         "to": "401k"
-        }
-       ]
+       "pay": {
+        "periods": [
+         {
+          "id": "p1",
+          "label": "Corporate job",
+          "fromAge": 25,
+          "toAge": 40,
+          "raisePct": 3,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-corporate",
+          "k401": 9450,
+          "saveFrom": "preset",
+          "savePreset": "bp-today",
+          "savings": 19602
+         },
+         {
+          "id": "p2",
+          "label": "Easier job",
+          "fromAge": 40,
+          "toAge": "retire",
+          "raisePct": 0,
+          "takeHomeFrom": "preset",
+          "takeHomePreset": "th-easier",
+          "k401": 0,
+          "saveFrom": "preset",
+          "savePreset": "bp-leaner",
+          "savings": 9098
+         }
+        ]
+       }
       },
       "port": [
        {
@@ -4920,6 +5022,77 @@
       "b008": 50
      }
     }
+   ],
+   "takeHome": [
+    {
+     "id": "th-corporate",
+     "name": "Corporate job",
+     "data": {
+      "salary": 105000,
+      "deductions": [
+       {
+        "id": "d401k",
+        "kind": "401k",
+        "unit": "pct",
+        "amount": 6,
+        "match": 50
+       },
+       {
+        "id": "dmed",
+        "kind": "insurance",
+        "unit": "mo",
+        "amount": 150,
+        "match": 0
+       }
+      ]
+     }
+    },
+    {
+     "id": "th-easier",
+     "name": "Easier job",
+     "data": {
+      "salary": 62000,
+      "deductions": [
+       {
+        "id": "d401k",
+        "kind": "401k",
+        "unit": "pct",
+        "amount": 0,
+        "match": 0
+       },
+       {
+        "id": "dmed",
+        "kind": "insurance",
+        "unit": "mo",
+        "amount": 150,
+        "match": 0
+       }
+      ]
+     }
+    },
+    {
+     "id": "th-parttime",
+     "name": "Part-time",
+     "data": {
+      "salary": 30000,
+      "deductions": [
+       {
+        "id": "d401k",
+        "kind": "401k",
+        "unit": "pct",
+        "amount": 0,
+        "match": 0
+       },
+       {
+        "id": "dmed",
+        "kind": "insurance",
+        "unit": "mo",
+        "amount": 150,
+        "match": 0
+       }
+      ]
+     }
+    }
    ]
   },
   "log": {
@@ -4952,17 +5125,17 @@
   },
   "local": {
    "ledger:age": {
-    "age": 35,
+    "age": 25,
     "asOf": 2026
    },
    "ledger:filingStatus": "single",
-   "ledger:retireAgeAuto": false,
+   "ledger:retireAgeAuto": true,
    "ledger:taxState": "tx",
    "ledger:debts": [
     {
      "id": "d1",
      "name": "Car loan",
-     "balance": 11800,
+     "balance": 9600,
      "apr": 6.4,
      "payment": 385,
      "budgetRow": "b009"
@@ -4970,7 +5143,7 @@
     {
      "id": "d2",
      "name": "Student loan",
-     "balance": 17500,
+     "balance": 14800,
      "apr": 4.5,
      "payment": 210,
      "budgetRow": "b010"
@@ -4978,7 +5151,7 @@
     {
      "id": "d3",
      "name": "Credit card",
-     "balance": 1200,
+     "balance": 800,
      "apr": 22.9,
      "payment": 150,
      "budgetRow": null
@@ -4988,39 +5161,39 @@
     {
      "id": "a1",
      "name": "Checking",
-     "balance": 4200,
+     "balance": 3200,
      "pool": "savings"
     },
     {
      "id": "a2",
      "name": "Emergency fund (savings)",
-     "balance": 20000,
+     "balance": 12000,
      "pool": "savings"
     },
     {
      "id": "a3",
      "name": "Taxable brokerage",
-     "balance": 34000,
+     "balance": 13000,
      "pool": "savings"
     },
     {
      "id": "a4",
      "name": "401k (pre-tax)",
-     "balance": 46800,
+     "balance": 14500,
      "pool": "401k",
      "kind": "pretax"
     },
     {
      "id": "a5",
      "name": "Roth IRA",
-     "balance": 15200,
+     "balance": 6000,
      "pool": "401k",
      "kind": "roth"
     }
    ],
    "ledger:assetsAsOf": "2026-10-31",
    "ledger:retireCalc": {
-    "age": 34,
+    "age": 25,
     "retireAge": 62,
     "accessAge": 60,
     "endAge": 95,
@@ -5035,6 +5208,8 @@
     "withdrawMo": 4000,
     "taxPct": 15,
     "autoTax": true,
+    "tax401k": true,
+    "raisePct": 0,
     "ss": {
      "on": true,
      "claimAge": 67,
@@ -5042,6 +5217,16 @@
      "monthly": 0
     },
     "events": [
+     {
+      "id": "e3",
+      "name": "Roth IRA",
+      "amount": 300,
+      "kind": "in",
+      "age": 25,
+      "repeat": "month",
+      "years": 15,
+      "to": "401k"
+     },
      {
       "id": "e1",
       "name": "Replace the car",
@@ -5061,15 +5246,36 @@
       "years": 1
      }
     ],
-    "extras": [
-     {
-      "id": "x1",
-      "name": "Roth IRA",
-      "amount": 500,
-      "unit": "mo",
-      "to": "401k"
-     }
-    ]
+    "pay": {
+     "periods": [
+      {
+       "id": "p1",
+       "label": "Corporate job",
+       "fromAge": 25,
+       "toAge": 40,
+       "raisePct": 3,
+       "takeHomeFrom": "preset",
+       "takeHomePreset": "th-corporate",
+       "k401": 9450,
+       "saveFrom": "preset",
+       "savePreset": "bp-today",
+       "savings": 19602
+      },
+      {
+       "id": "p2",
+       "label": "Easier job",
+       "fromAge": 40,
+       "toAge": "retire",
+       "raisePct": 0,
+       "takeHomeFrom": "preset",
+       "takeHomePreset": "th-easier",
+       "k401": 0,
+       "saveFrom": "preset",
+       "savePreset": "bp-leaner",
+       "savings": 9098
+      }
+     ]
+    }
    },
    "ledger:retirePortfolio": [
     {
@@ -5099,7 +5305,7 @@
     ]
    },
    "ledger:retireIncludeDebt": true,
-   "ledger:retireNeedPreset": "Retirement",
+   "ledger:retireNeedPreset": "bp-retirement",
    "ledger:rentScenario3": {
     "from": 1250,
     "to": 3000,
@@ -5166,7 +5372,30 @@
       }
      ]
     }
-   ]
+   ],
+   "ledger:budgetIncomeOverride": {
+    "active": true,
+    "amount": 0
+   },
+   "ledger:takeHome": {
+    "salary": 105000,
+    "deductions": [
+     {
+      "id": "d401k",
+      "kind": "401k",
+      "unit": "pct",
+      "amount": 6,
+      "match": 50
+     },
+     {
+      "id": "dmed",
+      "kind": "insurance",
+      "unit": "mo",
+      "amount": 150,
+      "match": 0
+     }
+    ]
+   }
   }
  }
 }
