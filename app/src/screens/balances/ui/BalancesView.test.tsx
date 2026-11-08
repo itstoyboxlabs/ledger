@@ -17,6 +17,11 @@ describe('BalancesView', () => {
     loadSampleData()
   })
 
+  it('says Retirement plans from your age on the As of date', () => {
+    renderApp(<BalancesView />)
+    expect(screen.getByText(/Retirement plans from your age on that day/)).toBeInTheDocument()
+  })
+
   it('starts empty with zero totals', () => {
     renderApp(<BalancesView />)
     expect(screen.getByText('No debts yet.')).toBeInTheDocument()

@@ -53,56 +53,56 @@ test.describe('upload replaces stored data', () => {
     // and so are the sample's localStorage settings
     expect(await ls(page, 'retireNeedPreset')).toBeNull()
     expect(JSON.stringify(await ls(page, 'debts'))).not.toContain('Car loan')
-    expect((await ls(page, 'age'))?.age).not.toBe(25)
+    expect(await ls(page, 'birthDate')).toBeNull()
 
     await goTo(page, 'Log')
     await expect(main(page).getByText('Farmers market')).toHaveCount(0)
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).not.toHaveValue('25')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('')
   })
 
   test('a data file and a settings backup picked together both load', async ({ page }) => {
-    const backup = { version: 1, settings: { budget: { rows: [] }, local: { 'ledger:age': { age: 31, asOf: 2026 } } } }
+    const backup = { version: 1, settings: { budget: { rows: [] }, local: { 'ledger:birthDate': '1995-02-03' } } }
     await upload(page, asUpload('ledger-settings.json', backup), asUpload('ledger-data.json', realFile))
     await expect(page.getByRole('status')).toContainText('Loaded your statements and settings.')
     await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
     await expect(aside(page).getByText('Harbor Bank')).toHaveCount(0)
     expect(await idb(page, 'presets')).toBeNull()
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).toHaveValue('31')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('02-03-1995')
   })
 
   test('an old settings backup on its own keeps your statements and replaces the settings', async ({ page }) => {
     await upload(page, asUpload('ledger-data.json', { ...realFile, settings: { presets: { budget: [{ name: 'Mine', data: {} }] } } }))
     await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
-    await upload(page, asUpload('ledger-settings.json', { version: 1, settings: { local: { 'ledger:age': { age: 44, asOf: 2026 } } } }))
+    await upload(page, asUpload('ledger-settings.json', { version: 1, settings: { local: { 'ledger:birthDate': '1982-07-04' } } }))
     await expect(page.getByRole('status')).toContainText('Settings loaded.')
     await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
     expect((await idb(page, 'data')).transactions.map((t) => t.id)).toEqual(['m-1', 'm-2'])
     expect(await idb(page, 'presets')).toBeNull()
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).toHaveValue('44')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('07-04-1982')
   })
 
   test('an old settings backup over the sample clears the sample and waits for your statements', async ({ page }) => {
-    await upload(page, asUpload('ledger-settings.json', { version: 1, settings: { local: { 'ledger:age': { age: 44, asOf: 2026 } } } }))
+    await upload(page, asUpload('ledger-settings.json', { version: 1, settings: { local: { 'ledger:birthDate': '1982-07-04' } } }))
     await expect(page.getByRole('status')).toContainText('Now upload your ledger-data.json')
     await expect(page.getByRole('button', { name: 'Upload ledger-data.json' })).toBeVisible()
     expect(await ls(page, 'retireNeedPreset')).toBeNull()
     await upload(page, asUpload('ledger-data.json', realFile))
     await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).toHaveValue('44')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('07-04-1982')
   })
 
   test('a statements-only file over your own data keeps your settings', async ({ page }) => {
-    await upload(page, asUpload('ledger-data.json', { ...realFile, settings: { local: { 'ledger:age': { age: 31, asOf: 2026 } } } }))
+    await upload(page, asUpload('ledger-data.json', { ...realFile, settings: { local: { 'ledger:birthDate': '1995-02-03' } } }))
     await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
     const next = { ...realFile, transactions: [...realFile.transactions, tx('m-3', '2026-10-20', 9.75, 'Bakery Row')] }
     await upload(page, asUpload('ledger-data.json', next))
     await expect(page.getByRole('status')).toContainText('Loaded 3 transactions.')
     await goTo(page, 'About you')
-    await expect(main(page).getByLabel('Your age')).toHaveValue('31')
+    await expect(main(page).getByLabel('Birth date')).toHaveValue('02-03-1995')
   })
 
   test('the upload button says it replaces what is stored', async ({ page }) => {

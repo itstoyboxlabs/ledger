@@ -5124,10 +5124,7 @@
    ]
   },
   "local": {
-   "ledger:age": {
-    "age": 25,
-    "asOf": 2026
-   },
+   "ledger:birthDate": "2001-05-14",
    "ledger:filingStatus": "single",
    "ledger:retireAgeAuto": true,
    "ledger:taxState": "tx",

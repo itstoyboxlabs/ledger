@@ -1,14 +1,14 @@
 import fs from 'node:fs'
 import { test, expect, openApp, goTo, ls } from './fixtures'
 
-// The About you page: age, filing status and tax state, which the planning pages read.
-// openApp loads the lean e2e settings (no About you keys), so each test starts from what the
-// shipped sample saves: age 35 as of 2026 and Single. The clock is pinned to November 2026.
+// The About you page: birth date, filing status and tax state, which the planning pages read.
+// openApp loads the lean e2e settings (no About you keys and no Balances date), so each test
+// seeds a birth date that makes you 35 today and Single. The clock is pinned to November 8, 2026.
 // The rich sample itself is checked in sample.spec.js.
 
 const main = (page) => page.getByRole('main')
 const card = (page, title) => main(page).locator('[data-slot=card]').filter({ has: page.locator('h2', { hasText: title }) }).first()
-const ageBox = (page) => main(page).getByLabel('Your age')
+const birthBox = (page) => main(page).getByLabel('Birth date')
 const filingSelect = (page) => main(page).getByRole('combobox', { name: 'Filing status' })
 
 async function pickFiling(page, name) {
@@ -26,7 +26,7 @@ async function takeHome(page) {
 test.beforeEach(async ({ page }) => {
   await openApp(page)
   await page.evaluate(() => {
-    localStorage.setItem('ledger:age', JSON.stringify({ age: 35, asOf: 2026 }))
+    localStorage.setItem('ledger:birthDate', JSON.stringify('1991-03-15'))
     localStorage.setItem('ledger:filingStatus', JSON.stringify('single'))
   })
   await page.reload()
@@ -38,13 +38,14 @@ test.describe('page', () => {
     const names = await page.getByRole('complementary').getByRole('navigation', { name: 'Pages' }).getByRole('button').allInnerTexts()
     expect(names.map((n) => n.trim()).slice(0, 3)).toEqual(['About you', 'Spending', 'Budget'])
     await expect(main(page)).toContainText('This is the starting point for planning')
-    for (const t of ['Your age', 'Filing status', 'Tax state and city']) {
+    for (const t of ['Your birth date', 'Filing status', 'Tax state and city']) {
       await expect(main(page).getByRole('heading', { level: 2, name: new RegExp(t) })).toBeVisible()
     }
   })
 
-  test('starts from the sample data: 35, Single, Texas', async ({ page }) => {
-    await expect(ageBox(page)).toHaveValue('35')
+  test('starts from the seeded birth date (35 today), Single, Texas', async ({ page }) => {
+    await expect(birthBox(page)).toHaveValue('03-15-1991')
+    await expect(card(page, 'Your birth date')).toContainText('You are 35 today.')
     await expect(filingSelect(page)).toHaveText('Single')
     await expect(main(page).getByRole('button', { name: /State\s*Texas/ })).toBeVisible()
   })
@@ -54,45 +55,101 @@ test.describe('page', () => {
   })
 })
 
-test.describe('age', () => {
-  test('a typed age is saved with this year and survives a reload', async ({ page }) => {
-    await ageBox(page).fill('41')
-    await expect(card(page, 'Your age')).toContainText('You are 41. Next January this becomes 42 by itself.')
-    expect(await ls(page, 'age')).toEqual({ age: 41, asOf: 2026 })
+test.describe('birth date', () => {
+  const ageField = (page) => main(page).locator('div.relative').filter({ has: page.locator('span:text-is("Current age")') }).first()
+  const firstRowAge = (page) => main(page).locator('table').filter({ hasText: 'Total (liquid)' }).first().locator('tbody tr').first().locator('td').first()
+  const tip = async (page) => {
+    await ageField(page).locator('[tabindex="0"]').first().focus()
+    return page.getByRole('tooltip').first()
+  }
+
+  test('a birth date typed as MM-DD-YYYY shows the age and survives a reload', async ({ page }) => {
+    await birthBox(page).fill('04-20-1988')
+    await expect(card(page, 'Your birth date')).toContainText('You are 38 today.')
+    expect(await ls(page, 'birthDate')).toBe('1988-04-20')
     await page.reload()
-    await expect(ageBox(page)).toHaveValue('41')
+    await expect(birthBox(page)).toHaveValue('04-20-1988')
+    await expect(card(page, 'Your birth date')).toContainText('You are 38 today.')
   })
 
-  test('an age typed in an earlier year has gone up since', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('ledger:age', JSON.stringify({ age: 30, asOf: 2024 })))
-    await page.reload()
-    await expect(ageBox(page)).toHaveValue('32')
-    await expect(card(page, 'Your age')).toContainText('You are 32 now. You typed 30 in 2024')
+  test('slashes work too and the date shows back with dashes', async ({ page }) => {
+    await birthBox(page).fill('4/2/1990')
+    await birthBox(page).blur()
+    expect(await ls(page, 'birthDate')).toBe('1990-04-02')
+    await expect(birthBox(page)).toHaveValue('04-02-1990')
   })
 
-  test('Retirement reads it behind an Auto badge, and a typed age still works', async ({ page }) => {
-    await ageBox(page).fill('40')
+  test('bad input shows a plain error and keeps the saved date', async ({ page }) => {
+    const alert = card(page, 'Your birth date').getByRole('alert')
+    await birthBox(page).fill('02-30-1990')
+    await expect(alert).toHaveText('That date does not exist. Check the month and the day.')
+    await birthBox(page).fill('01-01-2030')
+    await expect(alert).toHaveText('That date is in the future. Check the year.')
+    await birthBox(page).fill('01-01-1890')
+    await expect(alert).toContainText('older than 120')
+    await birthBox(page).fill('1990')
+    await expect(alert).toHaveCount(0)
+    await birthBox(page).blur()
+    await expect(alert).toHaveText('Type your birth date as MM-DD-YYYY, like 04-15-1990.')
+    expect(await ls(page, 'birthDate')).toBe('1991-03-15')
+  })
+
+  test('Retirement Auto uses the age on the Balances date and moves when Balances does', async ({ page }) => {
+    await birthBox(page).fill('11-01-1990')
+    await page.evaluate(() => localStorage.setItem('ledger:assetsAsOf', JSON.stringify('2025-10-31')))
+    await page.reload()
     await goTo(page, 'Retirement')
-    const ageField = main(page).locator('div.relative').filter({ has: page.locator('span:text-is("Current age")') }).first()
-    await expect(ageField.getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(ageField).toContainText('40')
-    const table = main(page).locator('table').filter({ hasText: 'Total (liquid)' }).first()
-    await expect(table.locator('tbody tr').first().locator('td').first()).toHaveText('40')
-    // turn Auto off: the typed age (35 for a new plan) comes back and can be edited
-    await ageField.getByRole('button', { name: 'Auto' }).click()
-    await expect(ageField.locator('input')).toHaveValue('35')
-    await ageField.locator('input').fill('38')
-    await expect(table.locator('tbody tr').first().locator('td').first()).toHaveText('38')
+    await expect(ageField(page).getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(ageField(page)).toContainText('34')
+    await expect(firstRowAge(page)).toHaveText('34')
+    await expect(await tip(page)).toContainText('Using your age on the day you last updated Balances (October 31, 2025). Update Balances to move it forward.')
+
+    await goTo(page, 'Balances')
+    await main(page).getByLabel('As of').fill('2026-11-05')
+    await goTo(page, 'Retirement')
+    await expect(ageField(page)).toContainText('36')
+    await expect(firstRowAge(page)).toHaveText('36')
+    await expect(await tip(page)).toContainText('(November 5, 2026)')
+  })
+
+  test('with no Balances date Retirement uses the age today, and a typed age still works', async ({ page }) => {
+    await goTo(page, 'Retirement')
+    await expect(ageField(page)).toContainText('35')
+    await expect(await tip(page)).toContainText('Using your age today')
+    // turn Auto off: the typed age comes back and can be edited
+    await ageField(page).getByRole('button', { name: 'Auto' }).click()
+    await expect(ageField(page).locator('input')).toHaveValue('35')
+    await ageField(page).locator('input').fill('38')
+    await expect(firstRowAge(page)).toHaveText('38')
     expect(await ls(page, 'retireAgeAuto')).toBe(false)
   })
 
-  test('clearing the age leaves Retirement on its typed age', async ({ page }) => {
-    await main(page).getByRole('button', { name: 'Clear my age' }).click()
+  test('an old save with a typed age still loads as that fixed age until a birth date is added', async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.removeItem('ledger:birthDate')
+      localStorage.setItem('ledger:age', JSON.stringify({ age: 30, asOf: 2024 }))
+    })
+    await page.reload()
+    await expect(birthBox(page)).toHaveValue('')
+    await expect(card(page, 'Your birth date')).toContainText('You typed your age as 30 before Ledger asked for a birth date.')
+    await goTo(page, 'Retirement')
+    await expect(ageField(page)).toContainText('30')
+    await expect(firstRowAge(page)).toHaveText('30')
+
+    await goTo(page, 'About you')
+    await birthBox(page).fill('06-01-1980')
     expect(await ls(page, 'age')).toBeNull()
     await goTo(page, 'Retirement')
-    const ageField = main(page).locator('label').filter({ has: page.locator('span:text-is("Current age")') }).first()
-    await expect(ageField.locator('input')).toHaveValue('35')
-    await expect(main(page).locator('div.relative').filter({ has: page.locator('span:text-is("Current age")') }).getByRole('button', { name: 'Auto' })).toHaveCount(0)
+    await expect(firstRowAge(page)).toHaveText('46')
+  })
+
+  test('clearing the birth date leaves Retirement on its typed age', async ({ page }) => {
+    await main(page).getByRole('button', { name: 'Clear my birth date' }).click()
+    expect(await ls(page, 'birthDate')).toBeNull()
+    await goTo(page, 'Retirement')
+    const typed = main(page).locator('label').filter({ has: page.locator('span:text-is("Current age")') }).first()
+    await expect(typed.locator('input')).toHaveValue('35')
+    await expect(ageField(page).getByRole('button', { name: 'Auto' })).toHaveCount(0)
   })
 })
 
@@ -158,8 +215,8 @@ test.describe('tax state', () => {
 })
 
 test.describe('export and import', () => {
-  test('age and filing status travel in the exported ledger-data.json', async ({ page }) => {
-    await ageBox(page).fill('44')
+  test('birth date and filing status travel in the exported ledger-data.json', async ({ page }) => {
+    await birthBox(page).fill('07-04-1982')
     await pickFiling(page, 'Married filing jointly')
     await page.getByRole('complementary').getByRole('button', { name: 'Export data' }).click()
     const [dl] = await Promise.all([
@@ -168,12 +225,12 @@ test.describe('export and import', () => {
     ])
     const text = fs.readFileSync(await dl.path(), 'utf8')
     const file = JSON.parse(text)
-    expect(file.settings.local['ledger:age']).toEqual({ age: 44, asOf: 2026 })
+    expect(file.settings.local['ledger:birthDate']).toBe('1982-07-04')
     expect(file.settings.local['ledger:filingStatus']).toBe('mfj')
     await page.keyboard.press('Escape')
 
     // change both, then load the file back
-    await ageBox(page).fill('20')
+    await birthBox(page).fill('01-01-2000')
     await pickFiling(page, 'Single')
     await page.locator('input[type=file]').first().setInputFiles({
       name: 'ledger-data.json',
@@ -181,19 +238,21 @@ test.describe('export and import', () => {
       buffer: Buffer.from(text),
     })
     await goTo(page, 'About you')
-    await expect(ageBox(page)).toHaveValue('44')
+    await expect(birthBox(page)).toHaveValue('07-04-1982')
+    await expect(card(page, 'Your birth date')).toContainText('You are 44 today.')
     await expect(filingSelect(page)).toHaveText('Married filing jointly')
   })
 })
 
 test.describe('keyboard and labels', () => {
   test('every control has a name and can be reached and used with the keyboard', async ({ page }) => {
-    await expect(ageBox(page)).toBeVisible()
+    await expect(birthBox(page)).toBeVisible()
     await expect(filingSelect(page)).toBeVisible()
-    await ageBox(page).focus()
+    await birthBox(page).focus()
     await page.keyboard.press('ControlOrMeta+a')
-    await page.keyboard.type('52')
-    await expect(ageBox(page)).toHaveValue('52')
+    await page.keyboard.type('05-06-1974')
+    await expect(birthBox(page)).toHaveValue('05-06-1974')
+    expect(await ls(page, 'birthDate')).toBe('1974-05-06')
     // tab on to the filing status select and change it with the arrow keys
     await filingSelect(page).focus()
     await expect(filingSelect(page)).toBeFocused()

@@ -405,11 +405,11 @@ describe('RetirementCalc', () => {
   })
 
   describe('current age from About you', () => {
-    const year = new Date().getFullYear()
     const ageBadge = () => within(screen.getByText('Current age').closest('div.relative') as HTMLElement).getByRole('button', { name: 'Auto' })
-    it('runs the plan from the About you age and keeps the typed age saved', () => {
+    it('runs the plan from the About you age on the Balances date and keeps the typed age saved', () => {
       seedPlan()
-      localStorage.setItem('ledger:age', JSON.stringify({ age: 33, asOf: year }))
+      localStorage.setItem('ledger:birthDate', JSON.stringify('1990-01-01'))
+      localStorage.setItem('ledger:assetsAsOf', JSON.stringify('2023-06-01'))
       renderApp(<RetirementCalc debts={[]} goToBalances={() => {}} />)
       expect(ageBadge()).toHaveAttribute('aria-pressed', 'true')
       expect(yearRow(33)[0]).toBe('33')
@@ -418,7 +418,8 @@ describe('RetirementCalc', () => {
     })
     it('goes back to the typed age when Auto is turned off', async () => {
       seedPlan()
-      localStorage.setItem('ledger:age', JSON.stringify({ age: 33, asOf: year }))
+      localStorage.setItem('ledger:birthDate', JSON.stringify('1990-01-01'))
+      localStorage.setItem('ledger:assetsAsOf', JSON.stringify('2023-06-01'))
       renderApp(<RetirementCalc debts={[]} goToBalances={() => {}} />)
       await userEvent.click(ageBadge())
       expect(ageBadge()).toHaveAttribute('aria-pressed', 'false')

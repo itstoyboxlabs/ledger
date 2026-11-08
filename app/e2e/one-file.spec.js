@@ -58,7 +58,8 @@ test.describe('one data file', () => {
     expect(Object.keys(file.accounts).sort()).toEqual(Object.keys(sample.accounts).sort())
     expect(file.settings.budget.rows.map((r) => r.id)).toEqual(sample.settings.budget.rows.map((r) => r.id))
     expect(Object.keys(file.settings.presets).sort()).toEqual(Object.keys(sample.settings.presets).sort())
-    expect(file.settings.local['ledger:age']).toEqual(sample.settings.local['ledger:age'])
+    expect(file.settings.local['ledger:birthDate']).toBe(sample.settings.local['ledger:birthDate'])
+    expect(file.settings.local['ledger:birthDate']).toBe('2001-05-14')
   })
 
   test('export, clear and upload brings back the budget, presets and statements', async ({ page }) => {
@@ -75,7 +76,7 @@ test.describe('one data file', () => {
     expect(await idb(page, 'data')).toEqual(before.data)
     expect(await idb(page, 'budget')).toEqual(before.budget)
     expect(await idb(page, 'presets')).toEqual(before.presets)
-    expect((await ls(page, 'age'))?.age).toBe(25)
+    expect(await ls(page, 'birthDate')).toBe('2001-05-14')
 
     // and a second export is the same file apart from the time it was made
     const again = JSON.parse(await exportFile(page))
@@ -102,6 +103,6 @@ test.describe('one data file', () => {
     await page.locator('input[type=file]').setInputFiles({ name: 'ledger-data.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(statementsOnly)) })
     await expect(aside(page).getByText('Harbor Bank').first()).toBeVisible()
     expect(Object.keys((await idb(page, 'presets')) ?? {}).length).toBeGreaterThan(0)
-    expect((await ls(page, 'age'))?.age).toBe(25)
+    expect(await ls(page, 'birthDate')).toBe('2001-05-14')
   })
 })
