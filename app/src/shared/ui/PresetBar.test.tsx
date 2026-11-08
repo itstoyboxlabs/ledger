@@ -68,6 +68,12 @@ describe('PresetBar', () => {
     expect(onDelete).toHaveBeenCalledWith('Lean')
   })
 
+  it('shows a hint at the top of the menu when given', async () => {
+    setup({ hint: 'On Retirement you pick one for each period by age.' })
+    await userEvent.click(screen.getByRole('button', { name: /Presets/ }))
+    expect(await screen.findByText('On Retirement you pick one for each period by age.')).toBeInTheDocument()
+  })
+
   it('says so when there are no presets', async () => {
     setup({ presets: [] })
     await userEvent.click(screen.getByRole('button', { name: /Presets/ }))

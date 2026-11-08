@@ -12,6 +12,7 @@ import { DEDUCTION_KINDS } from '@/shared/constants/DEDUCTION_KINDS'
 import { DEDUCTION_TIPS } from '@/screens/tools/features/take-home/constants/DEDUCTION_TIPS'
 import { DEDUCTION_UNITS } from '@/screens/tools/features/take-home/constants/DEDUCTION_UNITS'
 import { K401_CAPPED_TIP } from '@/screens/tools/features/take-home/constants/K401_CAPPED_TIP'
+import { TAKE_HOME_PRESET_HINT } from '@/screens/tools/features/take-home/constants/TAKE_HOME_PRESET_HINT'
 import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
@@ -66,6 +67,7 @@ export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
           onDelete={remove}
           onRename={rename}
           scope="takeHome"
+          hint={TAKE_HOME_PRESET_HINT}
         />
       </div>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">

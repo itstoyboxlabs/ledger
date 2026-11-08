@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Plus, X } from 'lucide-react'
+import { useId, useState, type ReactNode } from 'react'
+import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import type { PayIssue } from '@/screens/retirement/types/PayIssue'
 import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
 import type { ResolvedPayPeriod } from '@/screens/retirement/types/ResolvedPayPeriod'
@@ -43,6 +43,45 @@ const UNTIL_OPTIONS = [
   { value: 'age', label: 'At an age' },
 ]
 
+const PAY_PLAN_TIP =
+  "How much you put away each year while you work. Your 401k comes from Take-home pay (your 401k plus your employer's match) and your savings from the Budget (your savings share of what is left). Presets are saved versions of your Budget and Take-home pay for different parts of your life, like a corporate job now and an easier job later. Set each one up once on its tab, then pick them here by age. Everything is in today's dollars."
+
+// "How this works": a short explainer of presets and periods, closed until clicked
+function HowThisWorks() {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  return (
+    <div className="mb-3">
+      <Button variant="ghost" size="xs"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={id}
+        className="-ml-2 h-6 gap-1 px-2 text-[12px] font-normal text-[var(--text-muted)] hover:text-white"
+      >
+        {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        How this works
+      </Button>
+      {open && (
+        <div id={id} className="mt-1 max-w-[680px] space-y-2 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+          <p>
+            Presets are saved versions of your Budget and your Take-home pay for different parts of your life. You
+            set each one up once: build the budget you would live on and save it as a preset on the Budget tab, then
+            do the same for your pay in the Take-home pay tool on Tools. Here you split your working life into
+            periods by age and pick a Take-home preset and a Budget preset for each one. The plan then puts that
+            pay's 401k and that budget's savings away every year of the period.
+          </p>
+          <p className="text-[var(--text-muted)]">
+            For example, say you are 25 with a corporate job. The first period runs from 25 until 40 with the
+            Corporate job Take-home preset and the Today Budget preset, growing 3% a year. The second starts at 40
+            with the Easier job and Leaner budget presets, so you save less and put nothing into a 401k until you
+            retire.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // a value from somewhere else, in the same box a ToolField uses
 function ReadOnlyField({ label, value, tip }: { label: ReactNode; value: string; tip: string }) {
   return (
@@ -74,7 +113,7 @@ export function PayPlanCard({ periods, resolved, issues, todaySalary, retireAge,
     <Card className="p-5 lg:col-span-2">
       <div className="mb-3 flex items-center gap-1.5">
         <h2 className="text-[14px] font-semibold">Pay and saving over time</h2>
-        <InfoTip tip="How much you put away each year while you work. The 401k comes from the Take-home pay tool (your 401k plus your employer's match) and savings from the Budget (your savings share of what is left), today's or a saved preset, so they stay in sync. Plan pay changes to split your working life into periods, like an easier job at 45 or part time after you retire, each with its own Take-home and Budget preset or typed numbers. Everything is in today's dollars." />
+        <InfoTip tip={PAY_PLAN_TIP} />
         {periods.length > 0 && (
           <span className="ml-auto flex items-center gap-1.5">
             {periods.length > 1 && (
@@ -93,6 +132,7 @@ export function PayPlanCard({ periods, resolved, issues, todaySalary, retireAge,
           </span>
         )}
       </div>
+      <HowThisWorks />
       {periods.length === 0 ? (
         <div className="flex flex-col gap-3">
           {today}
@@ -102,9 +142,9 @@ export function PayPlanCard({ periods, resolved, issues, todaySalary, retireAge,
                 Same pay until you retire. {fmt0(todaySalary)} a year from Take-home pay.
               </p>
               <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-                If your pay might change, like a raise or a lower paying job at a certain age, add another period.
-                Set that life up first on the Budget page and in the Take-home pay tool. Save each as a preset, then
-                pick those presets here.
+                If your pay or spending will change, like a lower paying job at 40, plan it in periods. First save
+                that part of your life as presets: a Budget preset on the Budget tab and a Take-home preset in the
+                Take-home pay tool on Tools. Then pick them here for each period.
               </p>
             </div>
             <Button variant="outline" size="sm" className="rounded-lg" onClick={onAdd}>

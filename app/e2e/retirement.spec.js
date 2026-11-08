@@ -1503,8 +1503,8 @@ test.describe('pay and saving over time', () => {
   test('with no plan, one card holds today\'s 401k and savings', async ({ page }) => {
     await setup(page)
     await expect(card(page)).toContainText('Same pay until you retire. $80,000 a year from Take-home pay.')
-    await expect(card(page)).toContainText('If your pay might change, like a raise or a lower paying job at a certain age, add another period.')
-    await expect(card(page)).toContainText('Save each as a preset, then pick those presets here.')
+    await expect(card(page)).toContainText('If your pay or spending will change, like a lower paying job at 40, plan it in periods.')
+    await expect(card(page)).toContainText('Then pick them here for each period.')
     await expect(todayRow(page)).toBeVisible()
     await expect(main(page).getByText('Saving each year')).toHaveCount(0)
     await expect(card(page).getByText(/Pay per year/)).toHaveCount(0)

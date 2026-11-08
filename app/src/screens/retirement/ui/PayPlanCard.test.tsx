@@ -43,10 +43,23 @@ describe('PayPlanCard', () => {
     expect(screen.getByText('Today row')).toBeInTheDocument()
     expect(screen.getByText('Own savings here')).toBeInTheDocument()
     expect(screen.getByText('Same pay until you retire. $95,000 a year from Take-home pay.')).toBeInTheDocument()
-    expect(screen.getByText(/If your pay might change, like a raise or a lower paying job at a certain age, add another period\./)).toBeInTheDocument()
-    expect(screen.getByText(/Save each as a preset, then\s+pick those presets here\./)).toBeInTheDocument()
+    expect(screen.getByText(/If your pay or spending will change, like a lower paying job at 40, plan it in periods\./)).toBeInTheDocument()
+    expect(screen.getByText(/Then pick them here for each period\./)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
     expect(onAdd).toHaveBeenCalled()
+  })
+
+  it('explains presets and periods in a How this works section that starts closed', async () => {
+    setup()
+    const toggle = screen.getByRole('button', { name: 'How this works' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText(/Presets are saved versions of your Budget/)).toBeNull()
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(toggle.getAttribute('aria-controls')!)).toHaveTextContent(/Presets are saved versions of your Budget and your Take-home pay/)
+    expect(screen.getByText(/say you are 25 with a corporate job/)).toBeInTheDocument()
+    await userEvent.click(toggle)
+    expect(screen.queryByText(/Presets are saved versions of your Budget/)).toBeNull()
   })
 
   it('a period shows its ages, 401k, savings and raise, and no pay', () => {
