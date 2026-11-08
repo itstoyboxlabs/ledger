@@ -1,3 +1,4 @@
+import { videoUrl } from '@/screens/marketing/utils/videoUrl'
 import type { TutorialChapter } from '@/screens/marketing/types/TutorialChapter'
 import type { Ref } from 'react'
 type TutorialPlayerProps = {
@@ -13,7 +14,7 @@ export function TutorialPlayer({ chapter, number, count, videoRef, onEnded }: Tu
   return (
     <div>
       <div className="player">
-        <video ref={videoRef} controls playsInline preload="metadata" poster={`/videos/${chapter.file}.jpg`} src={`/videos/${chapter.file}.mp4`} onEnded={onEnded} />
+        <video ref={videoRef} controls playsInline preload="metadata" poster={videoUrl(`${chapter.file}.jpg`)} src={videoUrl(`${chapter.file}.mp4`)} onEnded={onEnded} />
       </div>
       <div className="now">
         <small>

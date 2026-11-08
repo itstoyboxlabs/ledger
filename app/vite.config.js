@@ -53,26 +53,6 @@ function budgetApi() {
   }
 }
 
-// The tutorial videos live in demo/video (they are large, so the public repo leaves them out). In dev this serves
-// them at /videos/<file>. For a deploy, `npm run videos` copies the chapter files into public/videos, which git
-// ignores and Vercel uploads, so the hosted site serves them too. Both do nothing when the folder is missing.
-const VIDEO_DIR = path.resolve(here, '../demo/video')
-const isChapterFile = (f) => /^chapter-\d.*\.(mp4|jpg)$/.test(f)
-function demoVideos() {
-  return {
-    name: 'demo-videos',
-    configureServer(server) {
-      server.middlewares.use('/videos', (req, res, next) => {
-        const file = path.basename((req.url ?? '').split('?')[0])
-        const full = path.join(VIDEO_DIR, file)
-        if (!isChapterFile(file) || !fs.existsSync(full)) return next()
-        res.setHeader('content-type', file.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
-        fs.createReadStream(full).pipe(res)
-      })
-    },
-  }
-}
-
 const NOTES_PATH = path.join(DATA_DIR, 'notes.json')
 
 // personal notes (always-available header modal) — structured list of
@@ -214,7 +194,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    demoVideos(),
     ...(mode === 'browser'
       ? []
       : [budgetApi(), notesApi(), presetsApi(), logApi(), transactionsApi()]),

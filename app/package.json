@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "videos": "node scripts/sync-videos.mjs",
-    "deploy": "npm run videos && vercel deploy --prod --yes && node scripts/indexnow.mjs"
+    "videos": "vercel env pull /tmp/ledger-blob.env --environment production --yes > /dev/null && node --env-file=/tmp/ledger-blob.env scripts/upload-videos.mjs; rm -f /tmp/ledger-blob.env",
+    "deploy": "vercel deploy --prod --yes && node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
@@ -39,6 +39,7 @@
     "@types/node": "^26.6.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@vercel/blob": "^2.8.2",
     "@vitejs/plugin-react": "^6.0.3",
     "fake-indexeddb": "^6.2.7",
     "jsdom": "^31.0.0",

@@ -31,7 +31,7 @@ test.describe('tutorial page', () => {
     await page.goto('/tutorial')
     await page.locator('button.ch').nth(3).click()
     await expect(page.getByText('Chapter 4 of 9')).toBeVisible()
-    await expect(page.locator('video')).toHaveAttribute('src', '/videos/chapter-4-spending.mp4')
+    await expect(page.locator('video')).toHaveAttribute('src', /\/videos\/chapter-4-spending\.mp4$/)
   })
 })
 

@@ -46,3 +46,30 @@ jobs:
           name: playwright-traces
           path: app/test-results
           retention-days: 7
+
+  # Ships the site to Vercel after the tests pass on main. It only runs for pushes to main, so a pull request
+  # from a fork never reaches it, and fork runs never see the secret.
+  deploy:
+    name: deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+      - run: node scripts/indexnow.mjs

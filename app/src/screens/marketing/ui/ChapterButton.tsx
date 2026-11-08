@@ -1,3 +1,4 @@
+import { videoUrl } from '@/screens/marketing/utils/videoUrl'
 import type { TutorialChapter } from '@/screens/marketing/types/TutorialChapter'
 
 type ChapterButtonProps = {
@@ -12,7 +13,7 @@ export function ChapterButton({ chapter, number, active, onSelect }: ChapterButt
   return (
     <button type="button" className={active ? 'ch on' : 'ch'} aria-current={active ? 'true' : undefined} onClick={onSelect}>
       <div className="thumb">
-        <img src={`/videos/${chapter.file}.jpg`} alt="" loading="lazy" />
+        <img src={videoUrl(`${chapter.file}.jpg`)} alt="" loading="lazy" />
         <span>{chapter.length}</span>
       </div>
       <div>
