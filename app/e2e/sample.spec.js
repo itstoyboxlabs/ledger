@@ -10,8 +10,8 @@ test.describe('rich sample data', () => {
 
   test('Balances shows debts and assets', async ({ page }) => {
     await goTo(page, 'Balances')
-    await expect(main(page).getByText('$37,550').first()).toBeVisible()
-    await expect(main(page).getByText('$97,100').first()).toBeVisible()
+    await expect(main(page).getByText('$30,500').first()).toBeVisible()
+    await expect(main(page).getByText('$120,200').first()).toBeVisible()
     await expect(main(page).locator('input[value="Car loan"]')).toBeVisible()
     await expect(main(page).locator('input[value="Roth IRA"]')).toBeVisible()
   })
