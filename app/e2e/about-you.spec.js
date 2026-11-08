@@ -193,7 +193,7 @@ test.describe('keyboard and labels', () => {
     await expect(ageBox(page)).toBeVisible()
     await expect(filingSelect(page)).toBeVisible()
     await ageBox(page).focus()
-    await page.keyboard.press('Control+a')
+    await page.keyboard.press('ControlOrMeta+a')
     await page.keyboard.type('52')
     await expect(ageBox(page)).toHaveValue('52')
     // tab on to the filing status select and change it with the arrow keys
