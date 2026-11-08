@@ -129,7 +129,9 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     presets: expensePresets,
     save: saveExpensePreset,
     remove: removeExpensePreset,
-  } = usePresets<BudgetRow[]>('expenses')
+    rename: renameExpensePreset,
+    // ids let the Retirement pay plan point at a preset through a rename
+  } = usePresets<BudgetRow[]>('expenses', { ids: true })
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // counts edits: only the newest save may settle the state, so an older POST that
   // resolves while a newer edit is pending can't mark it saved (and let a focus
@@ -599,6 +601,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 onSave={(name) => saveExpensePreset(name, rows)}
                 scope="expenses"
                 onDelete={removeExpensePreset}
+                onRename={renameExpensePreset}
               />
             )}
           </div>
@@ -614,6 +617,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 onSave={(name) => saveExpensePreset(name, rows)}
                 scope="expenses"
                 onDelete={removeExpensePreset}
+                onRename={renameExpensePreset}
               />
             )}
             <UITooltip>

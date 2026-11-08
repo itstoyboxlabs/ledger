@@ -2,8 +2,9 @@ import fs from 'node:fs'
 import { test, expect, openApp, goTo, ls } from './fixtures'
 
 // The About you page: age, filing status and tax state, which the planning pages read.
-// The sample data saves an age of 35 (as of 2026) and Single. The clock is pinned to
-// November 2026, so the age shows as 35.
+// openApp loads the lean e2e settings (no About you keys), so each test starts from what the
+// shipped sample saves: age 35 as of 2026 and Single. The clock is pinned to November 2026.
+// The rich sample itself is checked in sample.spec.js.
 
 const main = (page) => page.getByRole('main')
 const card = (page, title) => main(page).locator('[data-slot=card]').filter({ has: page.locator('h2', { hasText: title }) }).first()
@@ -24,6 +25,11 @@ async function takeHome(page) {
 
 test.beforeEach(async ({ page }) => {
   await openApp(page)
+  await page.evaluate(() => {
+    localStorage.setItem('ledger:age', JSON.stringify({ age: 35, asOf: 2026 }))
+    localStorage.setItem('ledger:filingStatus', JSON.stringify('single'))
+  })
+  await page.reload()
   await goTo(page, 'About you')
 })
 
@@ -209,3 +215,4 @@ test.describe('keyboard and labels', () => {
     await expect(main(page).locator('[data-slot=card] h2')).toHaveCount(3)
   })
 })
+

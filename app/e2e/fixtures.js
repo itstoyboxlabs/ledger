@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import { test as base, expect } from '@playwright/test'
 
 // Every test gets a fresh browser context (empty IndexedDB and localStorage) on a dev server
@@ -27,9 +28,20 @@ export async function openEmpty(page) {
   await expect(page.getByRole('button', { name: 'Try it with sample data' })).toBeVisible()
 }
 
-// open the app with the fake sample data loaded, on the Spending page
-export async function openApp(page) {
+// open the app with the fake sample data loaded, on the Spending page.
+// Most specs were written against a bare start (no balances, no presets, the first eight budget rows), so by
+// default the sample's settings are swapped for e2e/lean-settings.json, the sample as it was before it got
+// balances and presets. Pass { rich: true } to load public/sample-data.json exactly as shipped.
+export async function openApp(page, { rich = false } = {}) {
   await openEmpty(page)
+  if (!rich) {
+    const lean = JSON.parse(fs.readFileSync('e2e/lean-settings.json', 'utf8'))
+    await page.route('**/sample-data.json', async (route) => {
+      const res = await route.fetch()
+      const body = await res.json()
+      await route.fulfill({ response: res, json: { ...body, settings: lean } })
+    })
+  }
   await page.getByRole('button', { name: 'Try it with sample data' }).click()
   await expect(page.getByRole('heading', { name: 'Spending', level: 1 }).or(page.locator('h1', { hasText: 'Spending' }))).toBeVisible()
 }

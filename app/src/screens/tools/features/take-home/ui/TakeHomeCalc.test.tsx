@@ -2,6 +2,9 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '@/test-utils/renderApp'
 import { TakeHomeCalc } from './TakeHomeCalc'
+import { seedStorage } from '@/test-utils/seedStorage'
+import { getPresets } from '@/shared/utils/getPresets'
+import { presetIdFor } from '@/shared/utils/presetIdFor'
 
 beforeEach(() => localStorage.clear())
 
@@ -89,5 +92,26 @@ describe('TakeHomeCalc', () => {
     renderApp(<TakeHomeCalc goToAboutYou={() => {}} />)
     expect(screen.getByText(/Using Married filing jointly from About you/)).toBeInTheDocument()
     expect(num(valueOf('Take-home per year'))).toBeGreaterThan(singleNet)
+  })
+
+  it('applies a saved preset and gives old presets an id', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    await seedStorage({ presets: { takeHome: [{ name: 'Easier job', data: { salary: 60000, deductions: [] } }] } })
+    renderApp(<TakeHomeCalc goToAboutYou={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: /Presets/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Easier job' }))
+    expect(valueOf('Salary')).toBe('$60,000.00')
+    expect(screen.queryByText('401k (4%)')).toBeNull()
+    expect((await getPresets()).takeHome[0]).toMatchObject({ id: presetIdFor('Easier job'), name: 'Easier job' })
+  })
+  it('saves the current numbers as a preset with an id', async () => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+    await seedStorage()
+    renderApp(<TakeHomeCalc goToAboutYou={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: /Presets/ }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Save as new preset/ }))
+    await userEvent.type(screen.getByPlaceholderText('Preset name'), 'Now{Enter}')
+    await vi.waitFor(async () => expect((await getPresets()).takeHome?.[0]).toMatchObject({ name: 'Now', data: { salary: 80000 } }))
+    expect((await getPresets()).takeHome[0].id).toMatch(/^pr/)
   })
 })

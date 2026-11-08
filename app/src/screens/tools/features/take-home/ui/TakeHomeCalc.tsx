@@ -30,6 +30,9 @@ import { takeHome401kMatchYearly } from '@/shared/utils/takeHome401kMatchYearly'
 import { takeHomeBreakdown } from '@/shared/utils/takeHomeBreakdown'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
+import { usePresets } from '@/shared/hooks/usePresets'
+import { PresetBar } from '@/shared/ui/PresetBar'
+import type { TakeHome } from '@/shared/types/TakeHome'
 import { useToolState } from '@/shared/hooks/useToolState'
 
 export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
@@ -38,6 +41,9 @@ export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   const [filing] = useFilingStatus()
   const [raw, setC] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
   const c = normalizeTakeHome(raw)
+  // named salaries and deductions, like "Now" or "Easier job". Ids let the Retirement pay
+  // plan point at one through a rename.
+  const { presets, save, remove, rename } = usePresets<TakeHome>('takeHome', { ids: true })
   const b = takeHomeBreakdown(c, taxState, filing)
   const setDeductions = (deductions: Deduction[]) => setC({ salary: c.salary, deductions })
   const patch = (id: string, p: Partial<Deduction>) => setDeductions(c.deductions.map((d) => (d.id === id ? { ...d, ...p } : d)))
@@ -50,7 +56,18 @@ export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   const dropdownClass = 'h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs'
   return (
     <Card id="take-home-pay" className="p-5 scroll-mt-4">
-      <h2 className="text-[15px] font-semibold">Take-home pay</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-[15px] font-semibold">Take-home pay</h2>
+        <PresetBar
+          presets={presets}
+          currentData={c}
+          onApply={(d) => setC(normalizeTakeHome(d))}
+          onSave={(name) => save(name, c)}
+          onDelete={remove}
+          onRename={rename}
+          scope="takeHome"
+        />
+      </div>
       <p className="mt-1 text-[12px] text-[var(--text-muted)]">
         See what a salary actually turns into after taxes, 401k and health insurance come out,
         per year, per month and per paycheck. A $80,000 salary isn't $6,667 a month, and this

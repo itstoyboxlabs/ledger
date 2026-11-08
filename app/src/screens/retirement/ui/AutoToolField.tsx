@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { fmt0 } from '@/shared/utils/fmt0'
 import { Label } from '@/shared/ui/primitives/label'
 import { FieldBadge } from '@/screens/retirement/ui/FieldBadge'
@@ -10,7 +11,7 @@ import { ToolField } from '@/shared/ui/ToolField'
 // the auto-display case, so both states stay pixel-identical to sibling ToolFields —
 // the badge is overlaid via FieldBadge and never touches either layout.
 type AutoToolFieldProps = {
-  label: string
+  label: ReactNode
   auto: boolean
   onToggleAuto: () => void
   autoValue: number
