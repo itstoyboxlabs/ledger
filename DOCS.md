@@ -624,6 +624,40 @@ from before this existed read as `typed`, so numbers do not move. New users star
   - It applies only while working. A caption under the fields shows each debt's payoff age, with "no payment
     set on Budget" or "already clear" when relevant.
 
+### Your pay over time
+
+The pay plan, `retireCalc.pay: { periods: [{ id, label, fromAge, toAge: number | 'retire', salary, raisePct,
+k401: number | 'auto', savings: number | 'auto' }] }`. It sits in its own card above Saving each year. Logic is in
+`utils/payAt.ts`, `utils/payBreakdown.ts`, `utils/payPlanIssues.ts` and `simulateRetirement`.
+
+- **No periods is today's behavior, exactly.** The card reads "Same pay until you retire. $X a year from Take-home
+  pay." Saves and presets without `pay` read as no periods (`normalizePay`), and a regression test in
+  `simulateRetirement.test.ts` pins the old numbers.
+- **Plan pay changes** starts a "Now" period from today at the Take-home salary with today's 401k and savings
+  (Auto stays Auto, typed values carry over, a typed 401k becomes a percent of pay), plus a second period ten
+  years on. Each later period starts where the last one ends, which then ends there. "Go back to the same pay"
+  clears the plan.
+- **A period** covers `fromAge` up to, not including, `toAge`. Ends is "When I retire" or "At an age", set by
+  "Until age" or "For how many years". Pay compounds by `raisePct` a year from the year it starts. Pay is in
+  today's dollars.
+- **401k**: Auto runs the Take-home deductions at the period's pay. A typed percent replaces the Take-home 401k
+  lines with one line at that percent and keeps the Take-home match. 0 means no 401k. The yearly deferral limit
+  (`K401_DEFERRAL_LIMIT`) applies either way and the match follows the capped amount. The first year of each
+  period is a 75% 401k year (new job). A raise inside a period is not.
+- **Savings**: Auto is the Budget savings figure plus the change in take-home pay against the period that covers
+  today (`takeHomeBreakdown` net), so today's savings stay what Budget says. A pay cut saves less, a year at 0 pay
+  saves less than nothing and draws on savings. Typed is that amount every year of the period. Your own savings
+  lines and freed debt payments still add on top.
+- **Work after retiring**: a period whose until age is past the saved retire age keeps paying after you retire.
+  Its take-home pay lowers that year's withdrawal (never below zero, any extra is saved) and its 401k setting
+  still applies. The card hides savings for a period that starts after the retire age. Find earliest safe age
+  stops periods that end by the saved retire age at each age it tries, and keeps these going.
+- **Edge cases**, each with a note in the card: a gap between periods keeps today's pay and the typed or Auto
+  numbers in Saving each year; where periods overlap the lower one in the list wins; a period starting before
+  today counts from today; one that starts after you retire and ends when you retire never pays; 0 pay counts as
+  time off. With a plan, the Saving each year fields say they only count for years no period covers.
+- **Year table**: a Pay column shows the gross pay of each year, from the plan or the Take-home salary.
+
 ### Events
 
 `retireCalc.events: [{ id, name, amount, kind: 'in'|'out'|'debt', age, repeat: 'once'|'month'|'year'|'2year',
@@ -647,7 +681,9 @@ Auto badge. Auto is `ssMonthlyBenefit()`: the Take-home salary for 35 years, cap
 90, 32 and 15 percent bend points, scaled by claim age: 62 is 70%, 67 is 100% and 70 is 124%. Claiming early
 loses 5/9 of 1% a month for the first 36 months before 67 and 5/12 of 1% a month beyond that (64 is 80%), and
 each year after 67 adds 8%.
-Figures are for 2026 and sourced in the code. From the claim age on, the benefit reduces the monthly withdrawal,
+Figures are for 2026 and sourced in the code. With a pay plan, Auto instead averages the best 35 years of the
+plan's pay up to the claim age (`ssFromEarnings`), each capped at the wage base, with years from 22 to today at
+today's pay. Long time off lowers it and raises lift it. From the claim age on, the benefit reduces the monthly withdrawal,
 never below zero. Saves without `ss` read as off so numbers do not move. New users start with it on.
 
 ### Known simplifications

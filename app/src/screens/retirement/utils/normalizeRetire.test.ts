@@ -47,4 +47,17 @@ describe('normalizeRetire', () => {
     expect(out.events[1].amount).toBe(29000)
     expect(out.events[2]).not.toHaveProperty('auto')
   })
+  it('reads a save from before the pay plan as no plan and changes nothing else', () => {
+    const old = {
+      age: 41, retireAge: 58, accessAge: 60, endAge: 92, start401k: 1000, startSavings: 2000, startFrom: 'typed', startOff: [],
+      contrib401k: 5000, contribSavings: 9000, auto401k: false, autoSavings: true, withdrawMo: 4000, taxPct: 12, autoTax: false,
+      ss: { on: true, claimAge: 68, auto: false, monthly: 1500 }, events: [], extras: [],
+    }
+    expect(normalizeRetire(old)).toEqual({ ...old, pay: { periods: [] } })
+    expect(normalizeRetire({ age: 30 }).pay).toEqual({ periods: [] })
+  })
+  it('keeps a saved pay plan', () => {
+    const pay = { periods: [{ id: 'a', label: 'Now', fromAge: 35, toAge: 45, salary: 90000, raisePct: 2, k401: 'auto', savings: 'auto' }] }
+    expect(normalizeRetire({ events: [], pay }).pay).toEqual(pay)
+  })
 })

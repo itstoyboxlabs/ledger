@@ -41,6 +41,12 @@ import { HeaderTip } from '@/screens/retirement/ui/HeaderTip'
 import { Icon } from '@/shared/ui/Icon'
 import { InfoTip } from '@/shared/ui/InfoTip'
 import { PortfolioTable } from '@/screens/retirement/ui/PortfolioTable'
+import { PayPlanCard } from '@/screens/retirement/ui/PayPlanCard'
+import { addPayPeriod } from '@/screens/retirement/utils/addPayPeriod'
+import { payBreakdown } from '@/screens/retirement/utils/payBreakdown'
+import { payPlanIssues } from '@/screens/retirement/utils/payPlanIssues'
+import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
+import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import { REPEAT_OPTIONS } from '@/screens/retirement/constants/REPEAT_OPTIONS'
 import { RETIRE_DEFAULTS } from '@/screens/retirement/constants/RETIRE_DEFAULTS'
@@ -252,8 +258,19 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       fromBalances && startOff.has(debts[i].id) ? sum : sum + freedFromDebt(sched, debtPayments[i], age), 0) * freedToSavings
   // the model itself is simulateRetirement; this is a function of retireAge so "Find"
   // (below) can replay it against candidate ages
+  // the pay plan: each period's pay, 401k and saving. Empty means today's numbers.
+  const periods = c.pay.periods
+  const hasPlan = periods.length > 0
+  const payMath: RetireSimPay['math'] = (gross, k401) => payBreakdown(takeHome, taxState, gross, k401)
+  const simPay: RetireSimPay | undefined = hasPlan
+    ? {
+      periods, planRetireAge: c.retireAge, todaySalary: takeHomeSalary, math: payMath,
+      budgetSavings: c.autoSavings ? autoContribSavings : c.contribSavings, extrasSavings,
+      ssFromPlan: c.ss.on && c.ss.auto,
+    }
+    : undefined
   const simInput: RetireSimInput = {
-    age: c.age, accessAge: c.accessAge, endAge: c.endAge,
+    age: c.age, accessAge: c.accessAge, endAge: c.endAge, salary: takeHomeSalary, pay: simPay,
     start401k: startK, startSavings: startS - (countDebt ? holeDebt : 0),
     base401k: baseContrib401k, extras401k, contribSavings: effectiveContribSavings, freed: freedPerYear,
     withdrawMo: c.withdrawMo, ssMonthly, ssClaimAge: c.ss.claimAge, r, rAfter, taxPct,
@@ -262,9 +279,27 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   }
   const simulate = (retireAge: number) => simulateRetirement(simInput, retireAge)
   // everything Find depends on; the "no safe age" note clears once any of it changes
-  const findKey = JSON.stringify({ ...simInput, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
+  const findKey = JSON.stringify({ ...simInput, takeHome: hasPlan ? takeHome : null, taxState, freed: Array.from({ length: Math.max(0, c.endAge - c.age + 1) }, (_, i) => freedPerYear(c.age + i)) })
   const findNotFound = findNotFoundFor === findKey
-  const { rows, runOutAge, atRetirement } = simulate(c.retireAge)
+  const { rows, runOutAge, atRetirement, ssMonthly: ssUsed } = simulate(c.retireAge)
+  const payIssues = payPlanIssues(periods, c.age, c.retireAge, c.endAge)
+  // Auto 401k and savings in a period's first year, as the projection works them out
+  const nowPeriodNet = (() => {
+    const first = periods.findLast((p) => Math.max(p.fromAge, c.age) <= c.age && (p.toAge === 'retire' ? c.retireAge : p.toAge) > c.age)
+    return first ? payMath(first.salary, first.k401).net : payMath(takeHomeSalary, 'auto').net
+  })()
+  const payPreview = (p: PayPeriod) => {
+    const m = payMath(p.salary, p.k401)
+    return { k401: m.own + m.match, savings: (c.autoSavings ? autoContribSavings : c.contribSavings) + m.net - nowPeriodNet }
+  }
+  // the percent a period's 401k starts at when its Auto is turned off: today's, from Take-home
+  const default401kPct = takeHomeSalary > 0 ? Math.round((k401Yearly / takeHomeSalary) * 1000) / 10 : 0
+  const setPeriods = (next: PayPeriod[]) => setC({ ...c, pay: { periods: next } })
+  const addPeriod = () => setPeriods(addPayPeriod(periods, c.age, c.retireAge, {
+    salary: takeHomeSalary,
+    k401: c.auto401k || takeHomeSalary <= 0 ? 'auto' : Math.round((c.contrib401k / takeHomeSalary) * 1000) / 10,
+    savings: c.autoSavings ? 'auto' : c.contribSavings,
+  }))
   // balance at a few milestone ages plus the end age, only the ones the projection reaches
   const milestones = [...new Set([60, 70, 80, 90, 100, c.endAge])]
     .sort((a, b) => a - b)
@@ -399,6 +434,17 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
           )}
         </FieldGroup>
 
+        <PayPlanCard
+          periods={periods}
+          issues={payIssues}
+          todaySalary={takeHomeSalary}
+          retireAge={c.retireAge}
+          default401kPct={default401kPct}
+          preview={payPreview}
+          onChange={setPeriods}
+          onAdd={addPeriod}
+        />
+
         <FieldGroup
           label="Saving each year"
           tip="How much you put away each year while you work. 401k is what you put in plus your employer's match, both set on the Take-home tool. Savings is everything else you set aside. Auto pulls these from the Tools and Budget pages so they stay in sync. Use the plus to add your own on top, like an IRA or a yearly bonus."
@@ -440,6 +486,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
             step={500}
             suffix="$"
           />
+          {hasPlan && (
+            <p className="col-span-2 text-[11px] text-[var(--text-muted)]">
+              Your pay plan sets the 401k and savings for each period. These two only count for years no period covers.
+            </p>
+          )}
           {c.extras.length > 0 && (
             <div className="col-span-2 mt-1 flex flex-col gap-2 border-t border-[var(--grid)] pt-3 show-spinners">
               <div className="text-[12px] text-[var(--text-muted)]">Your own, on top of the above. Retirement account money stays locked until your 401k access age.</div>
@@ -544,8 +595,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 label="Per month"
                 auto={c.ss.auto}
                 onToggleAuto={() => setC({ ...c, ss: { ...c.ss, auto: !c.ss.auto } })}
-                autoValue={autoSsMonthly}
-                autoTip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
+                autoValue={hasPlan ? ssUsed : autoSsMonthly}
+                autoTip={hasPlan
+                  ? `From your pay plan: your 35 best years of pay, with years before today at today's pay. Claiming at ${c.ss.claimAge} that comes to ${fmt0(ssUsed)} a month. For the real number, check your statement at ssa.gov and type it in.`
+                  : SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
                 tip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
                 value={c.ss.monthly}
                 onChange={(v) => setC({ ...c, ss: { ...c.ss, monthly: v } })}
@@ -766,15 +819,24 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
+                    label="Pay"
+                    tip={hasPlan
+                      ? 'Your pay before tax that year, from Your pay over time. Years no period covers use today\'s pay.'
+                      : `Your pay before tax that year: ${fmt0(takeHomeSalary)} from Take-home pay until you retire. Add pay changes in Your pay over time.`}
+                    right
+                  />
+                </TableHead>
+                <TableHead className="pb-2 pr-3 text-right font-medium">
+                  <HeaderTip
                     label="401k"
-                    tip={`Your retirement account. ${fmt0(effectiveContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
+                    tip={`Your retirement account. ${hasPlan ? 'Your pay plan sets what goes in each year while you work' : `${fmt0(effectiveContrib401k)} goes in each year while you work${matchPct > 0 ? ` (your share plus a ${matchPct}% employer match)` : ''}`}. It grows tax free and stays locked until ${c.accessAge}, when it moves into your savings. After that new 401k money goes straight to savings, so this column shows a dash.`}
                     right
                   />
                 </TableHead>
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Contributions"
-                    tip={`New money in that year: 401k (${fmt0(effectiveContrib401k)}) plus savings (${fmt0(effectiveContribSavings)}), any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in. Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
+                    tip={`New money in that year: 401k ${hasPlan ? 'plus savings, as your pay plan sets them' : `(${fmt0(effectiveContrib401k)}) plus savings (${fmt0(effectiveContribSavings)})`}, any money-in events, and payments freed up as debts get paid off. The first year is smaller because the 401k starts 3 months in${hasPlan ? ', and so is the first year of each pay period' : ''}.${hasPlan ? ' A year with less take-home pay than today can save less than nothing, which comes out of savings.' : ''} Regular saving stops the year you retire. In the year your 401k unlocks its balance moves into savings and shows here too.`}
                     right
                   />
                 </TableHead>
@@ -788,7 +850,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 <TableHead className="pb-2 pr-3 text-right font-medium">
                   <HeaderTip
                     label="Withdrawals"
-                    tip={`What you take out each year. Once retired that is ${fmt0(c.withdrawMo)} a month${ssMonthly > 0 ? `, minus ${fmt0(ssMonthly)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.`}
+                    tip={`What you take out each year. Once retired that is ${fmt0(c.withdrawMo)} a month${ssUsed > 0 ? `, minus ${fmt0(ssUsed)} a month of Social Security from age ${c.ss.claimAge}` : ''}. Money-out events, like a down payment, show here in their year.${hasPlan ? ' Pay from work after you retire lowers it.' : ''}`}
                     right
                   />
                 </TableHead>
@@ -817,6 +879,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                       {row.phase === 'working' ? 'working' : row.phase === 'early-retired' ? 'retired (pre-401k)' : 'retired'}
                     </span>
                   </TableCell>
+                  <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.pay > 0 ? fmt0(row.pay) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.k > 0 ? fmt0(row.k) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{row.contrib ? fmt0(row.contrib) : '—'}</TableCell>
                   <TableCell className="py-1 pr-3 text-right tnum text-[var(--text-secondary)]">{fmt0(row.growth)}</TableCell>

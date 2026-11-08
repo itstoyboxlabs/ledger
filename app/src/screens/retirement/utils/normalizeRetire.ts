@@ -8,6 +8,7 @@ import type { RetireExtra } from '@/screens/retirement/types/RetireExtra'
 import type { RetireState } from '@/screens/retirement/types/RetireState'
 import { isObj } from '@/shared/utils/isObj'
 import { validEvent } from '@/screens/retirement/utils/validEvent'
+import { normalizePay } from '@/screens/retirement/utils/normalizePay'
 
 export function normalizeRetire(input: unknown): RetireState {
   if (!isObj(input)) return { ...RETIRE_DEFAULTS }
@@ -15,6 +16,8 @@ export function normalizeRetire(input: unknown): RetireState {
   if (Array.isArray(raw.events)) {
     const m = typedMerge(RETIRE_DEFAULTS, raw)
     m.ss = typedMerge(RETIRE_DEFAULTS.ss, raw.ss)
+    // saves from before the pay plan read as no plan, so no number moves
+    m.pay = normalizePay(raw.pay)
     // saves from before this existed keep the balances they typed
     m.startFrom = raw.startFrom === 'balances' ? 'balances' : 'typed'
     m.startOff = Array.isArray(raw.startOff) ? raw.startOff.filter((x): x is string => typeof x === 'string') : []
@@ -46,6 +49,7 @@ export function normalizeRetire(input: unknown): RetireState {
     startFrom: 'typed',
     startOff: [],
     extras: [],
+    pay: { periods: [] },
     events: [
       { id: 'down', name: 'House downpayment', amount: downAmt, kind: 'out', age: downAge, repeat: 'once', years: 1 },
       { id: 'car', name: 'Car buyout', amount: carAmt, kind: 'out', age: carAge, repeat: 'once', years: 1 },

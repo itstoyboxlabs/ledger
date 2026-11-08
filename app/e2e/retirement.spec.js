@@ -73,8 +73,8 @@ async function readTable(page) {
   const out = {}
   for (const c of t) {
     out[c[0]] = {
-      phase: c[1], k: money(c[2]), contrib: money(c[3]), growth: money(c[4]),
-      wd: Math.abs(money(c[5])), total: money(c[6]), hasK: c[2] !== '—',
+      phase: c[1], pay: c[2] === '—' ? 0 : money(c[2]), k: money(c[3]), contrib: money(c[4]), growth: money(c[5]),
+      wd: Math.abs(money(c[6])), total: money(c[7]), hasK: c[3] !== '—',
     }
   }
   return out
@@ -98,12 +98,30 @@ function evAmt(e, age) {
   if (e.repeat === '2year') return (age - e.age) % 2 === 0 ? e.amount : 0
   return e.amount
 }
+// The pay plan part of the model, for periods with a typed 401k percent and typed
+// savings (Auto savings depend on the tax engine, so they are checked in unit tests).
+// The later period wins where two overlap, a year no period covers keeps today's numbers,
+// and the first year of each period is a 75% 401k year. The 401k is capped at 24,500
+// and the employer adds `match` percent of it.
+const K401_CAP = 24500
+function planAt(periods, age, startAge, retireAge, planRetireAge) {
+  for (let i = periods.length - 1; i >= 0; i--) {
+    const p = periods[i]
+    const from = Math.max(p.fromAge, startAge)
+    const end = p.toAge === 'retire' ? retireAge : p.toAge
+    if (age < from || age >= end) continue
+    if (age >= retireAge && (p.toAge === 'retire' || p.toAge <= planRetireAge)) continue
+    return { gross: p.salary * (1 + p.raisePct / 100) ** (age - from), i }
+  }
+  return null
+}
 function sim(o) {
   const c = {
     age: 30, retireAge: 40, accessAge: 60, endAge: 90, k0: 10000, s0: 50000, hole: 0,
     base401k: 5000, x401k: 0, contribS: 20000, r: 0, rAfter: null, tax: 0, need: 1000,
-    ssMonthly: 0, claim: 67, events: [], freed: () => 0, ...o,
+    ssMonthly: 0, claim: 67, events: [], freed: () => 0, periods: [], match: 0, ...o,
   }
+  let prevSeg = null
   const rows = {}
   // already past the access age: the 401k starts in savings
   const openNow = c.age >= c.accessAge
@@ -115,8 +133,21 @@ function sim(o) {
     const working = age < c.retireAge
     const open = age >= c.accessAge
     const rate = working ? c.r : (c.rAfter ?? c.r)
-    const cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) + c.x401k : 0
-    const cS = working ? c.contribS + c.freed(age) : 0
+    let cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) + c.x401k : 0
+    let cS = working ? c.contribS + c.freed(age) : 0
+    if (c.periods.length > 0 && working) {
+      const hit = planAt(c.periods, age, c.age, c.retireAge, c.retireAge)
+      const seg = hit ? hit.i : -1
+      const first = seg !== prevSeg
+      prevSeg = seg
+      if (!hit) cK = (first ? c.base401k * 0.75 : c.base401k) + c.x401k
+      else {
+        const p = c.periods[hit.i]
+        const own = Math.min(K401_CAP, hit.gross * p.k401 / 100)
+        cK = own * (1 + c.match / 100) * (first ? 0.75 : 1) + c.x401k
+        cS = p.savings + c.freed(age)
+      }
+    }
     const ssNow = c.ssMonthly > 0 && age >= c.claim ? c.ssMonthly : 0
     const wd = working ? 0 : Math.max(0, c.need - ssNow) * 12
     const kG = k > 0 ? k * rate : 0
@@ -1265,6 +1296,96 @@ test.describe('year-by-year table', () => {
     await setup(page)
     await expect(main(page).getByText(/Your funds earn the same return every year/)).toBeVisible()
     await expect(main(page).getByText(/Everything is in today's dollars, so there is no inflation/)).toBeVisible()
+  })
+})
+
+test.describe('your pay over time', () => {
+  const period = (o) => ({ id: 'p', label: '', fromAge: 30, toAge: 'retire', salary: 80000, raisePct: 0, k401: 5, savings: 20000, ...o })
+  const card = (page) => main(page).locator('[data-slot=card]', { has: page.getByRole('heading', { name: 'Your pay over time' }) })
+
+  test('with no plan, today\'s pay holds and fills the Pay column', async ({ page }) => {
+    await setup(page)
+    await expect(card(page)).toContainText('Same pay until you retire. $80,000 a year from Take-home pay.')
+    await expectRow(page, 30, { pay: 80000 })
+    await expectRow(page, 39, { pay: 80000 })
+    await expectRow(page, 40, { pay: 0 })
+    expect((await retireCalc(page)).pay).toBeUndefined()
+  })
+
+  test('add a change at 35: the Pay column drops and Money lasts updates', async ({ page }) => {
+    // Auto savings, so lower take-home pay saves less
+    await setup(page, { retire: { withdrawMo: 2000, autoSavings: true } })
+    const lasts = await chip(page, 'Money lasts').innerText()
+    await card(page).getByRole('button', { name: 'Plan pay changes' }).click()
+    await expect(page.getByLabel(/From age for Now/)).toHaveValue('30')
+    await page.getByLabel(/From age for period 2/).fill('35')
+    await page.getByLabel(/Until age for Now/).fill('35')
+    await page.getByLabel(/Pay per year for period 2/).fill('40000')
+    await page.getByLabel(/Label for period 2/).fill('Easier job')
+    await expectRow(page, 34, { pay: 80000 })
+    await expectRow(page, 35, { pay: 40000 })
+    await expect.poll(() => chip(page, 'Money lasts').innerText()).not.toBe(lasts)
+    const saved = (await retireCalc(page)).pay.periods
+    expect(saved.map((x) => [x.label, x.fromAge, x.toAge, x.salary])).toEqual([['Now', 30, 35, 80000], ['Easier job', 35, 'retire', 40000]])
+  })
+
+  test('the table matches the reference model with raises, a 401k percent and typed savings', async ({ page }) => {
+    const periods = [
+      period({ id: 'a', label: 'Now', toAge: 34, raisePct: 3, k401: 6 }),
+      period({ id: 'b', label: 'Easier job', fromAge: 34, salary: 50000, k401: 0, savings: 8000 }),
+    ]
+    await setup(page, { retire: { taxPct: 15, endAge: 75, withdrawMo: 2000, pay: { periods } }, port: [{ name: 'Fund', alloc: 100, perf: 6 }] })
+    await expectMatchesSim(page, sim({ r: 0.06, tax: 15, endAge: 75, need: 2000, periods }))
+    await expectRow(page, 33, { pay: Math.round(80000 * 1.03 ** 3) })
+  })
+
+  test('the 401k is capped and the match follows the cap', async ({ page }) => {
+    const takeHome = { salary: 80000, deductions: [{ id: 'd401k', kind: '401k', unit: 'pct', amount: 4, match: 50 }] }
+    const periods = [period({ salary: 400000, k401: 10 })]
+    await setup(page, { retire: { pay: { periods } }, takeHome })
+    await expectMatchesSim(page, sim({ periods, match: 50 }))
+    // 24,500 plus half of it, after the first year's 75%
+    await expectRow(page, 31, { contrib: 36750 + 20000 })
+  })
+
+  test('part time after retiring lowers the withdrawals in those years only', async ({ page }) => {
+    const periods = [period({ id: 'a', label: 'Now' }), period({ id: 'b', label: 'Part time', fromAge: 42, toAge: 45, salary: 30000, k401: 0 })]
+    await setup(page, { retire: { pay: { periods } } })
+    await expect(card(page)).toContainText('Keeps going after you retire at 40.')
+    await expectRow(page, 41, { wd: 12000, pay: 0 })
+    await expectRow(page, 42, { pay: 30000, phase: 'retired (pre-401k)' })
+    await expectRow(page, 45, { wd: 12000, pay: 0 })
+    const t = await readTable(page)
+    for (const a of [42, 43, 44]) {
+      // 30,000 of pay covers the 12,000 need and the rest is saved
+      expect(t[a].wd).toBe(0)
+      expect(t[a].contrib).toBeGreaterThan(0)
+    }
+  })
+
+  test('gaps, overlaps and periods after retiring say so', async ({ page }) => {
+    const periods = [
+      period({ id: 'a', label: 'Now', toAge: 33 }),
+      period({ id: 'b', label: 'Job two', fromAge: 35, toAge: 38 }),
+      period({ id: 'c', label: 'Job three', fromAge: 37, salary: 0 }),
+      period({ id: 'd', label: 'Late start', fromAge: 41 }),
+    ]
+    await setup(page, { retire: { pay: { periods } } })
+    await expect(card(page)).toContainText("No period covers ages 33 to 34. Those years use today's pay and saving.")
+    await expect(card(page)).toContainText('Overlaps Job three at age 37. The lower one wins there.')
+    await expect(card(page)).toContainText('No pay. These years count as time off.')
+    await expect(card(page)).toContainText('Starts after you retire at 40, so it never pays.')
+    // the gap keeps today's typed numbers, time off saves what the period says
+    await expectRow(page, 34, { pay: 80000, contrib: 25000 })
+    await expectRow(page, 38, { pay: 0, contrib: 20000 })
+  })
+
+  test('Go back to the same pay clears the plan and the numbers return', async ({ page }) => {
+    await setup(page, { retire: { pay: { periods: [period({ salary: 0, k401: 0, savings: 0 })] } } })
+    await expectRow(page, 31, { contrib: 0 })
+    await card(page).getByRole('button', { name: 'Go back to the same pay' }).click()
+    await expectRow(page, 31, { contrib: 25000 })
+    await expect.poll(async () => (await retireCalc(page)).pay.periods).toEqual([])
   })
 })
 

@@ -1,5 +1,6 @@
 import type { RetireEvent } from '@/screens/retirement/types/RetireEvent'
 import type { RetireExtra } from '@/screens/retirement/types/RetireExtra'
+import type { RetirePay } from '@/screens/retirement/types/RetirePay'
 import type { RetireSs } from '@/screens/retirement/types/RetireSs'
 
 // The saved Retirement plan (`retireCalc`).
@@ -22,4 +23,5 @@ export interface RetireState {
   ss: RetireSs
   events: RetireEvent[]
   extras: RetireExtra[]
+  pay: RetirePay
 }

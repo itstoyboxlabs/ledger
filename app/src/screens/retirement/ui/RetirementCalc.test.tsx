@@ -22,7 +22,7 @@ const seedPlan = (o: Record<string, unknown> = {}) => {
   localStorage.setItem('ledger:retirePortfolio', JSON.stringify([{ name: 'Cash', alloc: 100, perf: 0 }]))
 }
 const debt = (o: Partial<Debt> = {}): Debt => ({ id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250, budgetRow: null, ...o })
-// the cells of one year in the table: age, phase, 401k, contributions, growth, withdrawals, total
+// the cells of one year in the table: age, phase, pay, 401k, contributions, growth, withdrawals, total
 const yearRow = (age: number) => {
   const table = screen.getByRole('region', { name: 'Year by year projection table' })
   const row = within(table).getAllByRole('row').find((r) => r.querySelector('td')?.textContent === String(age))
@@ -107,14 +107,14 @@ describe('RetirementCalc', () => {
   it('keeps 401k money paid in after the access age', () => {
     seedPlan({ age: 55, retireAge: 65, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0, withdrawMo: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[6]).toBe('$197,500')
-    expect(yearRow(61)[2]).toBe('—')
+    expect(yearRow(70)[7]).toBe('$197,500')
+    expect(yearRow(61)[3]).toBe('—')
   })
 
   it('opens the 401k from the start when already past the access age', () => {
     seedPlan({ age: 65, retireAge: 66, endAge: 70, start401k: 100000, startSavings: 0, contrib401k: 10000, contribSavings: 0 })
     renderApp(<RetirementCalc debts={[]} />)
-    expect(yearRow(70)[6]).toBe('$47,500')
+    expect(yearRow(70)[7]).toBe('$47,500')
     expect(chipText('Money lasts')).toContain('to 70+')
   })
 
@@ -129,7 +129,7 @@ describe('RetirementCalc', () => {
     seedPlan()
     renderApp(<RetirementCalc debts={[]} />)
     // 10,000 at 59, minus 12,000, plus the 58,750 401k
-    expect(yearRow(60).slice(3)).toEqual(['$58,750', '$0', '−$12,000', '$56,750'])
+    expect(yearRow(60).slice(4)).toEqual(['$58,750', '$0', '−$12,000', '$56,750'])
   })
 
   it('a payoff event outside the plan does not take the debt out of the hole', async () => {
@@ -143,13 +143,13 @@ describe('RetirementCalc', () => {
     seedPlan({ startFrom: 'balances', startOff: ['d1'] })
     renderApp(<RetirementCalc debts={[debt()]} />)
     // 1,000 at 250 a month clears in 4 months, which would free 2,000 in the first year
-    expect(yearRow(30)[3]).toBe('$23,750')
+    expect(yearRow(30)[4]).toBe('$23,750')
   })
 
   it('a ticked debt frees its payment into savings once cleared', () => {
     seedPlan({ startFrom: 'balances' })
     renderApp(<RetirementCalc debts={[debt()]} />)
-    expect(yearRow(30)[3]).toBe('$25,750')
+    expect(yearRow(30)[4]).toBe('$25,750')
   })
 
   // the debt's payment is the linked Budget row, so the caption about a missing payment
@@ -161,7 +161,7 @@ describe('RetirementCalc', () => {
     seedPlan({ autoSavings: true })
     renderApp(<RetirementCalc debts={[debt({ balance: 0, budgetRow: 'r1' })]} />)
     await budgetLoaded()
-    expect(yearRow(31)[3]).toBe('$5,000')
+    expect(yearRow(31)[4]).toBe('$5,000')
   })
 
   it('Auto savings never goes below zero when the Budget is overspent', async () => {
@@ -170,7 +170,7 @@ describe('RetirementCalc', () => {
     renderApp(<RetirementCalc debts={[debt({ balance: 0, budgetRow: 'r2' })]} />)
     await budgetLoaded()
     // 5,000 into the 401k plus the card's freed 1,200, and nothing taken for the overspend
-    expect(yearRow(31)[3]).toBe('$6,200')
+    expect(yearRow(31)[4]).toBe('$6,200')
   })
 
   it('clears the no safe age note when the inputs change', async () => {
@@ -192,5 +192,53 @@ describe('RetirementCalc', () => {
     seedPlan({ endAge: 90 })
     renderApp(<RetirementCalc debts={[]} />)
     expect(screen.getAllByText('Left over at 90')).toHaveLength(1)
+  })
+
+  it('with no pay plan says today\'s pay holds and shows it in the Pay column', () => {
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText('Same pay until you retire. $80,000 a year from Take-home pay.')).toBeInTheDocument()
+    expect(yearRow(30)[2]).toBe('$80,000')
+    expect(yearRow(40)[2]).toBe('—')
+  })
+
+  it('starts a pay plan from today\'s numbers', async () => {
+    seedPlan()
+    renderApp(<RetirementCalc debts={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(2))
+    // typed 5,000 of 80,000 is 6.3%, typed savings carry over
+    expect(stored('retireCalc').pay.periods[0]).toMatchObject({ label: 'Now', fromAge: 30, toAge: 39, salary: 80000, k401: 6.3, savings: 20000 })
+    expect(stored('retireCalc').pay.periods[1]).toMatchObject({ fromAge: 39, toAge: 'retire' })
+    await userEvent.click(screen.getByRole('button', { name: 'Go back to the same pay' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toHaveLength(0))
+  })
+
+  it('uses each period\'s pay, 401k and savings in the table', () => {
+    seedPlan({
+      pay: {
+        periods: [
+          { id: 'a', label: 'Now', fromAge: 30, toAge: 35, salary: 80000, raisePct: 0, k401: 0, savings: 20000 },
+          { id: 'b', label: 'Easier job', fromAge: 35, toAge: 'retire', salary: 50000, raisePct: 0, k401: 0, savings: 8000 },
+        ],
+      },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(yearRow(34).slice(2, 5)).toEqual(['$80,000', '$10,000', '$20,000'])
+    expect(yearRow(36).slice(2, 5)).toEqual(['$50,000', '$10,000', '$8,000'])
+    expect(screen.getByText(/These two only count for years no period covers/)).toBeInTheDocument()
+  })
+
+  it('warns about a gap in the pay plan', () => {
+    seedPlan({
+      pay: {
+        periods: [
+          { id: 'a', label: 'Now', fromAge: 30, toAge: 33, salary: 80000, raisePct: 0, k401: 'auto', savings: 'auto' },
+          { id: 'b', label: '', fromAge: 35, toAge: 'retire', salary: 80000, raisePct: 0, k401: 'auto', savings: 'auto' },
+        ],
+      },
+    })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByText("No period covers ages 33 to 34. Those years use today's pay and saving.")).toBeInTheDocument()
   })
 })
