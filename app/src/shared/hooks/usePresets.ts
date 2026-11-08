@@ -11,6 +11,8 @@ import type { Preset } from '@/shared/types/Preset'
 export function usePresets<T = unknown>(key: string, opts: { ids?: boolean } = {}) {
   const ids = !!opts.ids
   const [presets, setPresets] = useState<Preset<T>[]>([])
+  // false until the stored list has loaded, so a page can tell "none yet" from "none"
+  const [loaded, setLoaded] = useState(false)
   // the latest list, and the load it must wait for: a save made before getPresets
   // returns is applied on top of the stored list, never in place of it
   const listRef = useRef<Preset<T>[]>([])
@@ -52,11 +54,13 @@ export function usePresets<T = unknown>(key: string, opts: { ids?: boolean } = {
       .catch(() => {})
       .finally(() => {
         ready.current = true
+        setLoaded(true)
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, ids])
   return {
     presets,
+    loaded,
     // saving over an existing name replaces it in place so the list keeps its order
     save: (name: string, data: T): void =>
       change((list) =>

@@ -81,7 +81,7 @@ import { usePresets } from '@/shared/hooks/usePresets'
 import { useToolState } from '@/shared/hooks/useToolState'
 import { NeedPerMonthField } from '@/screens/retirement/ui/NeedPerMonthField'
 import { retireNeed } from '@/screens/retirement/utils/retireNeed'
-import { useBudgetPresets } from '@/screens/retirement/hooks/useBudgetPresets'
+import { budgetPresetOptions } from '@/screens/retirement/utils/budgetPresetOptions'
 import { useRetireNeedPreset } from '@/screens/retirement/hooks/useRetireNeedPreset'
 
 type RetirementCalcProps = {
@@ -116,15 +116,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const afterRows = portAfter.same ? port : portAfter.rows
   const [includeDebt, setIncludeDebt] = usePersistedState<boolean>('retireIncludeDebt', true, (v) => typeof v === 'boolean')
   const f = (k: NumericRetireKey) => (v: number) => setC({ ...c, [k]: v })
-  // Need per month: the typed number, or a picked Budget preset's expenses (see retireNeed)
-  const [needPreset, setNeedPreset] = useRetireNeedPreset()
-  const budgetPresets = useBudgetPresets()
-  const need = retireNeed(needPreset, budgetPresets.options, c.withdrawMo)
-  const needMo = need.monthly
   const { presets, save, remove } = usePresets<RetirePresetData>('retirement')
-  // what pay periods can point at, by id so a rename does not break them
+  // what pay periods and Need per month can point at, by id so a rename does not break them
   const { presets: takeHomePresets } = usePresets<RawTakeHome>('takeHome', { ids: true })
-  const { presets: budgetPresets } = usePresets<BudgetRow[]>('expenses', { ids: true })
+  const { presets: budgetPresets, loaded: budgetPresetsLoaded } = usePresets<BudgetRow[]>('expenses', { ids: true })
   const presetData: RetirePresetData = { c, port, portAfter, includeDebt }
   const applyPreset = (d: Partial<RetirePresetData> | null | undefined) => {
     // presets saved before Events, Social Security and the split portfolio are in the
@@ -172,6 +167,17 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const [budgetRows, setBudgetRows] = useState<BudgetRow[] | null>(null)
   // the whole Budget, for pay periods that save by a Budget preset or today's Budget
   const [budgetFile, setBudgetFile] = useState<BudgetFile | null>(null)
+  // Need per month: the typed number, or a picked Budget preset's expenses (see retireNeed)
+  const [needPreset, setNeedPreset] = useRetireNeedPreset()
+  const needOptions = budgetPresetsLoaded ? budgetPresetOptions(budgetPresets, budgetFile?.dismissedSubs) : null
+  // today's Budget "Budgeted expenses", only once the Budget has a row of its own
+  const budgetToday = budgetFile && budgetFile.rows.some((r) => r.source !== 'subscription') ? budgetExpensesOf(budgetFile) : null
+  const need = retireNeed(needPreset, needOptions, c.withdrawMo)
+  const needMo = need.monthly
+  // a pick saved by name before presets had ids is saved again by its id
+  useEffect(() => {
+    if (need.status === 'preset' && need.id && need.id !== needPreset) setNeedPreset(need.id)
+  }, [need.status, need.id, needPreset, setNeedPreset])
   const debtPayments = debts.map((d) => debtPaymentOf(d, budgetRows))
   useEffect(() => {
     getBudget()
@@ -512,8 +518,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
             value={c.withdrawMo}
             onChange={f('withdrawMo')}
             need={need}
-            options={budgetPresets.options}
-            today={budgetPresets.today}
+            options={needOptions}
+            today={budgetToday}
             onPick={setNeedPreset}
           />
           <AutoToolField

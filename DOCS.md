@@ -625,10 +625,14 @@ the Auto badges) opens "Use a Budget preset": every Budget preset (key `expenses
   payment and savings rows count like any other row, because Budget counts them.
 - **With a preset picked** the field is read-only and a badge under it reads "From the <name> preset: $X a
   month". The typed number is kept in `retireCalc.withdrawMo` for later.
-- **Live by name.** Presets have no id and names are unique, so the pick is the preset name, stored in
-  `ledger:retireNeedPreset` (`string` or `null`). Overwriting the preset on Budget moves the need the next time
-  Retirement opens. A deleted or renamed preset falls back to the typed number with the note "The <name>
-  preset is gone, so this uses your typed number." Typing a new number clears the pick.
+- **Live by id.** Budget presets have ids (see Presets), so the pick is the preset id, stored in
+  `ledger:retireNeedPreset` (`string` or `null`). A rename on Budget keeps the pick. Overwriting the preset on
+  Budget moves the need the next time Retirement opens. A pick saved by name before presets had ids still
+  matches by name, and the page saves its id in its place. A deleted preset falls back to the typed number with
+  the note "The Budget preset you picked is gone, so this uses your typed number." Typing a new number clears
+  the pick.
+- **One source.** Retirement reads Budget presets once, through `usePresets('expenses', { ids: true })`, for both
+  Need per month and the pay periods. "Your Budget today" comes from the same Budget the page already loads.
 - **Old saves.** No key, or a bad value, reads as `null`: the typed number, exactly as before. Results only
   change once a preset is picked.
 - **Sanity line**: "Your Budget today: $Y a month" sits under the field whenever Budget has rows of its own.

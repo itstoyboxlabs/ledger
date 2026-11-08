@@ -1699,15 +1699,18 @@ test.describe('need per month from a Budget preset', () => {
     await expect(main(page).getByText('From the Retirement preset: $1,569 a month')).toBeVisible()
     await expect(intro(page)).toContainText('$18,828 a year')
     await expectRow(page, 40, { total: 250000 - 18828 })
-    expect(await ls(page, 'retireNeedPreset')).toBe('Retirement')
+    // saved by the preset's id, so a rename on Budget keeps it
+    expect(await ls(page, 'retireNeedPreset')).toMatch(/^p[nr]/)
     await page.reload()
     await goTo(page, 'Retirement')
     await expect(main(page).getByText('From the Retirement preset: $1,569 a month')).toBeVisible()
   })
 
   test('Type it in goes back to the typed number', async ({ page }) => {
+    // a pick saved by name before presets had ids still works, and is saved again by id
     await setupWithPresets(page, { ls: { retireNeedPreset: 'Retirement' } })
     await expect(intro(page)).toContainText('$18,828 a year')
+    await expect.poll(() => ls(page, 'retireNeedPreset')).toMatch(/^pn/)
     await needBtn(page).click()
     await page.getByRole('menuitem', { name: 'Type it in' }).click()
     await expect(field(main(page), 'Need per month')).toHaveValue('1000')
@@ -1717,7 +1720,7 @@ test.describe('need per month from a Budget preset', () => {
 
   test('a deleted preset falls back to the typed number with a note', async ({ page }) => {
     await setupWithPresets(page, { ls: { retireNeedPreset: 'Gone' } })
-    await expect(main(page).getByText('The Gone preset is gone, so this uses your typed number.')).toBeVisible()
+    await expect(main(page).getByText('The Budget preset you picked is gone, so this uses your typed number.')).toBeVisible()
     await expect(intro(page)).toContainText('$12,000 a year')
   })
 

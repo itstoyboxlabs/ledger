@@ -6,10 +6,9 @@ import { loadSampleData } from '@/test-utils/loadSampleData'
 import { RetirementCalc } from './RetirementCalc'
 import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { fmt0 } from '@/shared/utils/fmt0'
+import { presetIdFor } from '@/shared/utils/presetIdFor'
 import type { Debt } from '@/shared/types/Debt'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
-import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
-import { fmt0 } from '@/shared/utils/fmt0'
 
 const stored = (k: string) => JSON.parse(localStorage.getItem(`ledger:${k}`) as string)
 
@@ -317,6 +316,8 @@ describe('RetirementCalc', () => {
     expect(yearRow(30).slice(2, 4)).toEqual(['$15,750', '$28,750'])
     expect(yearRow(40)[3]).toBe('—')
     expect(screen.getAllByText('Until you retire')).toHaveLength(2)
+  })
+
   describe('Need per month from a Budget preset', () => {
     const PRESET_ROWS = [{ id: 'r', name: 'Rent', amount: 1500 }, { id: 'f', name: 'Food', amount: 500 }]
     // what Budget would show for the preset, live subscriptions from the sample data included
@@ -344,16 +345,25 @@ describe('RetirementCalc', () => {
       const m = presetMonthly()
       expect(screen.getByText(`From the Retirement preset: ${fmt0(m)} a month`)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(`then take out \\${fmt0(m * 12)} a year`))).toBeInTheDocument()
-      expect(stored('retireNeedPreset')).toBe('Retirement')
+      // saved by id, so a rename on Budget keeps it
+      expect(stored('retireNeedPreset')).toBe(presetIdFor('Retirement'))
       // the typed number is kept for later
       expect(stored('retireCalc').withdrawMo).toBe(1000)
+    })
+
+    it('a pick saved by name before ids is saved again by id', async () => {
+      seedPlan()
+      localStorage.setItem('ledger:retireNeedPreset', JSON.stringify('Retirement'))
+      renderApp(<RetirementCalc debts={[]} />)
+      expect(await screen.findByText(`From the Retirement preset: ${fmt0(presetMonthly())} a month`)).toBeInTheDocument()
+      await waitFor(() => expect(stored('retireNeedPreset')).toBe(presetIdFor('Retirement')))
     })
 
     it('a deleted preset falls back to the typed number with a note', async () => {
       seedPlan()
       localStorage.setItem('ledger:retireNeedPreset', JSON.stringify('Gone'))
       renderApp(<RetirementCalc debts={[]} />)
-      expect(await screen.findByText('The Gone preset is gone, so this uses your typed number.')).toBeInTheDocument()
+      expect(await screen.findByText('The Budget preset you picked is gone, so this uses your typed number.')).toBeInTheDocument()
       expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
     })
   })

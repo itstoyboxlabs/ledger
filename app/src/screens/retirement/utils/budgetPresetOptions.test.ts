@@ -21,7 +21,7 @@ describe('budgetPresetOptions', () => {
     }]
     // 1200 + 260 + Netflix live (rounds to 15, like on Budget)
     const [o] = budgetPresetOptions(presets, undefined)
-    expect(o.name).toBe('Retirement')
+    expect(o).toMatchObject({ id: '', name: 'Retirement' })
     expect(o.monthly).toBe(1200 + 260 + 15)
   })
 
@@ -36,7 +36,7 @@ describe('budgetPresetOptions', () => {
   })
 
   it('skips presets that are not a row list', () => {
-    const presets = [{ name: 'Bad', data: { rows: [] } }, { name: 'Ok', data: [] }] as Preset[]
-    expect(budgetPresetOptions(presets, { Netflix: '2026-10-12' })).toEqual([{ name: 'Ok', monthly: 0 }])
+    const presets = [{ name: 'Bad', data: { rows: [] } }, { id: 'pr1', name: 'Ok', data: [] }] as Preset[]
+    expect(budgetPresetOptions(presets, { Netflix: '2026-10-12' })).toEqual([{ id: 'pr1', name: 'Ok', monthly: 0 }])
   })
 })
