@@ -7,11 +7,11 @@ import { getBudget } from '@/shared/utils/getBudget'
 import { saveBudget } from '@/shared/utils/saveBudget'
 import { getLog } from '@/shared/utils/getLog'
 import { saveLog } from '@/shared/utils/saveLog'
-import { cn } from '@/shared/utils/cn'
 import { monthLabel } from '@/shared/utils/monthLabel'
 import { fmt } from '@/shared/utils/fmt'
 import { isBudgetRowHidden } from '@/shared/utils/isBudgetRowHidden'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/ui/primitives/table'
+import { SortHead } from '@/shared/ui/SortHead'
 
 import { Label } from '@/shared/ui/primitives/label'
 import { Input } from '@/shared/ui/primitives/input'
@@ -27,7 +27,10 @@ import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { leftoverAmount } from '@/shared/utils/leftoverAmount'
 import { leftoverShare } from '@/shared/utils/leftoverShare'
 import { logDayLabel } from '@/shared/utils/logDayLabel'
+import { logTotalsByRow } from '@/screens/log/utils/logTotalsByRow'
 import { logTracked } from '@/screens/log/utils/logTracked'
+import { nextLogSort } from '@/screens/log/utils/nextLogSort'
+import { sortLogEntries } from '@/screens/log/utils/sortLogEntries'
 import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
 import { normalizeLeftover } from '@/shared/utils/normalizeLeftover'
 import { parseSumExpr } from '@/shared/utils/parseSumExpr'
@@ -125,13 +128,7 @@ export function LogView() {
   const monthEntries = entries
     .filter((e) => e.date.startsWith(ym))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
-  const spentByRow: Record<string, number> = {}
-  // counted apart from the sum: entries that net to zero still count as logged
-  const countByRow: Record<string, number> = {}
-  for (const e of monthEntries) {
-    spentByRow[e.rowId] = (spentByRow[e.rowId] ?? 0) + e.amount
-    countByRow[e.rowId] = (countByRow[e.rowId] ?? 0) + 1
-  }
+  const { spent: spentByRow, count: countByRow } = logTotalsByRow(monthEntries)
   // meters: see logTracked. Subscriptions autopay, so they never get one. A row with a
   // share of the Budget leftover ("What to do with what is left") has that much more.
   const leftoverAlloc = normalizeLeftover(budgetFile.leftover)
@@ -146,22 +143,10 @@ export function LogView() {
   const isThisMonth = ym === todayYmd().slice(0, 7)
 
   // the entries table sorts by a clicked header; ties fall back to newest first
-  const sortVal = (e: LogEntry): string | number =>
-    sort.key === 'amount' ? e.amount
-    : sort.key === 'note' ? (e.note || '').toLowerCase()
-    : sort.key === 'row' ? (rowById[e.rowId]?.name ?? '').toLowerCase()
-    : e.date
-  const sortedEntries = [...monthEntries].sort((a, b) => {
-    const va = sortVal(a), vb = sortVal(b)
-    return (va < vb ? -1 : va > vb ? 1 : 0) * sort.dir || b.createdAt - a.createdAt
-  })
+  const sortedEntries = sortLogEntries(monthEntries, sort, (id) => rowById[id]?.name ?? '')
+  const headSort = { key: sort.key, dir: sort.dir === 1 ? 'asc' : 'desc' } as const
   const th = (key: LogSort['key'], label: string, right?: boolean) => (
-    <TableHead
-      onClick={() => setSort(sort.key === key ? { key, dir: sort.dir === 1 ? -1 : 1 } : { key, dir: key === 'date' || key === 'amount' ? -1 : 1 })}
-      className={cn('cursor-pointer pb-2 font-medium hover:text-white', right && 'text-right')}
-    >
-      {label} {sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : ''}
-    </TableHead>
+    <SortHead id={key} label={label} sort={headSort} onSort={() => setSort(nextLogSort(sort, key))} right={right} className="pb-2 font-medium" />
   )
 
   const addEntry = () => {
@@ -292,6 +277,7 @@ export function LogView() {
             <Button variant="outline" size="sm"
               onClick={() => setYm(shiftMonth(ym, -1))}
               title="Previous month"
+              aria-label="Previous month"
               className="px-2.5"
             >
               ‹
@@ -304,6 +290,7 @@ export function LogView() {
               onClick={() => setYm(shiftMonth(ym, 1))}
               disabled={isThisMonth}
               title="Next month"
+              aria-label="Next month"
               className="px-2.5"
             >
               ›
@@ -349,7 +336,7 @@ export function LogView() {
                 {th('note', 'Note')}
                 {th('row', 'Counts against')}
                 {th('amount', 'Amount', true)}
-                <TableHead className="pb-2" />
+                <TableHead className="pb-2"><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -368,7 +355,8 @@ export function LogView() {
                     <Button variant="ghost" size="icon-xs"
                       onClick={() => deleteEntry(e.id)}
                       title="Delete entry"
-                      className="text-[var(--text-muted)] opacity-0 hover:text-[var(--bad)] group-hover:opacity-100"
+                      aria-label="Delete entry"
+                      className="text-[var(--text-muted)] opacity-0 hover:text-[var(--bad)] focus-visible:opacity-100 group-hover:opacity-100"
                     >
                       <X className="size-3.5" />
                     </Button>

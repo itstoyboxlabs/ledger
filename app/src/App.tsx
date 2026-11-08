@@ -2,7 +2,6 @@ import { getAllTxns } from '@/shared/utils/getAllTxns'
 import { getAccounts } from '@/shared/utils/getAccounts'
 import { getMonths } from '@/shared/utils/getMonths'
 import { CATEGORY_HEX } from '@/shared/constants/CATEGORY_HEX'
-import { monthOf } from '@/shared/utils/monthOf'
 import { monthLabel } from '@/shared/utils/monthLabel'
 import { spendAmount } from '@/shared/utils/spendAmount'
 import { fmt } from '@/shared/utils/fmt'
@@ -13,7 +12,6 @@ import { Fragment, useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { useData } from '@/shared/hooks/useData'
 import { getBudget } from '@/shared/utils/getBudget'
 import { isLocal } from '@/shared/utils/isLocal'
-import type { MonthlyRow } from '@/shared/types/MonthlyRow'
 import type { Transaction } from '@/shared/types/Transaction'
 
 import { TooltipProvider } from '@/shared/ui/primitives/tooltip'
@@ -40,6 +38,10 @@ import { scopeLabel } from '@/screens/spending/utils/scopeLabel'
 import { scopeMonthsFor } from '@/screens/spending/utils/scopeMonthsFor'
 import { scopedTxns } from '@/screens/spending/utils/scopedTxns'
 import { inDrillPath } from '@/screens/spending/utils/inDrillPath'
+import { kpiSparks } from '@/screens/spending/utils/kpiSparks'
+import { monthlyRows } from '@/screens/spending/utils/monthlyRows'
+import { ensureToolShown } from '@/screens/tools/utils/ensureToolShown'
+import { scrollToWhenReady } from '@/shared/utils/scrollToWhenReady'
 import { roundCents } from '@/shared/utils/roundCents'
 import { useDebtLinkMigration } from '@/shared/hooks/useDebtLinkMigration'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
@@ -131,60 +133,17 @@ export default function App() {
   }, [view])
 
   // one row per month on record (account filter applied): totals + spending by category
-  const monthly = useMemo(
-    () =>
-      getMonths().map((m) => {
-        const row: MonthlyRow = { m, income: 0, spending: 0, net: 0 }
-        for (const t of getAllTxns()) {
-          if (monthOf(t) !== m || !accounts.includes(t.account)) continue
-          if (t.kind === 'income') row.income += t.amount
-          else if (t.kind === 'expense' || t.kind === 'refund') {
-            row.spending += spendAmount(t)
-            const cat = t.cat ?? ''
-            row[cat] = ((row[cat] as number | undefined) ?? 0) + spendAmount(t)
-          }
-        }
-        row.net = row.income - row.spending
-        return row
-      }),
-    [accounts],
-  )
+  const monthly = useMemo(() => monthlyRows(getAllTxns(), getMonths(), accounts), [accounts])
   const trendCats = Object.keys(CATEGORY_HEX).filter((c) => monthly.some((r) => r[c]))
 
   // KPI sparklines: running totals through the month, or month-by-month for "All months"
-  const sparks = useMemo(() => {
-    if (scopeMonths.length !== 1) {
-      const rows = monthly.filter((r) => scopeMonths.includes(r.m))
-      return {
-        spend: rows.map((r) => r.spending),
-        income: rows.map((r) => r.income),
-        net: rows.map((r) => r.net),
-      }
-    }
-    const [y, mo] = (scopeMonths[0] ?? '').split('-').map(Number)
-    const days = new Date(y, mo, 0).getDate()
-    const spend = Array(days).fill(0)
-    const inc = Array(days).fill(0)
-    for (const t of scoped) {
-      const d = Number(t.date.slice(8, 10)) - 1
-      if (t.kind === 'income') inc[d] += t.amount
-      else if (t.kind === 'expense' || t.kind === 'refund') spend[d] += spendAmount(t)
-    }
-    const run = (arr: number[]) => {
-      let acc = 0
-      return arr.map((v) => (acc += v))
-    }
-    const rs = run(spend)
-    const ri = run(inc)
-    return { spend: rs, income: ri, net: ri.map((v, i) => v - rs[i]) }
-  }, [month, scopeMonths, monthly, scoped])
+  const sparks = useMemo(() => kpiSparks(scopeMonths, monthly, scoped), [scopeMonths, monthly, scoped])
 
   // compare against the window of the same length just before this one (a month
   // against the month before it, 3 months against the 3 before them)
   const nMonths = scopeMonths.length
   const firstIdx = getMonths().indexOf(scopeMonths[0] ?? '')
   const prevWindow = month === 'all' || firstIdx - nMonths < 0 ? null : monthly.slice(firstIdx - nMonths, firstIdx)
-  const prevRow = prevWindow && nMonths === 1 ? prevWindow[0] : null
   const vsPrev = prevWindow ? roundCents(net - prevWindow.reduce((t, r) => t + r.net, 0)) : null
   const prevName = nMonths === 1 ? monthLabel(prevWindow?.[0]?.m ?? getMonths()[0]).slice(0, 3) : `previous ${nMonths} months`
   const allAccounts = accounts.length === Object.keys(getAccounts()).length
@@ -261,22 +220,10 @@ export default function App() {
           goToLog={() => setView('log')}
           goToTools={(anchor: string) => {
             // make sure the Take-home pay tool is switched on in the Tools picker
-            try {
-              const cur = JSON.parse(localStorage.getItem('ledger:toolsShown') ?? 'null')
-              if (Array.isArray(cur) && !cur.includes('takehome')) {
-                localStorage.setItem('ledger:toolsShown', JSON.stringify([...cur, 'takehome']))
-              }
-            } catch { /* storage unavailable */ }
+            ensureToolShown('takehome')
             setView('tools')
-            // the Tools view mounts on a later render, so poll briefly until the anchor exists
-            let tries = 0
-            const t = setInterval(() => {
-              const el = document.getElementById(anchor)
-              if (el || ++tries > 20) {
-                clearInterval(t)
-                el?.scrollIntoView({ block: 'start' })
-              }
-            }, 50)
+            // the Tools view mounts on a later render
+            scrollToWhenReady(anchor)
           }}
         />
       )}
