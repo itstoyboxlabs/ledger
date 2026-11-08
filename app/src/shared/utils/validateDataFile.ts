@@ -1,0 +1,23 @@
+import { isObj } from '@/shared/utils/isObj'
+import type { DataFile } from '@/shared/types/DataFile'
+
+// throws Error with a friendly message when the file is not a usable ledger file
+export function validateDataFile(f: unknown): asserts f is DataFile {
+  if (!isObj(f)) throw new Error('That file is not a ledger file.')
+  if (f.transactions == null && f.settings == null) {
+    throw new Error('This file has no transactions or settings. Pick ledger-data.json or ledger-settings.json.')
+  }
+  if (f.version !== 1) throw new Error('This file has an unknown version. Make a new one and try again.')
+  if (f.transactions != null) {
+    if (!Array.isArray(f.transactions)) throw new Error('The transactions section looks wrong.')
+    const bad = f.transactions.findIndex(
+      (t: unknown) => !isObj(t) || typeof t.id !== 'string' || typeof t.date !== 'string' || typeof t.amount !== 'number' || typeof t.kind !== 'string',
+    )
+    if (bad !== -1) throw new Error(`Transaction ${bad + 1} is missing an id, date, amount or kind.`)
+  }
+  if (f.accounts != null && !isObj(f.accounts)) throw new Error('The accounts section looks wrong.')
+  if (f.merchants != null && !isObj(f.merchants)) throw new Error('The merchants section looks wrong.')
+  if (f.periods != null && !isObj(f.periods)) throw new Error('The periods section looks wrong.')
+  if (f.subscriptions != null && !Array.isArray(f.subscriptions)) throw new Error('The subscriptions section looks wrong.')
+  if (f.settings != null && !isObj(f.settings)) throw new Error('The settings section looks wrong.')
+}

@@ -1,0 +1,23 @@
+# personal data: never commit
+/data/
+/statements
+/ledger-data.json
+/ledger-settings.json
+/app/ledger-data.json
+/app/ledger-settings.json
+/app/public/icons/*
+!/app/public/icons/.gitkeep
+
+# local only
+/services.md
+/demo/video/
+.envrc
+.env*
+.vercel
+
+# build and tools
+node_modules
+dist
+test-results
+playwright-report
+.DS_Store
