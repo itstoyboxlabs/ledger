@@ -23,5 +23,7 @@ export interface RetireSimInput {
   rAfter: number
   taxPct: number
   events: Pick<RetireEvent, 'kind' | 'age' | 'repeat' | 'amount' | 'years' | 'auto' | 'to' | 'untilRetire'>[]
+  // with no plan, today's 401k and savings grow by this percent each working year
+  raisePct?: number
   pay?: RetireSimPay
 }

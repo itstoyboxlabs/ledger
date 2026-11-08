@@ -126,6 +126,18 @@ describe('simulateRetirement with no pay plan (regression)', () => {
   })
 })
 
+describe('simulateRetirement Raise a year with no plan', () => {
+  it('0 or missing changes nothing', () => {
+    expect(simulateRetirement(plan({ raisePct: 0 }), 40).rows).toEqual(simulateRetirement(plan(), 40).rows)
+  })
+  it('grows today\'s 401k and savings each working year, not freed payments', () => {
+    const res = simulateRetirement(plan({ raisePct: 3, freed: () => 100 }), 40)
+    expect(row(res, 30).contrib).toBe(5000 * 0.75 + 20000 * 1 + 100)
+    expect(row(res, 35).contrib).toBeCloseTo((5000 + 20000) * 1.03 ** 5 + 100, 6)
+    expect(row(res, 40).contrib).toBe(0)
+  })
+})
+
 describe('simulateRetirement money-in events into the retirement account', () => {
   it('lock the money in the 401k with no first-year rule, until the access age', () => {
     const res = simulateRetirement(plan({ events: [{ kind: 'in', to: '401k', age: 30, repeat: 'year', amount: 2000, years: 40 }] }), 40)

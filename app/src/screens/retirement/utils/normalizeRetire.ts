@@ -61,6 +61,7 @@ export function normalizeRetire(input: unknown): RetireState {
     ss: { ...RETIRE_DEFAULTS.ss, on: false },
     startFrom: 'typed',
     startOff: [],
+    raisePct: 0,
     pay: { periods: [] },
     events: [
       { id: 'down', name: 'House downpayment', amount: downAmt, kind: 'out', age: downAge, repeat: 'once', years: 1 },

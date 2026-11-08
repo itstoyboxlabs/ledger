@@ -15,7 +15,10 @@ describe('addPayPeriod', () => {
     const plan: PayPeriod[] = [{ id: 'a', label: '', fromAge: 35, toAge: 50, raisePct: 2, takeHomeFrom: 'preset', takeHomePreset: 'th1', k401: 0, saveFrom: 'typed', savePreset: '', savings: 5000 }]
     const out = addPayPeriod(plan, 35, 60, today)
     expect(out[0]).toEqual(plan[0])
-    expect(out[1]).toMatchObject({ fromAge: 50, toAge: 'retire', raisePct: 0, takeHomeFrom: 'preset', takeHomePreset: 'th1', saveFrom: 'typed', savings: 5000 })
+    expect(out[1]).toMatchObject({ fromAge: 50, toAge: 'retire', raisePct: 2, takeHomeFrom: 'preset', takeHomePreset: 'th1', saveFrom: 'typed', savings: 5000 })
+  })
+  it('carries the no-plan raise into both periods', () => {
+    expect(addPayPeriod([], 35, 60, { ...today, raisePct: 3 }).map((p) => p.raisePct)).toEqual([3, 3])
   })
   it('stays before the retire age when close to it', () => {
     const out = addPayPeriod([], 55, 60, today)

@@ -55,8 +55,13 @@ describe('normalizeRetire', () => {
       contrib401k: 5000, contribSavings: 9000, auto401k: false, autoSavings: true, withdrawMo: 4000, taxPct: 12, autoTax: false,
       ss: { on: true, claimAge: 68, auto: false, monthly: 1500 }, events: [],
     }
-    expect(normalizeRetire(old)).toEqual({ ...old, pay: { periods: [] } })
+    expect(normalizeRetire(old)).toEqual({ ...old, raisePct: 0, pay: { periods: [] } })
     expect(normalizeRetire({ age: 30 }).pay).toEqual({ periods: [] })
+  })
+  it('keeps the no-plan raise and reads a bad one as 0', () => {
+    expect(normalizeRetire({ events: [], raisePct: 3 }).raisePct).toBe(3)
+    expect(normalizeRetire({ events: [], raisePct: 'x' }).raisePct).toBe(0)
+    expect(normalizeRetire({ age: 30 }).raisePct).toBe(0)
   })
   it('keeps a saved pay plan', () => {
     const pay = { periods: [{ id: 'a', label: 'Now', fromAge: 35, toAge: 45, raisePct: 2, takeHomeFrom: 'preset', takeHomePreset: 'th1', k401: 3600, saveFrom: 'today', savePreset: '', savings: 0 }] }

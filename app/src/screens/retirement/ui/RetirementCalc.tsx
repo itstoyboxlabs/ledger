@@ -93,7 +93,7 @@ type RetirementCalcProps = {
 type NumericRetireKey =
   | 'age' | 'retireAge' | 'accessAge' | 'endAge'
   | 'start401k' | 'startSavings' | 'contrib401k' | 'contribSavings'
-  | 'withdrawMo' | 'taxPct'
+  | 'withdrawMo' | 'taxPct' | 'raisePct'
 
 export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const [assets] = useAssets()
@@ -288,7 +288,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     }
     : undefined
   const simInput: RetireSimInput = {
-    age: c.age, accessAge: c.accessAge, endAge: c.endAge, pay: simPay,
+    age: c.age, accessAge: c.accessAge, endAge: c.endAge, pay: simPay, raisePct: c.raisePct,
     start401k: startK, startSavings: startS - (countDebt ? holeDebt : 0),
     // with a plan, a working year no period covers uses today's Take-home and Budget
     base401k: hasPlan ? autoContrib401k : baseContrib401k,
@@ -306,17 +306,21 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     periods.map((p, i) => ({ ...p, missingPay: resolved[i].missingPay, missingSave: resolved[i].missingSave })),
     c.age, c.retireAge, c.endAge,
   )
-  const setPeriods = (next: PayPeriod[]) => setC({ ...c, pay: { periods: next } })
+  // clearing the plan (Back to one period, or removing the last period) keeps the first
+  // period's raise on the no-plan row
+  const setPeriods = (next: PayPeriod[]) =>
+    setC({ ...c, ...(next.length === 0 && periods.length > 0 ? { raisePct: periods[0].raisePct } : {}), pay: { periods: next } })
   // the first period starts from today's sources: Auto stays today's, typed carries over
   const todaySources = {
     takeHomeFrom: c.auto401k ? 'today' : 'typed', takeHomePreset: '',
     k401: c.auto401k ? Math.round(autoContrib401k) : c.contrib401k,
     saveFrom: c.autoSavings ? 'today' : 'typed', savePreset: '', savings: c.autoSavings ? Math.round(autoContribSavings) : c.contribSavings,
+    raisePct: c.raisePct,
   } as const
   const addPeriod = () => setPeriods(addPayPeriod(periods, c.age, c.retireAge, todaySources))
   // picking a preset (or typed pay) on today's row turns it into the plan's first period
   const startPlan = (p: Partial<PayPeriod>) =>
-    setPeriods([{ id: newId('p'), label: 'Now', fromAge: c.age, toAge: 'retire', raisePct: 0, ...todaySources, ...p }])
+    setPeriods([{ id: newId('p'), label: 'Now', fromAge: c.age, toAge: 'retire', ...todaySources, ...p }])
   const takeHomeChoices = takeHomePresets.map((x) => {
     const m = payBreakdown(x.data, taxState)
     return { id: x.id ?? '', name: x.name, k401: m.own + m.match }
@@ -493,6 +497,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 onToggleAuto: () => setC({ ...c, auto401k: !c.auto401k }),
                 onChange: f('contrib401k'),
               }}
+              raise={{ value: c.raisePct, onChange: f('raisePct') }}
               savings={{
                 auto: c.autoSavings,
                 autoValue: autoContribSavings,

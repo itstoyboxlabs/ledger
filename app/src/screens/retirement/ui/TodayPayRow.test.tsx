@@ -4,7 +4,7 @@ import { TooltipProvider } from '@/shared/ui/primitives/tooltip'
 import { TodayPayRow } from './TodayPayRow'
 
 const setup = (o: { autoSavings?: boolean } = {}) => {
-  const fns = { onPickPay: vi.fn(), onToggleAuto: vi.fn(), on401k: vi.fn(), onSave: vi.fn(), onAuto: vi.fn(), onPickPreset: vi.fn() }
+  const fns = { onPickPay: vi.fn(), onToggleAuto: vi.fn(), on401k: vi.fn(), onSave: vi.fn(), onAuto: vi.fn(), onPickPreset: vi.fn(), onRaise: vi.fn() }
   render(
     <TooltipProvider>
       <TodayPayRow
@@ -12,6 +12,7 @@ const setup = (o: { autoSavings?: boolean } = {}) => {
         budgetPresets={[{ id: 'b1', name: 'Frugal' }]}
         onPickPay={fns.onPickPay}
         k401={{ auto: true, autoValue: 3200, autoTip: 'From Take-home.', value: 5000, onToggleAuto: fns.onToggleAuto, onChange: fns.on401k }}
+        raise={{ value: 0, onChange: fns.onRaise }}
         savings={{ auto: o.autoSavings ?? true, autoValue: 33142, autoTip: 'From the Budget.', value: 20000, onChange: fns.onSave, onAuto: fns.onAuto, onPickPreset: fns.onPickPreset }}
       />
     </TooltipProvider>,
@@ -62,5 +63,14 @@ describe('TodayPayRow', () => {
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Type it in' }))
     expect(onToggleAuto).toHaveBeenCalledTimes(1)
     expect(onPickPay).not.toHaveBeenCalled()
+  })
+
+  it('has the same Raise a year field as the plan periods', async () => {
+    const { onRaise } = setup()
+    const raise = screen.getByLabelText(/Raise a year/)
+    expect(raise).toHaveValue(0)
+    await userEvent.clear(raise)
+    await userEvent.type(raise, '3')
+    expect(onRaise).toHaveBeenLastCalledWith(3)
   })
 })

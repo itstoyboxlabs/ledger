@@ -15,14 +15,16 @@ type TodayPayRowProps = {
   // a Take-home preset id
   onPickPay: (value: string) => void
   k401: { auto: boolean; autoValue: number; autoTip: string; value: number; onToggleAuto: () => void; onChange: (v: number) => void }
+  // Raise a year, the same field the plan periods have
+  raise: { value: number; onChange: (v: number) => void }
   savings: { auto: boolean; autoValue: number; autoTip: string; value: number; onChange: (v: number) => void; onAuto: (auto: boolean) => void; onPickPreset: (id: string) => void }
 }
 
-export function TodayPayRow({ takeHomePresets, budgetPresets, onPickPay, k401, savings }: TodayPayRowProps) {
+export function TodayPayRow({ takeHomePresets, budgetPresets, onPickPay, k401, raise, savings }: TodayPayRowProps) {
   return (
     <div className="rounded-xl bg-[var(--surface-2)] p-3 ring-1 ring-[var(--ring)]">
       <div className="mb-2 text-[12px] font-medium">Now, until you retire</div>
-      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
         <div className="relative">
           {k401.auto ? (
             <Label className="block">
@@ -78,6 +80,8 @@ export function TodayPayRow({ takeHomePresets, budgetPresets, onPickPay, k401, s
             onPick={(v) => (v === 'today' || v === 'typed' ? savings.onAuto(v === 'today') : savings.onPickPreset(v))}
           />
         </div>
+        <ToolField label="Raise a year" value={raise.value} step={0.5} suffix="%" onChange={raise.onChange}
+          tip="How much the 401k and savings grow each year until you retire. Everything is in today's dollars, so this is growth above inflation." />
       </div>
     </div>
   )

@@ -367,4 +367,21 @@ describe('RetirementCalc', () => {
       expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
     })
   })
+
+  it('Raise a year on today\'s row carries into the plan and back', async () => {
+    seedPlan({ raisePct: 2 })
+    renderApp(<RetirementCalc debts={[]} />)
+    expect(screen.getByLabelText(/Raise a year/)).toHaveValue(2)
+    // 25,000 at 31 grows 2% a year
+    expect(yearRow(32)[3]).toBe(fmt0(25000 * 1.02 ** 2))
+    await userEvent.click(screen.getByRole('button', { name: 'Plan pay changes' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods.map((p: { raisePct: number }) => p.raisePct)).toEqual([2, 2]))
+    const first = screen.getByLabelText(/Raise a year for Now/)
+    await userEvent.clear(first)
+    await userEvent.type(first, '4')
+    await userEvent.click(screen.getByRole('button', { name: 'Back to one period' }))
+    await waitFor(() => expect(stored('retireCalc').pay.periods).toEqual([]))
+    expect(stored('retireCalc').raisePct).toBe(4)
+    expect(screen.getByLabelText(/Raise a year/)).toHaveValue(4)
+  })
 })

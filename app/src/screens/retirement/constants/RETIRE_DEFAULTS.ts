@@ -17,5 +17,6 @@ export const RETIRE_DEFAULTS: RetireState = {
   withdrawMo: 5000, taxPct: 15, autoTax: true,
   ss: { on: true, claimAge: 67, auto: true, monthly: 0 },
   events: [],
+  raisePct: 0, // Raise a year with no plan; 0 keeps the numbers flat, as before
   pay: { periods: [] }, // the pay plan; no periods means today's pay every working year
 }

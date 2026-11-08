@@ -655,6 +655,10 @@ pay tool and its presets. Logic is in `utils/resolvePayPeriods.ts`, `utils/tidyP
     employer match.
   - Today's Budget: the Budget `savings` leftover share, times 12. The leftover never goes below zero. With no
     allocation at all the whole leftover counts. Once there is one, only its savings share does.
+  - Raise a year (`retireCalc.raisePct`, default 0): the same field as on a plan period. It grows today's 401k
+    and savings by that percent for each working year after the first (freed debt payments are not grown). 0
+    leaves the numbers exactly as before. "Plan pay changes" copies it into the new periods, and clearing the
+    plan ("Back to one period", or removing the last period) copies the first period's raise back.
   - Pickers: each field has a small source badge (never "Auto"): "Take-home preset" on the 401k and "Budget
     preset" on savings. The menu lists Today's Take-home or Today's Budget, the saved presets and Type it in.
     Choosing a preset starts a plan with one "Now" period from today.
