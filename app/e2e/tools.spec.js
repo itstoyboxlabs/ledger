@@ -274,6 +274,8 @@ test.describe('lists', () => {
       }
     })
     await openApp(p2)
+    // loading the sample replaces every ledger key, the seeded one too, so reload to seed it again
+    await p2.reload()
     await goTo(p2, 'Tools')
     const card = main(p2).locator('[data-slot=card]').filter({ has: p2.getByRole('heading', { name: 'Selling stuff', level: 2 }) })
     await expect(card).toContainText('$520.00')

@@ -13,7 +13,7 @@ export const FAQ_ITEMS = [
   },
   {
     question: 'How do I add next month?',
-    answer: 'Download the new statements, ask your assistant to update the file it made, then upload it again. Your budget and plans stay as they are.',
+    answer: 'Download the new statements, ask your assistant to update the file it made, then upload it again. Uploading replaces what is stored, so use Export data first and upload that backup together with the new file to keep your budget and plans.',
   },
   {
     question: 'Does it cost anything?',

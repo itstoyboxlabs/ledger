@@ -1,7 +1,7 @@
 # Browser tests
 
 Playwright tests that click through every page the way a person would. One spec per area:
-`shell`, `spending`, `budget`, `log`, `tools`, `retirement`, `balances` and `marketing`. The unit tests live next to the code they test (see [CODING_PATTERNS.md](../../CODING_PATTERNS.md)).
+`shell`, `spending`, `budget`, `log`, `tools`, `retirement`, `balances`, `sample`, `import-replace` and `marketing`. The unit tests live next to the code they test (see [CODING_PATTERNS.md](../../CODING_PATTERNS.md)).
 
 ## Run
 

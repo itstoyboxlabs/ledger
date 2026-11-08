@@ -48,11 +48,11 @@ to use.
 2. Open your AI assistant (Claude, ChatGPT, Codex or similar), attach the statements and paste the import prompt (it is in [IMPORT_PROMPT.md](IMPORT_PROMPT.md) and behind a button in the app).
 3. The assistant gives you `ledger-data.json`. Upload it to Ledger.
 
-Next month, do it again with the new statements and the same file. The assistant adds to it.
+Next month, do it again with the new statements and the same file. The assistant adds to it. Uploading replaces everything Ledger stores in your browser, so use Export data first and upload the new `ledger-data.json` and that backup together.
 
 ## Two ways to run it
 
-**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it. Your statements are safe in the `ledger-data.json` file your assistant made, so upload it again. Your budget and settings are not in that file, so use the Export data button now and then to save them to a second file and upload that too.
+**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it. Your statements are safe in the `ledger-data.json` file your assistant made, so upload it again. Your budget and settings are not in that file, so use the Export data button now and then to save them to a second file. Upload both files at once, since a new upload replaces what is stored.
 
 **On your computer.** Clone the repo and run it. A coding assistant such as Claude Code or Codex can read your statements folder and write the data files for you, and nothing is lost when you clear your browser.
 

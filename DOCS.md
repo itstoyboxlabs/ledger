@@ -49,6 +49,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   Log entries, Notes, and `local` keys for Balances (`ledger:debts` linked to the loan rows, `ledger:assets` in the
   savings and 401k pools, planning-variables presets), the Retirement plan, portfolio, presets and the Budget preset
   it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists.
+  Uploading a real file after trying the sample replaces all of it, settings included (see Import and export).
   - **The story it tells**: a 25 year old (About you age 25, Single, Texas) with a corporate job until 40, then an
     easier, lower paying job until retiring at 62. It shows the pay plan end to end: one Budget preset and one
     Take-home preset per phase of life, picked by age on Retirement.
@@ -101,9 +102,17 @@ All files are plain JSON except where noted.
 - **Two files.** `ledger-data.json` holds statements data. It is made by an AI assistant from your statements
   using `IMPORT_PROMPT.md`, and the app only imports it. `ledger-settings.json` is what "Export data" writes:
   `{ version, exportedAt, settings: { budget, notes, presets, log, local } }`, with no transactions.
-- **Upload** takes either file or both. A file with `transactions` merges by id (the file wins), accounts,
-  merchants and periods by key, and subscriptions by name. A file with `settings` replaces only the keys it
-  contains. Import runs in browser mode. If you change the data format, change `IMPORT_PROMPT.md` too.
+- **Upload replaces.** Upload takes either file or both, picked at once. Several files are first combined
+  with each other (`combineDataFiles`: transactions by id with the later file winning and a repeated
+  `statement` replacing its old rows whole, accounts, merchants and periods by key, subscriptions by name,
+  settings sections from the settings backup over those in a data file). The result then replaces what the
+  browser stores (`importDataFile`). A file with `transactions` wipes everything first (`clearStoredData('all')`:
+  statements, budget, log, notes, presets and every `ledger:` localStorage key), so nothing from the sample or
+  an earlier file survives. A settings-only file wipes the settings and keeps the statements. Then the file's
+  sections are written. Nothing merges into what was stored before, so to add a month the user exports a
+  backup and uploads the new data file and the backup together. The Upload tooltip and the empty state say so.
+  Import runs in browser mode only. Local mode never imports through the app: an assistant writes `data/`
+  directly and keeps every existing id (see CLAUDE.md), so that workflow is unchanged. If you change the data format, change `IMPORT_PROMPT.md` too.
 - **What survives.** Anything that must outlive the browser, or be visible to an assistant during a refresh, goes
   through these files and not through localStorage.
 - **Merchant icons** are served from `app/public/icons/<domain>.png`. `scripts/fetch-icons.sh` downloads them from

@@ -1,0 +1,89 @@
+import { test, expect, openApp, goTo, ls } from './fixtures'
+
+// Uploading a file replaces what the browser stores. Nothing from the sample (or an earlier file) survives.
+const main = (page) => page.getByRole('main')
+const aside = (page) => page.getByRole('complementary')
+
+const tx = (id, date, amount, desc) => ({ id, date, account: 'mine', amount, kind: 'expense', desc, merchant: desc, cat: 'Food & Dining', sub: 'Groceries' })
+const realFile = {
+  version: 1,
+  accounts: { mine: { name: 'Everyday', bank: 'Cedar Credit Union', type: 'checking', last4: '7788' } },
+  transactions: [tx('m-1', '2026-10-03', 42.5, 'Corner Market'), tx('m-2', '2026-10-12', 18.25, 'Bakery Row')],
+}
+const asUpload = (name, json) => ({ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(json)) })
+
+// what the app saved in IndexedDB under a key (budget, presets, log, notes, data)
+const idb = (page, key) =>
+  page.evaluate(
+    (k) =>
+      new Promise((resolve, reject) => {
+        const req = indexedDB.open('ledger')
+        req.onerror = () => reject(req.error)
+        req.onsuccess = () => {
+          const get = req.result.transaction('kv').objectStore('kv').get(k)
+          get.onsuccess = () => resolve(get.result ?? null)
+          get.onerror = () => reject(get.error)
+        }
+      }),
+    key,
+  )
+
+const upload = (page, ...files) => page.locator('input[type=file]').setInputFiles(files)
+
+test.describe('upload replaces stored data', () => {
+  test.beforeEach(async ({ page }) => {
+    await openApp(page, { rich: true })
+    await expect(aside(page).getByText('Harbor Bank').first()).toBeVisible()
+  })
+
+  test('a real file after the sample removes the fake accounts and every sample setting', async ({ page }) => {
+    await upload(page, asUpload('ledger-data.json', realFile))
+    await expect(page.getByRole('status')).toContainText('Loaded 2 transactions.')
+    await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
+    await expect(aside(page).getByText('Harbor Bank')).toHaveCount(0)
+    await expect(aside(page).getByText('Maple Card')).toHaveCount(0)
+
+    // the sample budget, presets, log and notes are gone from storage
+    expect((await idb(page, 'data')).transactions.map((t) => t.id)).toEqual(['m-1', 'm-2'])
+    expect(await idb(page, 'presets')).toBeNull()
+    expect(await idb(page, 'log')).toBeNull()
+    expect(await idb(page, 'notes')).toBeNull()
+    const budget = await idb(page, 'budget')
+    expect(JSON.stringify(budget ?? {})).not.toContain('Car loan')
+    // and so are the sample's localStorage settings
+    expect(await ls(page, 'retireNeedPreset')).toBeNull()
+    expect(JSON.stringify(await ls(page, 'debts'))).not.toContain('Car loan')
+    expect((await ls(page, 'age'))?.age).not.toBe(25)
+
+    await goTo(page, 'Log')
+    await expect(main(page).getByText('Farmers market')).toHaveCount(0)
+    await goTo(page, 'About you')
+    await expect(main(page).getByLabel('Your age')).not.toHaveValue('25')
+  })
+
+  test('a data file and a settings backup picked together both load', async ({ page }) => {
+    const backup = { version: 1, settings: { budget: { rows: [] }, local: { 'ledger:age': { age: 31, asOf: 2026 } } } }
+    await upload(page, asUpload('ledger-settings.json', backup), asUpload('ledger-data.json', realFile))
+    await expect(page.getByRole('status')).toContainText('Loaded your statements and settings.')
+    await expect(aside(page).getByText('Cedar Credit Union').first()).toBeVisible()
+    await expect(aside(page).getByText('Harbor Bank')).toHaveCount(0)
+    expect(await idb(page, 'presets')).toBeNull()
+    await goTo(page, 'About you')
+    await expect(main(page).getByLabel('Your age')).toHaveValue('31')
+  })
+
+  test('a settings backup on its own keeps the statements and replaces the settings', async ({ page }) => {
+    await upload(page, asUpload('ledger-settings.json', { version: 1, settings: { local: { 'ledger:age': { age: 44, asOf: 2026 } } } }))
+    await expect(page.getByRole('status')).toContainText('Settings loaded.')
+    await expect(aside(page).getByText('Harbor Bank').first()).toBeVisible()
+    expect(await idb(page, 'presets')).toBeNull()
+    expect(await ls(page, 'retireNeedPreset')).toBeNull()
+    await goTo(page, 'About you')
+    await expect(main(page).getByLabel('Your age')).toHaveValue('44')
+  })
+
+  test('the upload button says it replaces what is stored', async ({ page }) => {
+    await aside(page).getByRole('button', { name: 'Upload file' }).hover()
+    await expect(page.getByRole('tooltip')).toContainText('replaces what is stored on this device')
+  })
+})
