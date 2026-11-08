@@ -11,7 +11,7 @@ export function amountInDayRange(row: BudgetRow, fromDay: number, toDay: number,
     return row.day >= fromDay && row.day <= toDay ? amt : 0
   }
   if (row.prorate) {
-    const days = toDay - fromDay + 1
+    const days = Math.max(0, Math.min(toDay, daysInMonth) - fromDay + 1)
     return (amt * days) / daysInMonth
   }
   return amt

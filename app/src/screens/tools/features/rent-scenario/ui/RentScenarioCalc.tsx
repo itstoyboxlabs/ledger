@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getBudget } from '@/shared/utils/getBudget'
+import { budgetEffRows } from '@/shared/utils/budgetEffRows'
+import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
+import { NO_RENT_ROW } from '@/screens/tools/features/rent-scenario/constants/NO_RENT_ROW'
 import { fmt } from '@/shared/utils/fmt'
 import { fmt0 } from '@/shared/utils/fmt0'
 import { isBudgetRowHidden } from '@/shared/utils/isBudgetRowHidden'
@@ -37,9 +40,11 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
     getBudget()
       .then((d) => {
         // the rent row is a saved link (rentRow). First run: link the row named Rent.
-        let rentRow = d.rows.find((r) => r.id === c.rentRow)
+        // Read the rows the way the Budget page does, so subscriptions count here too.
+        const effective = budgetEffRows(d.rows.map(normalizeBudgetRow), d.dismissedSubs)
+        let rentRow = effective.find((r) => r.id === c.rentRow)
         if (!c.rentRow) {
-          const byName = d.rows.find((r) => r.name === 'Rent')
+          const byName = effective.find((r) => r.name === 'Rent')
           if (byName) {
             rentRow = byName
             setC((prev) => (prev.rentRow ? prev : { ...prev, rentRow: byName.id }))
@@ -47,8 +52,8 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
         }
         setBudget({
           currentRent: Number(rentRow?.amount) || 0,
-          allRows: d.rows.filter((r) => !r.hidden && !isBudgetRowHidden(r)),
-          rows: d.rows
+          allRows: effective.filter((r) => !r.hidden && !isBudgetRowHidden(r)),
+          rows: effective
             .filter((r) => r !== rentRow && !r.hidden && !isBudgetRowHidden(r))
             .map((r) => ({ id: r.id, name: r.name, amount: Number(r.amount) || 0 })),
         })
@@ -80,7 +85,7 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
 
   const totalDebt = sumBalances(debts)
   const payoffLabel = (leftPerMonth: number): string => {
-    if (leftPerMonth <= 0) return '—'
+    if (totalDebt <= 0 || leftPerMonth <= 0) return '—'
     const months = Math.ceil(totalDebt / leftPerMonth)
     if (months > 1200) return '100+ yrs'
     const y = Math.floor(months / 12)
@@ -109,11 +114,11 @@ export function RentScenarioCalc({ debts }: { debts: Debt[] }) {
           <Dropdown
             label="Rent row"
             hideLabel
-            value={budget.allRows.some((r) => r.id === c.rentRow) ? c.rentRow : ''}
+            value={budget.allRows.some((r) => r.id === c.rentRow) ? c.rentRow : NO_RENT_ROW}
             onChange={(v: string) => setC({ ...c, rentRow: v })}
             className="h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs"
             options={[
-              { value: '', label: 'No budget row' },
+              { value: NO_RENT_ROW, label: 'No budget row' },
               ...[...budget.allRows].sort((a, b) => a.name.localeCompare(b.name)).map((r) => ({ value: r.id, label: r.name })),
             ]}
           />

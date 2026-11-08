@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getBudget } from '@/shared/utils/getBudget'
+import { budgetExpensesOf } from '@/shared/utils/budgetExpensesOf'
 import { fmt } from '@/shared/utils/fmt'
 import { fmt0 } from '@/shared/utils/fmt0'
-import { isBudgetRowHidden } from '@/shared/utils/isBudgetRowHidden'
 import { Table, TableBody } from '@/shared/ui/primitives/table'
 import { Card } from '@/shared/ui/Card'
 import { ToolField } from '@/shared/ui/ToolField'
@@ -25,10 +25,7 @@ export function VacationCalc() {
   useEffect(() => {
     getBudget()
       .then((d) => {
-        const expenses = d.rows
-          .filter((r) => !r.hidden && !isBudgetRowHidden(r))
-          .reduce((s, r) => s + (Number(r.amount) || 0), 0)
-        setLeftover(budgetIncome - expenses)
+        setLeftover(budgetIncome - budgetExpensesOf(d))
       })
       .catch(() => {})
   }, [budgetIncome])

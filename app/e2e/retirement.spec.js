@@ -1044,9 +1044,8 @@ test.describe('events: equity link', () => {
     expect(shown).toBeGreaterThan(0)
     expect(shown).toBeLessThan(10000)
     await expect(card.locator('button', { hasText: 'Money in' })).toBeVisible()
-    // a new event keeps its Once setting when linked; only Once and Every year are offered
-    await expect(card.locator('button', { hasText: 'Once' })).toBeVisible()
-    await pick(page, card, 'Once', 'Every year')
+    // linking a new event makes it repeat every year
+    await expect(card.locator('button', { hasText: 'Every year' })).toBeVisible()
     await expect(card.locator('label', { hasText: 'For how many years' })).toContainText('2')
     await expectRow(page, 32, { contrib: 25000 + shown })
     await expectRow(page, 33, { contrib: 25000 + shown })

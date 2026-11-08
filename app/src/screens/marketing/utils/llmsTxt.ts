@@ -9,7 +9,7 @@ export function llmsTxt(): string {
   const chapters = TUTORIAL_CHAPTERS.map((c) => `- ${c.title} (${c.length}): ${c.summary}`).join('\n')
   return `# Ledger
 
-> A free, open source financial planning app that reads your bank statements. It runs in your browser or on your own computer, needs no account and no bank login, and nothing leaves your machine. By ${PUBLISHER.name}.
+> A free, open source financial planning app that reads your bank statements. It runs in your browser or on your own computer, needs no account and no bank login, and has no server. Your statements go only to the AI assistant you choose. By ${PUBLISHER.name}.
 
 ## Key facts
 

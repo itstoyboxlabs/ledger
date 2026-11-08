@@ -65,7 +65,7 @@ describe('LogView', () => {
     expect(add).toBeEnabled()
     await user.click(add)
     expect(screen.getByText('coffee')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('14.50')).toHaveValue(null)
+    expect(screen.getByPlaceholderText('14.50')).toHaveValue('')
     await waitFor(async () => expect((await getLog()).entries.some((x) => x.note === 'coffee')).toBe(true), { timeout: 2000 })
     const e = (await getLog()).entries.find((x) => x.note === 'coffee')
     expect(e).toMatchObject({ amount: 3.46, date: '2026-11-08' })

@@ -66,6 +66,20 @@ test.describe('quick add', () => {
     await expect(page.getByText('Logged $12.35 across 1 entry')).toBeVisible()
   })
 
+  test('the amount can be a sum like 12 + 3.50', async ({ page }) => {
+    await log(page, '12 + 3.50', 'two things', 'Groceries')
+    await expect(tableRows(page).first()).toContainText('$15.50')
+  })
+
+  test('an entry survives closing the page right after adding it', async ({ page }) => {
+    await amount(page).fill('7')
+    await addBtn(page).click()
+    await expect(tableRows(page).first()).toContainText('$7.00')
+    await page.waitForTimeout(100)
+    await page.reload()
+    await expect(tableRows(page).first()).toContainText('$7.00')
+  })
+
   test('Enter in a field adds, clears the fields and returns focus to Amount', async ({ page }) => {
     await amount(page).fill('9')
     await noteBox(page).fill('coffee')

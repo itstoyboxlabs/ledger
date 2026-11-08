@@ -52,7 +52,7 @@ export function CashRangeCalc() {
   const cashExpr = c.cashExpr || (c.cashOnHand ? String(c.cashOnHand) : '')
   const cash = parseSumExpr(cashExpr)
   const leftover = cash.total - total
-  const days = validRange ? c.toDay - c.fromDay + 1 : 0
+  const days = validRange ? Math.max(0, Math.min(c.toDay, daysInMonth) - c.fromDay + 1) : 0
   const ord = (n: number): string => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th')
 
   return (

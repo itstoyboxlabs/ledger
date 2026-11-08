@@ -51,7 +51,6 @@ export function LogView() {
   const [date, setDate] = useState(todayYmd())
   const [rowId, setRowId] = usePersistedState('logRow', '', (v) => typeof v === 'string')
   const [sort, setSort] = useState<LogSort>({ key: 'date', dir: -1 })
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const amountRef = useRef<HTMLInputElement>(null)
   // for the Budget page's leftover shares: a row that receives one has a bigger meter
   const income = useBudgetIncome()
@@ -69,12 +68,10 @@ export function LogView() {
   const persist = (next: LogEntry[]) => {
     setEntries(next)
     setSaveState('saving')
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      saveLog(next)
-        .then(() => setSaveState('saved'))
-        .catch(() => setSaveState('error'))
-    }, 400)
+    // saved right away: adding or deleting is one action, and a delay could lose it if the page closes
+    saveLog(next)
+      .then(() => setSaveState('saved'))
+      .catch(() => setSaveState('error'))
   }
 
   if (!entries || !budgetRows) {
@@ -183,9 +180,7 @@ export function LogView() {
             <span className="group/num relative mt-1 block w-full">
               <Input
                 ref={amountRef}
-                type="number"
-                step={1}
-                inputMode="decimal"
+                type="text"
                 value={amount}
                 placeholder="14.50"
                 onChange={(e) => setAmount(e.target.value)}

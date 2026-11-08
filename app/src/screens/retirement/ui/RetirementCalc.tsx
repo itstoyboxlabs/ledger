@@ -641,7 +641,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                     onToggleAuto={() =>
                       isDebt
                         ? patchEvent(e.id, { custom: !raw.custom, amount: raw.custom ? raw.amount : debt?.balance ?? 0 })
-                        : patchEvent(e.id, linked ? { auto: undefined } : { auto: 'equity', kind: 'in' })}
+                        : patchEvent(e.id, linked ? { auto: undefined } : { auto: 'equity', kind: 'in', repeat: 'year' })}
                     autoValue={isDebt ? debt?.balance ?? 0 : autoOptAmt}
                     autoTip={isDebt
                       ? `The balance of ${debt?.name || 'this debt'} on the Balances page. Click Auto to type a different amount.`
