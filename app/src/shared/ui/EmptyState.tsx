@@ -45,10 +45,10 @@ export function EmptyState() {
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-[14px] leading-relaxed text-[var(--text-secondary)]">
           <li>Download your statements from your bank.</li>
           <li>Give them to an AI assistant (Claude, ChatGPT or Codex) with the import prompt.</li>
-          <li>Upload ledger-data.json.</li>
+          <li>Upload the ledger-data.json file it gives you.</li>
         </ol>
         <p className="mt-3 text-[13px] text-[var(--text-muted)]">
-          Have a settings backup too? Pick it together with ledger-data.json. Uploading replaces what is stored on this device.
+          Used Ledger before? Upload the last ledger-data.json you exported. It has your statements and settings, and it replaces what is stored on this device.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <Input

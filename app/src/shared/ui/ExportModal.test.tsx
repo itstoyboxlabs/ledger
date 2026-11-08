@@ -16,13 +16,15 @@ describe('ExportModal', () => {
   it('describes the browser-mode export', () => {
     render(<ExportModal onClose={() => {}} notify={() => {}} />)
     expect(screen.getByText('Export data')).toBeInTheDocument()
-    expect(screen.getByText(/ledger-data.json file/)).toBeInTheDocument()
+    expect(screen.getByText(/Saves everything to one file, ledger-data.json/)).toBeInTheDocument()
+    expect(screen.getByText(/give it to your assistant with your new statements/)).toBeInTheDocument()
   })
 
   it('describes the local-mode export', () => {
     storageModeStore.setState({ mode: 'local' })
     render(<ExportModal onClose={() => {}} notify={() => {}} />)
-    expect(screen.getByText(/already live in the data folder/)).toBeInTheDocument()
+    expect(screen.getByText(/already lives in the data folder/)).toBeInTheDocument()
+    expect(screen.getByText(/to one file, ledger-data.json/)).toBeInTheDocument()
   })
 
   it('downloads then closes', async () => {

@@ -30,7 +30,7 @@ export default function Root() {
   // written. Several files are combined into one, which then replaces what is stored. The version is bumped
   // once at the end.
   const importTexts = useCallback(
-    async (texts: { text: string; name: string }[], okMessage?: string) => {
+    async (texts: { text: string; name: string }[], okMessage?: string, sample = false) => {
       try {
         const files = texts.map(({ text, name }): DataFile => {
           let parsed: unknown
@@ -42,13 +42,13 @@ export default function Root() {
           validateDataFile(parsed)
           return parsed
         })
-        const { data, settings } = await importDataFile(combineDataFiles(files))
+        const { data, settings } = await importDataFile(combineDataFiles(files), { sample })
         setVersion((v) => v + 1)
         if (okMessage) notify(okMessage)
         else if (data && settings) notify('Loaded your statements and settings.')
         else if (data) notify(`Loaded ${getAllTxns().length.toLocaleString('en-US')} transactions.`)
         else if (hasData()) notify('Settings loaded.')
-        else notify('Settings loaded. Now upload ledger-data.json and this backup together, since a data file replaces everything stored here.')
+        else notify('Settings loaded. Now upload your ledger-data.json to see your statements.')
       } catch (e) {
         notify((e instanceof Error && e.message) || 'Could not read that file.', 'error')
       }
@@ -66,7 +66,7 @@ export default function Root() {
         try {
           const r = await fetch('/sample-data.json')
           if (!r.ok) throw new Error()
-          await importTexts([{ text: await r.text(), name: 'sample-data.json' }], 'Sample data loaded.')
+          await importTexts([{ text: await r.text(), name: 'sample-data.json' }], 'Sample data loaded.', true)
         } catch {
           notify('Could not load the sample data.', 'error')
         }

@@ -86,17 +86,18 @@ test.describe('sidebar', () => {
     await expect(aside.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', /.+/)
   })
 
-  test('Export data downloads a settings file with no transactions', async ({ page }) => {
+  test('Export data downloads one ledger-data.json with the statements and the settings', async ({ page }) => {
     await openApp(page)
     await page.getByRole('complementary').getByRole('button', { name: 'Export data' }).click()
     const [dl] = await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('dialog').getByRole('button', { name: 'Download' }).click(),
     ])
-    expect(dl.suggestedFilename()).toBe('ledger-settings.json')
+    expect(dl.suggestedFilename()).toBe('ledger-data.json')
     const file = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'))
     expect(file.version).toBe(1)
-    expect(file.transactions).toBeUndefined()
+    expect(file.transactions.length).toBeGreaterThan(100)
+    expect(Object.keys(file.accounts).length).toBeGreaterThan(0)
     expect(Array.isArray(file.settings.budget.rows)).toBe(true)
   })
 })

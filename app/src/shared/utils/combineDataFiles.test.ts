@@ -37,3 +37,25 @@ describe('combineDataFiles', () => {
     expect(out.settings?.local).toEqual({ 'ledger:age': 30, 'ledger:x': 1 })
   })
 })
+
+describe('combineDataFiles with one full file', () => {
+  it('keeps updated, notes and the settings so an export round trips', () => {
+    const f: DataFile = {
+      version: 1,
+      exportedAt: '2026-11-07T00:00:00.000Z',
+      updated: '2026-10-31',
+      notes: ['Made up.'],
+      accounts: { chk: { name: 'C', bank: 'B', type: 'checking' as never, last4: '1' } },
+      merchants: {},
+      periods: {},
+      subscriptions: [],
+      transactions: [tx('a', '2026-01-01')],
+      settings: { budget: budget('r1'), local: { 'ledger:age': 30 } },
+    }
+    const out = combineDataFiles([f])
+    expect(out.updated).toBe('2026-10-31')
+    expect(out.notes).toEqual(['Made up.'])
+    expect(out.settings).toEqual(f.settings)
+    expect(out.exportedAt).toBeUndefined()
+  })
+})

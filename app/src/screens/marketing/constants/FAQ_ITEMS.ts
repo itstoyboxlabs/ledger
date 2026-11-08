@@ -9,11 +9,11 @@ export const FAQ_ITEMS = [
   },
   {
     question: 'Where is my data stored?',
-    answer: 'In your browser, on your computer. Nothing is sent to a server. Use Export data to save a backup of your budget and settings, and upload it again if your browser is ever cleared.',
+    answer: 'In your browser, on your computer. Nothing is sent to a server. Use Export data any time to save a backup. It is one file, ledger-data.json, with your statements, budget and settings. If your browser is ever cleared, upload it again.',
   },
   {
     question: 'How do I add next month?',
-    answer: 'Download the new statements, ask your assistant to update the file it made, then upload it again. Uploading replaces what is stored, so use Export data first and upload that backup together with the new file to keep your budget and plans.',
+    answer: 'Click Export data to save your latest ledger-data.json. Give that file to your assistant with the new statements and the import prompt. It adds the new month and keeps your budget and plans as they are. Then upload the file it gives back.',
   },
   {
     question: 'Does it cost anything?',

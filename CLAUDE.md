@@ -5,7 +5,7 @@ A financial planning app that reads bank statements. Claude is the importer: you
 ## Two ways the app runs
 
 - **Local mode** (`npm run dev` in `app/`): the dev server reads and writes the `data/` folder. This is the mode you work in.
-- **Browser mode** (the hosted site, or `npm run dev -- --mode browser`): everything is stored in the browser and the user uploads a `ledger-data.json` file.
+- **Browser mode** (the hosted site, or `npm run dev -- --mode browser`): everything is stored in the browser and the user uploads one `ledger-data.json` file. That one file holds the statements and, once the user has exported it from the app, a `settings` section with their budget, notes, presets, log and app settings. There is no second settings file.
 
 The app tells the modes apart by whether `/api/budget` answers.
 
@@ -17,7 +17,17 @@ When the user says they added statements:
 2. Read IMPORT_PROMPT.md and follow it exactly. Write or extend `data/transactions.json` in that format (the same format as `ledger-data.json`). Keep every existing id, account, period and subscription. Add new ones.
 3. Check every statement against the totals it prints, and fix any difference before you finish. Ask the user about anything you cannot place.
 4. Add each new merchant's website to `merchants`, then run `bash scripts/fetch-icons.sh` to download its logo.
-5. The app reloads on its own. Do not touch `data/budget.json`, `data/notes.json`, `data/presets.json` or `data/log.json`. Those are the user's settings, saved by the app.
+5. The app reloads on its own. Do not touch `data/budget.json`, `data/notes.json`, `data/presets.json` or `data/log.json`. Those are the user's settings, saved by the app. In local mode they stay separate files, and Export data reads all of them and saves one combined `ledger-data.json` as a backup.
+
+## Updating a user's ledger-data.json (browser mode)
+
+When the user gives you their last `ledger-data.json` (the one Export data saved) plus new statements:
+
+1. Follow IMPORT_PROMPT.md, section "Adding to my last file".
+2. Keep every existing id, account, merchant, period, subscription and transaction. Add the new statement data.
+3. Copy the `settings` section, `version` and `exportedAt` back exactly as they were, byte for byte. Never edit, reformat or drop `settings`. It is the user's budget and plans.
+4. A first-time user has no previous file and no `settings` section. That is fine. Do not add one, and the app starts the settings from its defaults.
+5. Give back the whole file. Uploading it replaces everything the app stores.
 
 ## Working on the app
 

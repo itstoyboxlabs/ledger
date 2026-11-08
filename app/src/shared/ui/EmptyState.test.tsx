@@ -16,6 +16,8 @@ describe('EmptyState', () => {
     renderApp(<EmptyState />, { context: { importSample } })
     expect(screen.getByRole('heading', { level: 1, name: "There's nothing here yet." })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Upload ledger-data.json' })).toBeInTheDocument()
+    expect(screen.getByText(/Upload the last ledger-data.json you exported/)).toBeInTheDocument()
+    expect(screen.queryByText(/settings backup/)).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Try it with sample data' }))
     expect(importSample).toHaveBeenCalled()
   })

@@ -158,7 +158,7 @@ test.describe('tax state', () => {
 })
 
 test.describe('export and import', () => {
-  test('age and filing status travel in the settings file', async ({ page }) => {
+  test('age and filing status travel in the exported ledger-data.json', async ({ page }) => {
     await ageBox(page).fill('44')
     await pickFiling(page, 'Married filing jointly')
     await page.getByRole('complementary').getByRole('button', { name: 'Export data' }).click()
@@ -176,7 +176,7 @@ test.describe('export and import', () => {
     await ageBox(page).fill('20')
     await pickFiling(page, 'Single')
     await page.locator('input[type=file]').first().setInputFiles({
-      name: 'ledger-settings.json',
+      name: 'ledger-data.json',
       mimeType: 'application/json',
       buffer: Buffer.from(text),
     })
