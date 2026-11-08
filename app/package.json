@@ -11,7 +11,9 @@
     "test": "vitest run && playwright test",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "videos": "node scripts/sync-videos.mjs",
+    "deploy": "npm run videos && vercel deploy --prod --yes"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",

@@ -53,9 +53,9 @@ function budgetApi() {
   }
 }
 
-// The tutorial videos live in demo/video (they are large, so the public repo leaves them out). This serves them at
-// /videos/<file> in dev and copies the chapter videos and posters into dist/videos on build. It does nothing when
-// the folder is missing.
+// The tutorial videos live in demo/video (they are large, so the public repo leaves them out). In dev this serves
+// them at /videos/<file>. For a deploy, `npm run videos` copies the chapter files into public/videos, which git
+// ignores and Vercel uploads, so the hosted site serves them too. Both do nothing when the folder is missing.
 const VIDEO_DIR = path.resolve(here, '../demo/video')
 const isChapterFile = (f) => /^chapter-\d.*\.(mp4|jpg)$/.test(f)
 function demoVideos() {
@@ -69,12 +69,6 @@ function demoVideos() {
         res.setHeader('content-type', file.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
         fs.createReadStream(full).pipe(res)
       })
-    },
-    closeBundle() {
-      if (!fs.existsSync(VIDEO_DIR)) return
-      const out = path.resolve(here, 'dist/videos')
-      fs.mkdirSync(out, { recursive: true })
-      for (const f of fs.readdirSync(VIDEO_DIR).filter(isChapterFile)) fs.copyFileSync(path.join(VIDEO_DIR, f), path.join(out, f))
     },
   }
 }
