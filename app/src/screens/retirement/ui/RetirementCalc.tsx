@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Debt } from '@/shared/types/Debt'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
 import type { DebtSchedule } from '@/screens/retirement/types/DebtSchedule'
 import type { PortfolioAfter } from '@/screens/retirement/types/PortfolioAfter'
@@ -29,7 +30,6 @@ import { AutoToolField } from '@/screens/retirement/ui/AutoToolField'
 import { Card } from '@/shared/ui/Card'
 import { DEBT_EVENT_TIP } from '@/screens/retirement/constants/DEBT_EVENT_TIP'
 import { DEFAULT_PORTFOLIO } from '@/screens/retirement/constants/DEFAULT_PORTFOLIO'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { Dot } from '@/shared/ui/Dot'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { EVENT_KINDS } from '@/screens/retirement/constants/EVENT_KINDS'
@@ -53,7 +53,14 @@ import type { RetireSimPay } from '@/screens/retirement/types/RetireSimPay'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import { REPEAT_OPTIONS } from '@/screens/retirement/constants/REPEAT_OPTIONS'
 import { RETIRE_DEFAULTS } from '@/screens/retirement/constants/RETIRE_DEFAULTS'
-import { SS_EXPLAIN } from '@/screens/retirement/utils/SS_EXPLAIN'
+import { ssExplain } from '@/screens/retirement/utils/ssExplain'
+import { debtPayoffSchedule } from '@/screens/retirement/utils/debtPayoffSchedule'
+import { earliestSafeRetireAge } from '@/screens/retirement/utils/earliestSafeRetireAge'
+import { freedFromDebt } from '@/screens/retirement/utils/freedFromDebt'
+import { milestoneBalances } from '@/screens/retirement/utils/milestoneBalances'
+import { weightedReturn } from '@/screens/retirement/utils/weightedReturn'
+import { SS_EARLIEST_CLAIM_AGE } from '@/shared/constants/SS_EARLIEST_CLAIM_AGE'
+import { SS_LATEST_CLAIM_AGE } from '@/shared/constants/SS_LATEST_CLAIM_AGE'
 import { STOCK_DEFAULTS } from '@/shared/constants/STOCK_DEFAULTS'
 import { TAKE_HOME_DEFAULTS } from '@/shared/constants/TAKE_HOME_DEFAULTS'
 import { ToolField } from '@/shared/ui/ToolField'
@@ -144,7 +151,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // the Budget tab currently shows as monthly income — actual payroll, or its
   // income-override salary if that toggle is on. Budgeting IS the planning source of
   // truth here, so both fields track it instead of a separately-set number.
-  const [taxState] = usePersistedState<string>('taxState', DEFAULT_STATE, (v) => String(v) in STATES)
+  const [taxState] = useTaxState()
   const [filing] = useFilingStatus()
   const [incomeOverride] = useIncomeOverride()
   const [takeHome] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
@@ -232,39 +239,20 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     setC({ ...c, events: [...c.events, { id: newId('e'), name: '', amount: 0, kind: 'out', age: c.age + 1, repeat: 'once', years: 1 }] })
   const removeEvent = (id: string) => setC({ ...c, events: c.events.filter((e) => e.id !== id) })
 
-  // Debt payoff → savings waterfall: each of the three shared debts (card, taxes,
-  // loans) is paid off independently at ITS OWN budgeted monthly payment (no
-  // snowballing between them — Josh's call). balance ÷ payment = months to zero,
-  // ignoring interest (same simplification as the Debt payoff tool). The payoff
-  // year gets a PRORATED credit for just the months remaining after payoff that
-  // year; every year after gets the full 12 months. All of it goes straight to
-  // savings — always, regardless of the Savings Auto toggle, since paying down a
-  // debt is a real cash-flow fact whether the number above it is auto or typed.
-  const debtPayoffSchedule = (balance: number, monthlyPayment: number, startAge: number): DebtSchedule => {
-    if (balance <= 0) return { payoffAge: startAge - 1, freedMonthsInPayoffYear: 12 } // already clear
-    if (monthlyPayment <= 0) return { payoffAge: Infinity, freedMonthsInPayoffYear: 0 } // never clears at $0/mo
-    const months = Math.ceil(balance / monthlyPayment)
-    const yearIndex = Math.floor((months - 1) / 12)
-    const monthWithinYear = months - yearIndex * 12
-    return { payoffAge: startAge + yearIndex, freedMonthsInPayoffYear: 12 - monthWithinYear }
-  }
-  const freedFromDebt = (sched: DebtSchedule, monthlyPayment: number, age: number): number => {
-    if (monthlyPayment <= 0 || age < sched.payoffAge) return 0
-    return age === sched.payoffAge ? monthlyPayment * sched.freedMonthsInPayoffYear : monthlyPayment * 12
-  }
-  const debtSchedules = debts.map((d, i) =>
+  // Debt payoff → savings waterfall: each debt is paid off independently at its own
+  // budgeted monthly payment (no snowballing between them). The payoff year gets a
+  // prorated credit for the months left after payoff; every year after gets all 12.
+  // The freed payment follows the Budget's leftover split, whether the savings
+  // number above it is auto or typed (see debtPayoffSchedule and freedFromDebt).
+  const debtSchedules = debts.map((d, i): DebtSchedule =>
     payoffByDebt[d.id]
       ? { payoffAge: payoffByDebt[d.id].age, freedMonthsInPayoffYear: 12 }
       : debtPayoffSchedule(d.balance, debtPayments[i], c.age),
   )
   const autoTaxPct = gainsTaxPct(needMo * 12, taxState, filing)
   const taxPct = c.autoTax ? autoTaxPct : c.taxPct
-  const weighted = (rows: PortfolioRow[]) => {
-    const total = rows.reduce((s: number, x) => s + x.alloc, 0)
-    return { total, avg: total > 0 ? rows.reduce((s, x) => s + x.alloc * x.perf, 0) / total : 0 }
-  }
-  const avgReturn = weighted(port).avg
-  const avgReturnAfter = weighted(afterRows).avg
+  const avgReturn = weightedReturn(port).avg
+  const avgReturnAfter = weightedReturn(afterRows).avg
   const r = avgReturn / 100
   const rAfter = avgReturnAfter / 100
   // starting balances: from the Balances page (anything unchecked is left out) or typed
@@ -352,26 +340,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
     </p>
   )
-  // balance at a few milestone ages plus the end age, only the ones the projection reaches
-  const milestones = [...new Set([60, 70, 80, 90, 100, c.endAge])]
-    .sort((a, b) => a - b)
-    .filter((a) => a > c.age && a <= c.endAge)
-    .map((a) => ({ age: a, total: rows.find((r) => r.age === a)?.total ?? 0 }))
-
-  // "Find" button: earliest retire age (after current age) where money never goes
-  // negative through endAge, at today's inputs. Linear scan — cheap (at most ~80
-  // candidate ages × ~80 simulated years each) and correct even if survivability
-  // isn't perfectly monotonic in retireAge (one-time events land at fixed ages
-  // regardless of when you retire).
-  const findEarliestSafeRetireAge = () => {
-    for (let candidate = c.age + 1; candidate < c.endAge; candidate++) {
-      if (simulate(candidate).runOutAge === null) return candidate
-    }
-    return null
-  }
+  const milestones = milestoneBalances(rows, c.age, c.endAge)
 
   const phaseTone = (p: RetirePhase) =>
-    p === 'working' ? 'var(--good)' : p === 'early-retired' ? '#e8c76a' : 'var(--cat-housing)'
+    p === 'working' ? 'var(--good)' : p === 'early-retired' ? 'var(--warn)' : 'var(--cat-housing)'
 
   return (
     <div>
@@ -404,7 +376,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
               label="Find"
               active={false}
               onClick={() => {
-                const found = findEarliestSafeRetireAge()
+                // the earliest retire age the money lasts from, at the numbers on this page
+                const found = earliestSafeRetireAge(c.age, c.endAge, simulate)
                 if (found === null) {
                   setFindNotFoundFor(findKey)
                   return
@@ -594,8 +567,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
               <ToolField
                 label="Claim age"
                 value={c.ss.claimAge}
-                min={62}
-                max={70}
+                min={SS_EARLIEST_CLAIM_AGE}
+                max={SS_LATEST_CLAIM_AGE}
                 onChange={(v) => setC({ ...c, ss: { ...c.ss, claimAge: v } })}
                 tip="The age you start collecting. You can pick any age from 62 to 70. Waiting pays more each month for life: about 70% of the full amount at 62, 100% at 67 and 124% at 70."
               />
@@ -604,8 +577,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                 auto={c.ss.auto}
                 onToggleAuto={() => setC({ ...c, ss: { ...c.ss, auto: !c.ss.auto } })}
                 autoValue={autoSsMonthly}
-                autoTip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
-                tip={SS_EXPLAIN(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
+                autoTip={ssExplain(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
+                tip={ssExplain(takeHomeSalary, c.ss.claimAge, autoSsMonthly)}
                 value={c.ss.monthly}
                 onChange={(v) => setC({ ...c, ss: { ...c.ss, monthly: v } })}
                 step={50}
@@ -785,10 +758,10 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       {/* investments: what the money is in and what it earns. A second table only if the
           plan changes after retiring. */}
       <Card className="mt-5 p-5">
-        <div className="flex items-center gap-1.5 text-[14px] font-semibold">
+        <h2 className="flex items-center gap-1.5 text-[14px] font-semibold">
           Investments
           <InfoTip tip="The funds your savings and 401k are in, and what you expect them to earn. The projection uses the weighted average of these." />
-        </div>
+        </h2>
         <div className="mt-3">
           <PortfolioTable heading="While working" rows={port} setRows={setPort} />
         </div>
@@ -847,7 +820,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
 
       {/* year table */}
       <Card className="mt-5 p-5">
-      <div className="text-[12px] text-[var(--text-muted)]">Year by year</div>
+      <h2 className="text-[12px] font-normal text-[var(--text-muted)]">Year by year</h2>
       {(
         <div tabIndex={0} role="region" aria-label="Year by year projection table" className="mt-2 max-h-[420px] overflow-y-auto overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Table className="w-full text-[13px]">

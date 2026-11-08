@@ -1,11 +1,11 @@
 import { STATES } from '@/shared/constants/STATES'
 import { fmt } from '@/shared/utils/fmt'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import { Label } from '@/shared/ui/primitives/label'
 import { Input } from '@/shared/ui/primitives/input'
 import { Button } from '@/shared/ui/primitives/button'
 import { X } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
@@ -36,7 +36,7 @@ type BalancesViewProps = {
 }
 
 export function BalancesView({ goToAboutYou }: BalancesViewProps) {
-  const [taxState, setTaxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [taxState, setTaxState] = useTaxState()
   const [debts, setDebts] = useDebts()
   const [assets, setAssets] = useAssets()
   const [asOf, setAsOf] = usePersistedState('assetsAsOf', '', (v) => typeof v === 'string')

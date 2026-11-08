@@ -1,7 +1,10 @@
 import { Card } from '@/shared/ui/Card'
 import { Label } from '@/shared/ui/primitives/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/primitives/select'
+import { FED } from '@/shared/constants/FED'
+import { FED_MFJ } from '@/shared/constants/FED_MFJ'
 import { FILING_LABELS } from '@/shared/constants/FILING_LABELS'
+import { fmt0 } from '@/shared/utils/fmt0'
 import { FilingStatus } from '@/shared/enums/FilingStatus'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { isFilingStatus } from '@/shared/utils/isFilingStatus'
@@ -34,8 +37,8 @@ export function FilingStatusCard() {
       </div>
       <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-muted)]">
         {filing === FilingStatus.mfj
-          ? 'Married filing jointly doubles the standard deduction to $32,200 and roughly doubles the width of each federal bracket. The app still plans around your own income only, as if your partner earns nothing, so it shows the most your household could gain from filing together.'
-          : 'Single uses the $16,100 standard deduction and the single federal brackets for 2026. Pick Married filing jointly if you file one return with a spouse.'}
+          ? `Married filing jointly doubles the standard deduction to ${fmt0(FED_MFJ.standardDeduction)} and roughly doubles the width of each federal bracket. The app still plans around your own income only, as if your partner earns nothing, so it shows the most your household could gain from filing together.`
+          : `Single uses the ${fmt0(FED.standardDeduction)} standard deduction and the single federal brackets for 2026. Pick Married filing jointly if you file one return with a spouse.`}
       </p>
     </Card>
   )

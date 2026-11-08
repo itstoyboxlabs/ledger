@@ -17,8 +17,10 @@ export function FieldGroup({ label, tip, action, gridClass = 'grid-cols-2 sm:gri
   return (
     <Card className={`p-5 ${className}`}>
       <div className="mb-3 flex items-center gap-1.5 text-[14px] font-semibold">
-        {label}
-        {tip && <InfoTip tip={tip} />}
+        <h2 className="flex items-center gap-1.5">
+          {label}
+          {tip && <InfoTip tip={tip} />}
+        </h2>
         {action && <span className="ml-auto">{action}</span>}
       </div>
       <div className={`grid gap-3 ${gridClass}`}>{children}</div>

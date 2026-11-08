@@ -17,6 +17,15 @@ describe('SortHead', () => {
     expect(onSort).toHaveBeenCalledWith('amt')
   })
 
+  it('sorts from the keyboard with Enter or Space', async () => {
+    const onSort = setup({ sort: { key: 'date', dir: 'asc' } })
+    await userEvent.tab()
+    expect(screen.getByRole('columnheader')).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await userEvent.keyboard(' ')
+    expect(onSort).toHaveBeenCalledTimes(2)
+  })
+
   it('has no aria-sort when inactive', () => {
     setup({ sort: { key: 'date', dir: 'asc' } })
     expect(screen.getByRole('columnheader')).not.toHaveAttribute('aria-sort')

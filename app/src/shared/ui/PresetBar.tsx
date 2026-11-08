@@ -66,7 +66,7 @@ export function PresetBar<T>({ presets, currentData, onApply, onSave, onDelete, 
           ) : (
           <Button variant="outline" size="sm" className="group gap-2">
             {active?.name ?? 'Presets'}
-            {drifted && <span className="size-1.5 rounded-full bg-[#e8c76a]" aria-label="Changed since this preset" />}
+            {drifted && <span className="size-1.5 rounded-full bg-[var(--warn)]" aria-label="Changed since this preset" />}
             <ChevronDown className="size-3 text-[var(--text-muted)] transition-transform group-data-[state=open]:rotate-180" />
           </Button>
           )}

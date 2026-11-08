@@ -3,9 +3,10 @@ import { getLog } from '@/shared/utils/getLog'
 import { getNotes } from '@/shared/utils/getNotes'
 import { getPresets } from '@/shared/utils/getPresets'
 import { readLocalKeys } from '@/shared/utils/readLocalKeys'
+import type { SettingsFile } from '@/shared/types/SettingsFile'
 
 // build the file from whatever is loaded right now
-export async function buildExport() {
+export async function buildExport(): Promise<SettingsFile> {
   const [budget, notes, presets, log] = await Promise.all([
     getBudget().catch(() => null),
     getNotes().catch(() => null),

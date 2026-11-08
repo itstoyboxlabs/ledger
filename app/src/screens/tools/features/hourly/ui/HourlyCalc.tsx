@@ -1,5 +1,6 @@
 import { STATES } from '@/shared/constants/STATES'
 import { taxOn } from '@/shared/utils/taxOn'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/ui/primitives/table'
 import { cn } from '@/shared/utils/cn'
 import { fmt0 } from '@/shared/utils/fmt0'
@@ -9,14 +10,13 @@ import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { TaxedInCaption } from '@/screens/tools/ui/TaxedInCaption'
 import { ToolField } from '@/shared/ui/ToolField'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
-import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { useToolState } from '@/shared/hooks/useToolState'
 
 // Hourly calculator for a W-2 employee (employee-side FICA only), with tax math from the shared engine
 export function HourlyCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   // `state` stays in the saved data but is no longer read: the shared taxState is used
   const [c, setC] = useToolState('hourlyCalc', { hoursPerWeek: 40, rate: 50, state: DEFAULT_STATE })
-  const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [taxState] = useTaxState()
   const [filing] = useFilingStatus()
   const f = (k: 'hoursPerWeek' | 'rate') => (v: number) => setC({ ...c, [k]: v })
   const perWeek = c.hoursPerWeek * c.rate

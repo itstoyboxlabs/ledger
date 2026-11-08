@@ -18,7 +18,7 @@ describe('CoverageDot', () => {
 
   it('is yellow when statements are missing', () => {
     const { container } = setup('2030-01')
-    expect(container.querySelector('span span')?.getAttribute('style')).toContain('rgb(232, 199, 106)')
+    expect(container.querySelector('span span')?.getAttribute('style')).toContain('--warn')
   })
 
   it('lists the missing accounts in the tooltip', async () => {

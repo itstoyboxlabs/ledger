@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { getMonths } from '@/shared/utils/getMonths'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import { monthCompareLabel } from '@/shared/utils/monthCompareLabel'
 import { getLastCompleteMonth } from '@/shared/utils/getLastCompleteMonth'
 import { spendAmount } from '@/shared/utils/spendAmount'
@@ -28,13 +29,10 @@ import type { LeftoverAllocation } from '@/shared/types/LeftoverAllocation'
 import type { BudgetSaveState } from '@/screens/budget/types/BudgetSaveState'
 import type { BudgetEditSnapshot } from '@/screens/budget/types/BudgetEditSnapshot'
 import type { BudgetTableItem } from '@/screens/budget/types/BudgetTableItem'
-import type { GhostRow } from '@/screens/budget/types/GhostRow'
 import type { SortState } from '@/shared/types/SortState'
 import type { BudgetSort } from '@/screens/budget/types/BudgetSort'
 import { AddRowModal } from '@/screens/budget/ui/AddRowModal'
 import { Card } from '@/shared/ui/Card'
-import { CoverageDot } from '@/shared/ui/CoverageDot'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
@@ -55,7 +53,6 @@ import { actualForBudgetRow } from '@/shared/utils/actualForBudgetRow'
 import { budgetEffRows } from '@/shared/utils/budgetEffRows'
 import { budgetIncomeFor } from '@/shared/utils/budgetIncomeFor'
 import { deductionLabel } from '@/shared/utils/deductionLabel'
-import { derivedMonthlyIncome } from '@/shared/utils/derivedMonthlyIncome'
 import { ghostRowsForMonth } from '@/screens/budget/utils/ghostRowsForMonth'
 import { budgetDiff } from '@/screens/budget/utils/budgetDiff'
 import { diffLabel } from '@/screens/budget/utils/diffLabel'
@@ -68,6 +65,13 @@ import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
 import { normalizeLeftover } from '@/shared/utils/normalizeLeftover'
 import { normalizeTakeHome } from '@/shared/utils/normalizeTakeHome'
 import { totalSpendForMonth } from '@/screens/budget/utils/totalSpendForMonth'
+import { isBudgetSort } from '@/screens/budget/utils/isBudgetSort'
+import { isGhostRow } from '@/screens/budget/utils/isGhostRow'
+import { patchAllocation } from '@/screens/budget/utils/patchAllocation'
+import { remainingThisMonth } from '@/screens/budget/utils/remainingThisMonth'
+import { sortByValue } from '@/screens/budget/utils/sortByValue'
+import { CompareMonthDropdown } from '@/screens/budget/ui/CompareMonthDropdown'
+import { ordinal } from '@/shared/utils/ordinal'
 import { useIncomeOverride } from '@/shared/hooks/useIncomeOverride'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
@@ -78,9 +82,6 @@ type BudgetViewProps = {
   goToLog: () => void
 }
 
-// table body entries are real rows, ghost rows, or the section markers
-const isGhostRow = (r: BudgetTableItem): r is GhostRow => r !== null && typeof r === 'object' && '__ghost' in r
-
 export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const [rows, setRows] = useState<BudgetRow[] | null>(null)
   const [saveState, setSaveState] = useState<BudgetSaveState>('saved') // saved | saving | error
@@ -89,26 +90,19 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const [editSnap, setEditSnap] = useState<BudgetEditSnapshot | null>(null)
   // column sort for the expenses and subscription rows. key null = file order for
   // expenses and biggest first for subscriptions (how the page always worked).
-  const [sort, setSort] = usePersistedState<BudgetSort>(
-    'budgetSort',
-    { key: null, dir: 'desc' },
-    (v) => {
-      const s = v as BudgetSort | null
-      return !!s && [null, 'name', 'amount', 'actual', 'diff'].includes(s.key) && (s.dir === 'asc' || s.dir === 'desc')
-    },
-  )
+  const [sort, setSort] = usePersistedState<BudgetSort>('budgetSort', { key: null, dir: 'desc' }, isBudgetSort)
   const [restMode, setRestMode] = usePersistedState('restMode', false, (v) => typeof v === 'boolean')
   const [optsOpen, setOptsOpen] = useState(false) // phone menu
   const [presetsOpen, setPresetsOpen] = useState(false)
   const [compareMode, setCompareMode] = usePersistedState('budgetCompareMode', false, (v) => typeof v === 'boolean')
-  // defaults to the newest FULLY covered month — the newest month overall is
-  // normally still mid-statement and would read artificially cheap
   // which "Not budgeted" groups are expanded to show their individual charges
   const [openGhosts, setOpenGhosts] = usePersistedState<string[]>(
     'budgetOpenGhosts', [], (v) => Array.isArray(v) && v.every((x) => typeof x === 'string'),
   )
   const toggleGhost = (id: string) =>
     setOpenGhosts(openGhosts.includes(id) ? openGhosts.filter((x) => x !== id) : [...openGhosts, id])
+  // defaults to the newest FULLY covered month: the newest month overall is
+  // normally still mid-statement and would read artificially cheap
   const [compareMonth, setCompareMonth] = usePersistedState<string>(
     'budgetCompareMonth2', getLastCompleteMonth() ?? '', (v) => getMonths().includes(v as string),
   )
@@ -124,7 +118,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const [leftoverAlloc, setLeftoverAlloc] = useState<LeftoverAllocation[]>([])
   const leftoverRef = useRef(leftoverAlloc)
   leftoverRef.current = leftoverAlloc
-  const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => (v as string) in STATES)
+  const [taxState] = useTaxState()
   const [filing] = useFilingStatus()
   const {
     presets: expensePresets,
@@ -147,19 +141,13 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   const rowState = (r: BudgetRowLike) =>
     isBudgetRowHidden(r) ? 'auto' : r.hidden ? 'soft' : 'visible'
 
-  // rest-of-month math: rows with a billing day count only if still upcoming;
-  // prorate rows scale by days left; rows with neither count in full (unknown date).
+  // rest-of-month math (see remainingThisMonth)
   const now = new Date()
   const today = now.getDate()
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
   const daysLeft = daysInMonth - today
   // a row that receives a share of the leftover has that much more to spend this month
-  const remainingOf = (r: BudgetRow) => {
-    const amt = (Number(r.amount) || 0) + extraOf(r)
-    if (r.day != null) return r.day > today ? amt : 0
-    if (r.prorate) return (amt * daysLeft) / daysInMonth
-    return amt
-  }
+  const remainingOf = (r: BudgetRow) => remainingThisMonth((Number(r.amount) || 0) + extraOf(r), r, today, daysInMonth)
 
   const saveStateRef = useRef(saveState)
   saveStateRef.current = saveState
@@ -290,7 +278,6 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
 
   const counted = effRows.filter((r) => rowState(r) === 'visible')
   const expenses = counted.reduce((s, r) => s + (Number(r.amount) || 0), 0)
-  const actualIncome = derivedMonthlyIncome()
   const income = budgetIncomeFor(incomeOverride, takeHome, taxState, filing)
   const monthly = income - expenses
   const setIncomeSource = (source: string) =>
@@ -307,14 +294,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     { value: 'savings', label: 'Savings' },
     ...rows.filter((r) => r.source !== 'subscription').map((r) => ({ value: r.id, label: r.name || 'Unnamed row' })),
   ]
-  const setAlloc = (id: string, p: Partial<LeftoverAllocation>) =>
-    persist(rows, undefined, leftoverAlloc.map((a) => {
-      if (a.id !== id) return a
-      const next = { ...a, ...p }
-      // the shares can't add up past 100
-      const others = leftoverAlloc.filter((x) => x.id !== id).reduce((s, x) => s + x.pct, 0)
-      return { ...next, pct: Math.min(Math.max(0, Number(next.pct) || 0), Math.max(0, 100 - others)) }
-    }))
+  const setAlloc = (id: string, p: Partial<LeftoverAllocation>) => persist(rows, undefined, patchAllocation(leftoverAlloc, id, p))
   const addAlloc = () =>
     persist(rows, undefined, [
       ...leftoverAlloc,
@@ -342,14 +322,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
   }
   const sortRows = <R extends BudgetRow>(list: R[], fallback?: (a: R, b: R) => number): R[] => {
     if (!sortKey) return fallback ? [...list].sort(fallback) : list
-    const dir = sort.dir === 'asc' ? 1 : -1
-    return list
-      .map((r): [R, string | number | null] => [r, sortValue(r)])
-      .sort(([, a], [, b]) => {
-        if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1
-        return (a < b ? -1 : a > b ? 1 : 0) * dir
-      })
-      .map(([r]) => r)
+    return sortByValue(list, sortValue, sort.dir)
   }
   const subRows = sortRows(
     effRows.filter((r) => r.source === 'subscription').filter(visible),
@@ -555,7 +528,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
           <h2 className="text-[15px] font-semibold">
             Expenses
             {restMode && (
-              <span className="ml-2 text-[12px] font-normal text-[#e8c76a]">
+              <span className="ml-2 text-[12px] font-normal text-[var(--warn)]">
                 remaining this month · {daysLeft} days left
               </span>
             )}
@@ -670,33 +643,13 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
               </TooltipContent>
             </UITooltip>
             {compareMode && (
-              <Dropdown
-                label="Month"
-                value={compareMonth}
-                onChange={setCompareMonth}
-                className="h-8 rounded-lg px-3 text-[13px]"
-                options={[...getMonths()].reverse().map((m) => ({
-                  value: m,
-                  label: monthCompareLabel(m),
-                  badge: <CoverageDot month={m} />,
-                }))}
-              />
+              <CompareMonthDropdown value={compareMonth} onChange={setCompareMonth} />
             )}
           </div>
         </div>
         {compareMode && (
           <div className="mb-3 sm:hidden">
-            <Dropdown
-              label="Month"
-              value={compareMonth}
-              onChange={setCompareMonth}
-              className="h-8 rounded-lg px-3 text-[13px]"
-              options={[...getMonths()].reverse().map((m) => ({
-                value: m,
-                label: monthCompareLabel(m),
-                badge: <CoverageDot month={m} />,
-              }))}
-            />
+            <CompareMonthDropdown value={compareMonth} onChange={setCompareMonth} />
           </div>
         )}
         {doubleCounted && (
@@ -737,8 +690,16 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 <Fragment key={r.id}>
                   <TableRow
                     onClick={() => toggleGhost(r.id)}
+                    // opens from the keyboard too: Tab to it, then Enter or Space
+                    tabIndex={0}
+                    aria-expanded={openGhosts.includes(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' && e.key !== ' ') return
+                      e.preventDefault()
+                      toggleGhost(r.id)
+                    }}
                     title={`Show the ${r.txns.length} charge${r.txns.length === 1 ? '' : 's'} behind this`}
-                    className="cursor-pointer border-t border-[var(--grid)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition-colors"
+                    className="cursor-pointer border-t border-[var(--grid)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   >
                     <TableCell className="py-1 pr-3 pl-2">
                       <span className="flex items-center gap-1.5">
@@ -877,8 +838,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                         )}
                         {r.day != null && (
                           <span className="mr-2 text-[11px] text-[var(--text-muted)]">
-                            on the {r.day}
-                            {['th', 'st', 'nd', 'rd'][r.day % 10 > 3 || (r.day % 100) - (r.day % 10) === 10 ? 0 : r.day % 10]}
+                            on the {ordinal(r.day)}
                           </span>
                         )}
                         {fmt0(rowValue(r))}
@@ -1043,7 +1003,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                     </span>
                     <Button variant="ghost" size="icon-xs"
                       onClick={() => removeAlloc(a.id)}
-                      aria-label="Remove"
+                      aria-label="Remove share"
                       className="text-[var(--text-muted)] opacity-0 hover:bg-transparent hover:text-[var(--bad)] focus-visible:opacity-100 group-hover:opacity-100"
                     >
                       <X className="size-3.5" />

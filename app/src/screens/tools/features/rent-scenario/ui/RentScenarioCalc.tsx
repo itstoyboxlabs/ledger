@@ -148,7 +148,7 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
             </svg>
             Expenses used · {fmt(nonRent)}/mo
             {overriddenCount > 0 && (
-              <span className="text-[#e8c76a]">{overriddenCount} overridden</span>
+              <span className="text-[var(--warn)]">{overriddenCount} overridden</span>
             )}
           </Button>
           {overriddenCount > 0 && (
@@ -201,7 +201,7 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
                           onChange={(v: number) => setOverrides({ ...liveOverrides, [r.id]: v })}
                           className={
                             'w-24 max-sm:w-20 border-input bg-[var(--surface-1)] text-right tnum ' +
-                            (overridden ? 'border-[#5c4a1d] text-[#e8c76a]' : '')
+                            (overridden ? 'border-[#5c4a1d] text-[var(--warn)]' : '')
                           }
                         />
                       </TableCell>
@@ -270,7 +270,7 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
                     <TableCell className="py-1.5 tnum">
                       {fmt0(r)}
                       {isCurrent && (
-                        <span className="ml-2 text-[11px] text-[#e8c76a]">← closest to current ({fmt0(budget.currentRent)})</span>
+                        <span className="ml-2 text-[11px] text-[var(--warn)]">← closest to current ({fmt0(budget.currentRent)})</span>
                       )}
                     </TableCell>
                     <TableCell className="py-1.5 text-right tnum" style={{ color: left >= 0 ? 'var(--good)' : 'var(--bad)' }}>

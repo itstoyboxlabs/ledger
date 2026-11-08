@@ -5,7 +5,7 @@ import { FieldGroup } from './FieldGroup'
 describe('FieldGroup', () => {
   it('renders the label and children', () => {
     renderApp(<FieldGroup label="Timeline"><span>child one</span></FieldGroup>)
-    expect(screen.getByText('Timeline')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Timeline' })).toBeInTheDocument()
     expect(screen.getByText('child one')).toBeInTheDocument()
   })
   it('renders the action and tip when given', () => {

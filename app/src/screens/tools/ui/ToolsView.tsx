@@ -1,10 +1,9 @@
-import { STATES } from '@/shared/constants/STATES'
 import { useEffect, useState, type ReactNode } from 'react'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import type { ToolList } from '@/screens/tools/types/ToolList'
 import { Button } from '@/shared/ui/primitives/button'
 import { Card } from '@/shared/ui/Card'
 import { CashRangeCalc } from '@/screens/tools/features/cash-range/ui/CashRangeCalc'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { DebtPayoffCalc } from '@/screens/tools/features/debt-payoff/ui/DebtPayoffCalc'
 import { HourlyCalc } from '@/screens/tools/features/hourly/ui/HourlyCalc'
@@ -30,7 +29,7 @@ type ToolsViewProps = {
 }
 
 export function ToolsView({ goToAboutYou }: ToolsViewProps) {
-  const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [taxState] = useTaxState()
   const [filing] = useFilingStatus()
   const [debts] = useDebts()
   const [lists, setLists] = useLists()

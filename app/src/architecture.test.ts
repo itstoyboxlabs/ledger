@@ -75,6 +75,13 @@ describe('architecture', () => {
     expect(missing.map(rel), 'add a .test file next to each one').toEqual([])
   })
 
+  it('every test file sits beside the file it tests', () => {
+    const orphans = [...code('screens'), ...code('shared')]
+      .filter(isTest)
+      .filter((f) => !['.ts', '.tsx'].some((e) => fs.existsSync(f.replace(/\.test\.(ts|tsx)$/, e))))
+    expect(orphans.map(rel), 'delete the test or move it next to its file').toEqual([])
+  })
+
   it('constants, enums and types folders hold one export per file', () => {
     const bad: string[] = []
     for (const file of [...code('screens'), ...code('shared')].filter((f) => !isTest(f))) {

@@ -67,7 +67,7 @@ export function PortfolioTable({ heading, rows, setRows, action }: PortfolioTabl
           ))}
           <TableRow className="border-t border-[var(--baseline)] font-medium">
             <TableCell className="py-1.5">Weighted avg return</TableCell>
-            <TableCell className={`py-1.5 text-right tnum ${total !== 100 ? 'text-[#e8c76a]' : ''}`}>{total}%</TableCell>
+            <TableCell className={`py-1.5 text-right tnum ${total !== 100 ? 'text-[var(--warn)]' : ''}`}>{total}%</TableCell>
             <TableCell className="py-1.5 text-right tnum" style={{ color: 'var(--good)' }}>{avg.toFixed(2)}%</TableCell>
             <TableCell></TableCell>
           </TableRow>

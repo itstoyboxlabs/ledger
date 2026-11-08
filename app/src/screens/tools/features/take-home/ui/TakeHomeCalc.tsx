@@ -1,7 +1,7 @@
 import type { DeductionKind } from '@/shared/enums/DeductionKind'
 import type { DeductionUnit } from '@/shared/enums/DeductionUnit'
+import { useTaxState } from '@/shared/hooks/useTaxState'
 import type { Deduction } from '@/shared/types/Deduction'
-import { STATES } from '@/shared/constants/STATES'
 import { Label } from '@/shared/ui/primitives/label'
 import { Button } from '@/shared/ui/primitives/button'
 import { X } from 'lucide-react'
@@ -13,7 +13,6 @@ import { DEDUCTION_TIPS } from '@/screens/tools/features/take-home/constants/DED
 import { DEDUCTION_UNITS } from '@/screens/tools/features/take-home/constants/DEDUCTION_UNITS'
 import { K401_CAPPED_TIP } from '@/screens/tools/features/take-home/constants/K401_CAPPED_TIP'
 import { TAKE_HOME_PRESET_HINT } from '@/screens/tools/features/take-home/constants/TAKE_HOME_PRESET_HINT'
-import { DEFAULT_STATE } from '@/shared/constants/DEFAULT_STATE'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
@@ -30,7 +29,6 @@ import { normalizeTakeHome } from '@/shared/utils/normalizeTakeHome'
 import { takeHome401kMatchYearly } from '@/shared/utils/takeHome401kMatchYearly'
 import { takeHomeBreakdown } from '@/shared/utils/takeHomeBreakdown'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
-import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import type { TakeHome } from '@/shared/types/TakeHome'
@@ -38,7 +36,7 @@ import { useToolState } from '@/shared/hooks/useToolState'
 
 export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   // the shared tax state and filing status, set on the About you page; also used by the Budget income override
-  const [taxState] = usePersistedState('taxState', DEFAULT_STATE, (v) => typeof v === 'string' && v in STATES)
+  const [taxState] = useTaxState()
   const [filing] = useFilingStatus()
   const [raw, setC] = useToolState('takeHome', TAKE_HOME_DEFAULTS)
   const c = normalizeTakeHome(raw)

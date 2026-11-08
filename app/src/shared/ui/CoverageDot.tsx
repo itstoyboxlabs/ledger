@@ -11,7 +11,7 @@ export function CoverageDot({ month }: CoverageDotProps) {
   const dot = (
     <span
       className="h-2 w-2 shrink-0 rounded-full"
-      style={{ background: missing.length ? '#e8c76a' : 'var(--good)' }}
+      style={{ background: missing.length ? 'var(--warn)' : 'var(--good)' }}
     />
   )
   const box = <span className="flex h-4 w-4 shrink-0 items-center justify-center">{dot}</span>

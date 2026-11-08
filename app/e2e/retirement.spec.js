@@ -859,7 +859,7 @@ test.describe('returns', () => {
   test('allocations that do not add to 100 turn the total yellow', async ({ page }) => {
     await setup(page, { port: [{ name: 'A', alloc: 100, perf: 7 }, { name: 'B', alloc: 50, perf: 10 }] })
     const total = portCard(page).locator('tr', { hasText: 'Weighted avg return' }).locator('td').nth(1)
-    await expect(total).toHaveClass(/e8c76a/)
+    await expect(total).toHaveClass(/--warn/)
   })
 
   test('+ Add fund adds an empty row, and the X removes one', async ({ page }) => {

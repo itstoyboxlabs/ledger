@@ -24,7 +24,6 @@ export function RowEditModal({ row, onChange, onCancel, onClose }: RowEditModalP
   const isStack = row.type === 'breakdown'
   const items = row.items ?? []
   const setItems = (next: SubItem[]) => onChange({ items: next, amount: itemsTotal(next) })
-  const patch = (id: string, p: Partial<SubItem>) => setItems(items.map((it) => (it.id === id ? { ...it, ...p } : it)))
   const setType = (type: string) => {
     if (type === row.type) return
     if (type === 'breakdown') {
