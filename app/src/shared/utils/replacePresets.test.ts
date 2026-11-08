@@ -12,8 +12,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const okJson = (body: unknown) => vi.fn(async (_url: string, _init?: RequestInit) => ({ ok: true, status: 200, json: async () => body }))
-const failing = (status: number) => vi.fn(async (_url: string, _init?: RequestInit) => ({ ok: false, status, json: async () => ({}) }))
 
 describe('replacePresets', () => {
   it('replaces the whole presets object', async () => {
