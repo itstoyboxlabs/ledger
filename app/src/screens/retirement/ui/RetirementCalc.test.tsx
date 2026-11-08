@@ -246,7 +246,7 @@ describe('RetirementCalc', () => {
       expect(screen.getByLabelText(/Need per month/)).toHaveValue(1000)
       expect(screen.getByText(/then take out \$12,000 a year/)).toBeInTheDocument()
       // ages 40 to 59 take 12,000 a year: 250,000 at 39 leaves 238,000 at 40
-      expect(yearRow(40)[6]).toBe('$238,000')
+      expect(yearRow(40)[7]).toBe('$238,000')
       expect(localStorage.getItem('ledger:retireNeedPreset')).toBe('null')
       await screen.findByText(/Your Budget today/)
     })
