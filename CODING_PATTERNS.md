@@ -28,7 +28,8 @@ Every file exports one thing, named after the file.
 
 Rules:
 
-- Constants, enums, types and utilities each get their own file. Every utility, hook, store and component has a test file.
+- Constants, enums, types and utilities each get their own file. Every utility, hook, store and component has a test file,
+  and every test file sits next to the file it tests.
 - The exception: the props type of a component stays in the component file (`type LogMeterProps = ...`).
   Anything used by more than one file moves to `types/`.
 - No barrel files (`index.ts` that re-export). Import from the file you need.
@@ -43,7 +44,7 @@ folders, and components always live in `ui/`.
 ```
 app/src/
   screens/
-    spending/  budget/  log/  balances/  retirement/  notes/  marketing/
+    spending/  about-you/  budget/  log/  balances/  retirement/  notes/  marketing/
     tools/
       constants/  enums/  hooks/  state/  types/  utils/  ui/    what the Tools screen itself uses
       features/                                                  one folder per calculator
