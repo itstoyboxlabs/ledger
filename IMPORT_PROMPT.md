@@ -54,6 +54,12 @@ A file I exported from Ledger also has `exportedAt` and a `settings` section aft
 - One entry per account. The id is lowercase and stable, like `chk-harbor` or `cc-maple`. Never rename an id once it exists.
 - `type` is `checking`, `savings` or `card`. `bank` is the bank's name. `last4` is only the last four digits. Never write a full account number anywhere.
 
+## Privacy
+
+- Keep only what Ledger needs: the date, the merchant, the amount and the category, plus each account's bank, type and last four digits.
+- Leave out anything that could identify me. Do not copy my name, address, phone number, email, Social Security number, full account or card numbers, routing numbers, reference or confirmation numbers, or any other personal detail from the statements into the file. If a transaction description contains one of these, remove that part and keep the merchant name.
+- Before you finish, check the file once more and remove anything personal you missed.
+
 ## Merchants
 
 - Ledger has logos for about 3,400 common merchants, listed one per line at https://raw.githubusercontent.com/itstoyboxlabs/ledger/main/app/scripts/icon-domains.txt. Each line reads `Brand name | domain | other spellings`, for example `Uber | uber.com | Uber Trip, Uber One`.
