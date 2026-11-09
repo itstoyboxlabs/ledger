@@ -60,19 +60,11 @@ const RetirementView = lazyNamed(() => import('@/screens/retirement/ui/Retiremen
 const ToolsView = lazyNamed(() => import('@/screens/tools/ui/ToolsView'), 'ToolsView')
 const TrendsChart = lazyNamed(() => import('@/screens/spending/ui/TrendsChart'), 'TrendsChart')
 
-// downloaded while the browser is idle so the first visit to a tab or chart does not blank the page
-const IDLE_CHUNKS = [
-  () => import('@/screens/spending/ui/Donut'),
-  () => import('@/screens/spending/ui/TrendsChart'),
-  () => import('@/screens/spending/ui/CashFlowChart'),
-  () => import('@/screens/budget/ui/BudgetView'),
-  () => import('@/screens/log/ui/LogView'),
-  () => import('@/screens/tools/ui/ToolsView'),
-  () => import('@/screens/retirement/ui/RetirementView'),
-  () => import('@/screens/balances/ui/BalancesView'),
-  () => import('@/screens/notes/ui/NotesModal'),
-]
+// a quiet placeholder with the chart's height, so only the chart waits if its code is still downloading
+const ChartWait = () => <div className="min-h-[300px]" aria-busy="true" />
 
+// downloaded while the browser is idle so the first visit to a tab or chart does not blank the page
+const IDLE_CHUNKS = [Donut, TrendsChart, CashFlowChart, BudgetView, LogView, ToolsView, RetirementView, BalancesView, NotesModal].map((c) => c.preload)
 
 // runs once when the app loads: moves an old saved employer match onto the 401k deduction
 migrateEmployerMatch()
@@ -339,12 +331,14 @@ export default function App() {
           {tab === 'category' && (
             <>
               <div className="mt-2 grid grid-cols-[minmax(0,1fr)] items-center gap-6 md:grid-cols-[300px_minmax(0,1fr)]">
-                <Donut
-                  groups={groups}
-                  total={scopeTotal}
-                  centerLabel={level === 0 ? 'Total spending' : path[path.length - 1]}
-                  onSelect={level < 2 ? (name: string) => setPath([...path, name]) : undefined}
-                />
+                <Suspense fallback={<ChartWait />}>
+                  <Donut
+                    groups={groups}
+                    total={scopeTotal}
+                    centerLabel={level === 0 ? 'Total spending' : path[path.length - 1]}
+                    onSelect={level < 2 ? (name: string) => setPath([...path, name]) : undefined}
+                  />
+                </Suspense>
                 <div className="min-w-0">
                   <GroupTable
                     groups={groups}
@@ -360,12 +354,16 @@ export default function App() {
           )}
           {tab === 'trends' && (
             <div className="mt-4">
-              <TrendsChart monthly={monthly} cats={trendCats} onPick={setMonth} />
+              <Suspense fallback={<ChartWait />}>
+                <TrendsChart monthly={monthly} cats={trendCats} onPick={setMonth} />
+              </Suspense>
             </div>
           )}
           {tab === 'cashflow' && (
             <div className="mt-4">
-              <CashFlowChart monthly={monthly} onPick={setMonth} />
+              <Suspense fallback={<ChartWait />}>
+                <CashFlowChart monthly={monthly} onPick={setMonth} />
+              </Suspense>
             </div>
           )}
         </Card>
