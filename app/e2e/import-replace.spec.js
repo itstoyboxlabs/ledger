@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import { test, expect, openApp, goTo, ls } from './fixtures'
 
 // Uploading a file replaces what the browser stores. Nothing from the sample (or an earlier file) survives.
@@ -105,8 +106,54 @@ test.describe('upload replaces stored data', () => {
     await expect(main(page).getByLabel('Birth date')).toHaveValue('02-03-1995')
   })
 
-  test('the upload button says it replaces what is stored', async ({ page }) => {
+  test('the upload button says it loads your data or gives the prompt again', async ({ page }) => {
     await aside(page).getByRole('button', { name: 'Upload file' }).hover()
-    await expect(page.getByRole('tooltip')).toContainText('replaces what is stored on this device')
+    await expect(page.getByRole('tooltip')).toContainText('Upload file: load your data, or get the import prompt again.')
+  })
+})
+
+test.describe('the Upload your data modal', () => {
+  const dialog = (page) => page.getByRole('dialog', { name: 'Upload your data' })
+  test.beforeEach(async ({ page }) => {
+    await openApp(page)
+    await aside(page).getByRole('button', { name: 'Upload file' }).click()
+    await expect(dialog(page)).toBeVisible()
+  })
+
+  test('says what a file replaces and closes with Escape', async ({ page }) => {
+    await expect(dialog(page)).toContainText('a statements-only file replaces just your statements')
+    await expect(dialog(page).getByRole('heading', { name: 'Need to redo your statements?' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(dialog(page)).toBeHidden()
+  })
+
+  test('Choose a file opens the file picker and closes the modal', async ({ page }) => {
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      dialog(page).getByRole('button', { name: 'Choose a file' }).click(),
+    ])
+    await expect(dialog(page)).toBeHidden()
+    const realFile = JSON.parse(fs.readFileSync('public/sample-data.json', 'utf8'))
+    delete realFile.settings
+    await chooser.setFiles({ name: 'ledger-data.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(realFile)) })
+    await expect(page.getByRole('status')).toContainText('Loaded')
+  })
+
+  test('copies and downloads the import prompt', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await dialog(page).getByRole('button', { name: 'Copy the prompt' }).click()
+    await expect(dialog(page).getByRole('button', { name: 'Copied' })).toBeVisible()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('You are helping me import')
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      dialog(page).getByRole('button', { name: 'Download the prompt' }).click(),
+    ])
+    expect(download.suggestedFilename()).toBe('IMPORT_PROMPT.md')
+  })
+
+  test('Read more opens Getting started', async ({ page }) => {
+    await dialog(page).getByRole('button', { name: 'Read more on the Getting started page' }).click()
+    await expect(dialog(page)).toBeHidden()
+    await expect(page.locator('h1')).toHaveText('Getting started')
   })
 })

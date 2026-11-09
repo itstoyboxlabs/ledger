@@ -3,7 +3,7 @@ import { Check, ChevronDown, Copy, Download } from 'lucide-react'
 import { Button } from '@/shared/ui/primitives/button'
 import { IMPORT_PROMPT } from '@/shared/constants/IMPORT_PROMPT'
 import { copyText } from '@/shared/utils/copyText'
-import { downloadBlob } from '@/shared/utils/downloadBlob'
+import { downloadImportPrompt } from '@/shared/utils/downloadImportPrompt'
 import { cn } from '@/shared/utils/cn'
 
 // The import prompt, for people who already have data and so never see the empty screen again:
@@ -26,7 +26,7 @@ export function ImportPromptActions() {
           {copied === 'yes' ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
           {copied === 'yes' ? 'Copied' : 'Copy the prompt'}
         </Button>
-        <Button variant="outline" size="sm" onClick={() => downloadBlob(IMPORT_PROMPT, 'IMPORT_PROMPT.md', 'text/markdown')}>
+        <Button variant="outline" size="sm" onClick={downloadImportPrompt}>
           <Download className="size-3.5" aria-hidden />
           Download the prompt
         </Button>

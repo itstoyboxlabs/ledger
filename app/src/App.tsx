@@ -22,6 +22,7 @@ import { Card } from '@/shared/ui/Card'
 import { CoverageDot } from '@/shared/ui/CoverageDot'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { ExportModal } from '@/shared/ui/ExportModal'
+import { UploadModal } from '@/shared/ui/UploadModal'
 import { GroupTable } from '@/screens/spending/ui/GroupTable'
 import { Kpi } from '@/shared/ui/Kpi'
 import { NAV } from '@/shared/constants/NAV'
@@ -88,6 +89,7 @@ export default function App() {
     (v) => typeof v === 'string' && ['actuals', 'guide', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
   )
   const [showExport, setShowExport] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
   const dataCtx = useData()
   if (!dataCtx) throw new Error('App must be rendered inside the data provider.')
   const uploadRef = useRef<HTMLInputElement>(null)
@@ -166,7 +168,7 @@ export default function App() {
         accounts={accounts}
         setAccounts={setAccounts}
         onExport={() => setShowExport(true)}
-        onUpload={isLocal() ? null : () => uploadRef.current?.click()}
+        onUpload={isLocal() ? null : () => setShowUpload(true)}
       />
       {!isLocal() && (
         <Input
@@ -210,6 +212,13 @@ export default function App() {
         {view === 'balances' && <BalancesPresets />}
       </PageHeader>
       {showExport && <ExportModal onClose={() => setShowExport(false)} notify={dataCtx.notify} />}
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onChooseFile={() => uploadRef.current?.click()}
+          onReadMore={() => { setView('guide'); window.scrollTo({ top: 0 }) }}
+        />
+      )}
 
       {view === 'budget' && (
         <BudgetView

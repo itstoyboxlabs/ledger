@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ImportPromptActions } from './ImportPromptActions'
 import { IMPORT_PROMPT } from '@/shared/constants/IMPORT_PROMPT'
-import { downloadBlob } from '@/shared/utils/downloadBlob'
+import { downloadImportPrompt } from '@/shared/utils/downloadImportPrompt'
 import { copyText } from '@/shared/utils/copyText'
 
-vi.mock('@/shared/utils/downloadBlob', () => ({ downloadBlob: vi.fn() }))
+vi.mock('@/shared/utils/downloadImportPrompt', () => ({ downloadImportPrompt: vi.fn() }))
 vi.mock('@/shared/utils/copyText', () => ({ copyText: vi.fn() }))
 
 describe('ImportPromptActions', () => {
@@ -30,7 +30,7 @@ describe('ImportPromptActions', () => {
   it('downloads IMPORT_PROMPT.md as markdown', async () => {
     render(<ImportPromptActions />)
     await userEvent.click(screen.getByRole('button', { name: 'Download the prompt' }))
-    expect(downloadBlob).toHaveBeenCalledWith(IMPORT_PROMPT, 'IMPORT_PROMPT.md', 'text/markdown')
+    expect(downloadImportPrompt).toHaveBeenCalled()
   })
 
   it('shows and hides the prompt text', async () => {

@@ -208,7 +208,12 @@ so `dark:` variants apply.
 ### Shell and layout
 
 - **Sidebar**: wordmark, the pages from `NAV`, accounts, then one row of icon buttons named by tooltip
-  (Export data, Upload file when available, Tutorial, GitHub) at the very bottom. `PageHeader` has the big title, a
+  (Export data, Upload file when available, Tutorial, GitHub) at the very bottom. In browser mode Upload file
+  opens `UploadModal` ("Upload your data", built on `Modal` like `ExportModal`) instead of the file picker: a sentence on
+  what a file replaces, "Choose a file" (closes the modal and opens the hidden file input), then "Need to redo your
+  statements?" with "Copy the prompt" and "Download the prompt" (`copyText`, `downloadImportPrompt`, the same helpers
+  as Getting started) and a "Read more on the Getting started page" link that switches to that tab. Its tooltip is
+  "Upload file: load your data, or get the import prompt again." Browser tests still upload through the file input. `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
 - **Tutorial nudge** (`TutorialNudge`, wraps the Tutorial icon): in browser mode, until `ledger:tutorialAck` is `true`,
   a bouncing arrow points at the Tutorial icon and a callout ("Watch the tutorials first") asks the person to watch the
@@ -393,10 +398,10 @@ to the app, written to be read top to bottom or jumped into.
 - **Links**: a tab name in the text (`{ tab }`) switches the app's view with `setView` and scrolls to the top, no
   reload. In-page links (`{ anchor }`) scroll to a heading. Outside links open in a new tab with `rel="noreferrer"`.
 - **Get the import prompt again** (under Your data and your file): once there is data the empty screen and its
-  Copy import prompt button are gone, so this subsection explains when the prompt is needed and that a statements-only
+  Copy import prompt button are gone, so this subsection (and the Upload your data modal) explains when the prompt is needed and that a statements-only
   file replaces just the statements. `ImportPromptActions` has "Copy the prompt" (`copyText`, the same helper
-  `EmptyState` uses, with a short Copied state), "Download the prompt" (`downloadBlob` as `IMPORT_PROMPT.md`,
-  `text/markdown`) and a "Show the prompt" disclosure, closed by default, with the text in a scrolling monospace box.
+  `EmptyState` uses, with a short Copied state), "Download the prompt" (`downloadImportPrompt`: `downloadBlob` as
+  `IMPORT_PROMPT.md`, `text/markdown`) and a "Show the prompt" disclosure, closed by default, with the text in a scrolling monospace box.
 - Browser tests: `e2e/getting-started.spec.js`.
 
 ---
