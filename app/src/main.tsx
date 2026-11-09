@@ -27,13 +27,14 @@ async function showMarketing(route: MarketingRoute) {
   countVisit()
 }
 
-// One anonymous count per browser session, by state, on the public pages only. The server reads the state from
+// One anonymous count per browser per day, by state, on the public pages only. The server reads the state from
 // the request and stores nothing else (see api/visit.js).
 function countVisit() {
   if (import.meta.env.DEV) return
   try {
-    if (sessionStorage.getItem('ledger:counted')) return
-    sessionStorage.setItem('ledger:counted', '1')
+    const today = new Date().toISOString().slice(0, 10)
+    if (localStorage.getItem('ledger:counted') === today) return
+    localStorage.setItem('ledger:counted', today)
     navigator.sendBeacon('/api/visit')
   } catch {
     // counting is best effort
