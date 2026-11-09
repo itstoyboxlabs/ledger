@@ -61,7 +61,7 @@ test.describe('empty state and sample data', () => {
 test.describe('sidebar', () => {
   test('nav switches pages and remembers the last one on reload', async ({ page }) => {
     await openApp(page)
-    for (const name of ['About you', 'Budget', 'Log', 'Tools', 'Retirement', 'Balances', 'Spending']) {
+    for (const name of ['Getting started', 'About you', 'Budget', 'Log', 'Tools', 'Retirement', 'Balances', 'Spending']) {
       await goTo(page, name)
     }
     await goTo(page, 'Budget')

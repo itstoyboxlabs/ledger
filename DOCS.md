@@ -15,7 +15,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **One project, three routes**: the landing page (`/`) and the tutorial (`/tutorial`) are part of the same React
   project as the app. They live in `app/src/screens/marketing` and are prerendered to HTML at build time
   (`npm run build` runs `scripts/prerender.mjs` after Vite). The app itself is a single-page app at `/app`.
-- **Code layout**: one thing per file. Each page lives in `app/src/screens/<page>` (spending, about-you, budget, log,
+- **Code layout**: one thing per file. Each page lives in `app/src/screens/<page>` (guide, spending, about-you, budget, log,
   tools, retirement, balances). Anything several pages use lives in `app/src/shared` (components, hooks, state,
   utils, constants). A feature never imports from another feature. `App.jsx` is only the shell: the sidebar, the
   page header and which page shows. Pages load lazily.
@@ -219,7 +219,7 @@ so `dark:` variants apply.
   icon inside the menu drawer, so phones see it when they open the menu. The arrow's `nudge-bounce` keyframe
   (`styles/base.css`) is off under `prefers-reduced-motion`. `ledger:tutorialAck` is a normal `ledger:` key
   (`useTutorialAck`): it is in the export's `settings.local`, and a file that has its own `ledger:tutorialAck` replaces it; a file or the sample without one keeps the person's acknowledgement (`importDataFile`), so loading data never brings the nudge back.
-- **Nav names and view ids**: About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
+- **Nav names and view ids**: Getting started (`guide`), About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
   (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
 - **Accounts in the sidebar**: each row toggles the `accounts` filter. Rows are grouped under a muted bank
   header (none when `bank` is empty) and show name, last four digits and a dot on the right (filled is on, hollow
@@ -368,9 +368,37 @@ Statement reality. Everything derives from the statements data.
 
 ---
 
+## Page: Getting started (view id `guide`)
+
+A sidebar page (`guide`, book icon) at the very top of the sidebar, above About you. It does not change which page
+opens by default: Spending for someone with data, the empty state for a visitor with none. It is a wiki-style guide
+to the app, written to be read top to bottom or jumped into.
+
+- **Content** lives in one typed list, `screens/guide/constants/GUIDE_SECTIONS.ts` (`GuideSection` with `blocks` and
+  `subsections`, `GuideBlock` paragraphs, notes, lists and steps, `GuideInline` text pieces). The article and the table
+  of contents are both built from it (`buildToc`, `tocIds`), so a heading added there shows up in both. Ids must be
+  unique; a unit test checks this and that every contents link has a heading.
+- **Sections**: What is Ledger, How the tabs fit together (one subsection per tab plus how data flows), Your data and
+  your file, Set up the Retirement tab step by step (six numbered subsections), Plan different phases of life with
+  presets (with the sample data's worked example), Good habits and Open source and contributing. Copy follows the
+  app: exact UI labels (as `{ label }`), no em dashes, no Oxford commas. Check a claim against the code before adding it.
+- **Headings**: the page header is the only h1, sections are h2 and subsections h3. Each heading has an id, takes
+  focus when jumped to (`tabIndex={-1}`) and has a small link icon beside it that shows on hover or focus.
+- **On this page**: on `lg` and up, a sticky column on the right with sections and their subsections nested. Links
+  scroll smoothly to the heading (`scrollToHeading`, instant under `prefers-reduced-motion`) and move focus there.
+  `useActiveSection` marks the heading being read with `aria-current="location"`: an IntersectionObserver reports
+  headings crossing the top 15% of the window, and the active one is the last heading reached. A spacer at the end
+  lets the last headings scroll up to the top. Below `lg` the contents fold into an "On this page" button
+  (`aria-expanded`, `aria-controls`) above the article that closes after a pick.
+- **Links**: a tab name in the text (`{ tab }`) switches the app's view with `setView` and scrolls to the top, no
+  reload. In-page links (`{ anchor }`) scroll to a heading. Outside links open in a new tab with `rel="noreferrer"`.
+- Browser tests: `e2e/getting-started.spec.js`.
+
+---
+
 ## Page: About you (view id `about`)
 
-A sidebar page (`about`, user icon) at the very top of the sidebar, above Spending. It is the starting point of planning: the few facts
+A sidebar page (`about`, user icon) near the top of the sidebar, under Getting started and above Spending. It is the starting point of planning: the few facts
 about you that several pages share, set once. A short intro says what the page is for and that the other pages
 read from it. Every field has a sentence or two saying what it is for and which pages use it.
 
