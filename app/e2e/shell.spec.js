@@ -10,9 +10,12 @@ test.describe('safety', () => {
     await expect(page.getByText("There's nothing here yet.")).toBeVisible()
   })
 
-  test('every test starts clean', async ({ page }) => {
+  test.describe('with no fixture seeding', () => {
+    test.use({ tutorialAck: false })
+    test('every test starts clean', async ({ page }) => {
     await page.goto('/app')
     expect(await page.evaluate(() => localStorage.length)).toBe(0)
+    })
   })
 })
 

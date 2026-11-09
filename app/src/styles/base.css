@@ -194,3 +194,13 @@ input[type="number"].no-native-spin {
   }
   .kpi-budget .absolute { display: none; }
 }
+
+/* Bouncing pointer of TutorialNudge. A plain static arrow when the person prefers less motion. */
+@keyframes nudge-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+.nudge-arrow { animation: nudge-bounce 1.1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .nudge-arrow { animation: none; }
+}

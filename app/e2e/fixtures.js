@@ -10,10 +10,23 @@ export const NOW = '2026-11-08T12:00:00'
 // request fails, so merchants show letter avatars as before. icons.spec.js mocks it instead.
 export const ICON_ROUTE = 'https://*.public.blob.vercel-storage.com/icons/**'
 
+// The first-run "watch the tutorials" nudge would sit over the sidebar in every spec, so by default each test
+// starts with `ledger:tutorialAck` already set. Set `test.use({ tutorialAck: false })` to start like a new user.
 export const test = base.extend({
-  page: async ({ page }, provide) => {
+  tutorialAck: [true, { option: true }],
+  page: async ({ page, tutorialAck }, provide) => {
     await page.route(ICON_ROUTE, (route) => route.abort())
     await page.clock.install({ time: new Date(NOW) })
+    if (tutorialAck) {
+      // once per tab (sessionStorage marks it) so a later clear or upload is not undone by a reload
+      await page.addInitScript(() => {
+        try {
+          if (sessionStorage.getItem('e2e:seeded')) return
+          sessionStorage.setItem('e2e:seeded', '1')
+          localStorage.setItem('ledger:tutorialAck', 'true')
+        } catch { /* storage unavailable */ }
+      })
+    }
     await provide(page)
   },
 })

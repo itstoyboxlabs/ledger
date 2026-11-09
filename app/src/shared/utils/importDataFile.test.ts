@@ -34,6 +34,13 @@ describe('importDataFile', () => {
     expect(await getBudget()).toEqual({ rows: [{ id: 'r1' }] })
     expect(await getData()).toBeNull()
   })
+  it('keeps the tutorial nudge acknowledged unless the file says otherwise', async () => {
+    localStorage.setItem('ledger:tutorialAck', 'true')
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [] } } })
+    expect(localStorage.getItem('ledger:tutorialAck')).toBe('true')
+    await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [] }, local: { 'ledger:tutorialAck': false } } })
+    expect(localStorage.getItem('ledger:tutorialAck')).toBe('false')
+  })
   it('does both when the file has both', async () => {
     const r = await importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')], settings: { budget: { rows: [] } } })
     expect(r).toEqual({ transactions: 1, data: true, settings: true })
