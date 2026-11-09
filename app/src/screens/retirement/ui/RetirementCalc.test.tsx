@@ -192,6 +192,51 @@ describe('RetirementCalc', () => {
     expect(yearRow(30)[3]).toBe('$25,750')
   })
 
+  it('a debt with no APR keeps the old numbers and says when it is paid off', () => {
+    seedPlan()
+    renderApp(<RetirementCalc debts={[debt()]} />)
+    // 1,000 at 250 is 4 months: 8 months of 250 freed in the first year, 3,000 a year after
+    expect(yearRow(30)[3]).toBe('$25,750')
+    expect(yearRow(31)[3]).toBe('$28,000')
+    expect(screen.getByText(/so interest is included/)).toBeInTheDocument()
+    expect(screen.getByText('Paid off in 4 months (age 30). Then $250 a month is freed up.')).toBeInTheDocument()
+  })
+
+  it('a debt with an APR is paid off later, the same months as the Debt payoff tool', () => {
+    seedPlan()
+    // 1,000 at 12% and 250 a month takes 5 months, so only 7 months are freed in the first year
+    renderApp(<RetirementCalc debts={[debt({ apr: 12 })]} />)
+    expect(yearRow(30)[3]).toBe(`$${(23750 + 7 * 250).toLocaleString('en-US')}`)
+    expect(yearRow(31)[3]).toBe('$28,000')
+    expect(screen.getByText('Paid off in 5 months (age 30). Then $250 a month is freed up.')).toBeInTheDocument()
+  })
+
+  it('a payment that never covers the interest never frees anything and the caption says so', () => {
+    seedPlan()
+    // 12% of 12,000 is 120 a month in interest
+    renderApp(<RetirementCalc debts={[debt({ balance: 12000, apr: 12, payment: 100 })]} />)
+    expect(yearRow(35)[3]).toBe('$25,000')
+    expect(screen.getByText('Your payment does not cover the interest, so this debt is never paid off at this payment.')).toBeInTheDocument()
+  })
+
+  it('a payoff event names its age in the caption and frees the payment from then on', () => {
+    seedPlan({ events: [{ id: 'e1', name: '', amount: 0, kind: 'debt', age: 33, repeat: 'once', years: 1, debtId: 'd1' }] })
+    renderApp(<RetirementCalc debts={[debt({ balance: 6000, apr: 12, payment: 200 })]} />)
+    expect(screen.getByText('Paid off at age 33 by your Pay off a debt event. Then $200 a month is freed up.')).toBeInTheDocument()
+    // the payment covers the 60 a month interest, so the event pays the 6,000 balance
+    expect(yearRow(33)[5]).toBe('−$6,000')
+    expect(yearRow(33)[3]).toBe('$27,400')
+  })
+
+  it('a payoff event pays the interest a too small payment leaves unpaid', () => {
+    seedPlan({ events: [{ id: 'e1', name: '', amount: 0, kind: 'debt', age: 31, repeat: 'once', years: 1, debtId: 'd1' }] })
+    // 12,000 at 12% with 100 a month: 20 a month unpaid, growing at 1% a month for 12 months
+    renderApp(<RetirementCalc debts={[debt({ balance: 12000, apr: 12, payment: 100 })]} />)
+    const grow = 1.01 ** 12
+    const owed = 12000 * grow - (100 * (grow - 1)) / 0.01
+    expect(yearRow(31)[5]).toBe(`−${fmt0(owed)}`)
+  })
+
   // the debt's payment is the linked Budget row, so the caption about a missing payment
   // going away means the Budget has loaded
   const budgetLoaded = () => waitFor(() => expect(screen.queryByText(/Add a payment on the Balances page/)).toBeNull())

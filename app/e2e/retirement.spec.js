@@ -253,6 +253,42 @@ function simTaxed(o) {
   }
   return { rows, runOut }
 }
+// ---- reference model for debts (same rules as the page, written apart from it) ----
+// Months to pay off a debt: with an APR, step month by month (interest, then the payment) until
+// nothing is left; with none, balance over payment rounded up. Null when it never clears.
+function payoffMonthsRef(balance, payment, apr) {
+  if (balance <= 0) return 0
+  if (!(payment > 0)) return null
+  const r = apr / 100 / 12
+  if (r > 0 && payment <= balance * r) return null
+  let left = balance
+  let n = 0
+  while (left > 1e-6 && n < 2000) { left = left * (1 + r) - payment; n++ }
+  return n
+}
+// What each year frees into savings: in the payoff year the months after the last payment, then
+// 12 a year. An event at an age frees all 12 months from that age instead.
+function freedRef(debts, startAge, eventAges = {}) {
+  return (age) => debts.reduce((sum, d) => {
+    const ev = eventAges[d.id]
+    if (ev !== undefined) return sum + (age >= ev ? d.payment * 12 : 0)
+    const m = payoffMonthsRef(d.balance, d.payment, d.apr)
+    if (m === null) return sum
+    const end = startAge * 12 + m // the month the last payment is made, counted from birth
+    const freedMonths = Math.max(0, Math.min(12, (age + 1) * 12 - Math.max(end, age * 12)))
+    return sum + d.payment * freedMonths
+  }, 0)
+}
+// What a Pay off a debt event at `age` pays: the balance, plus the interest the payment leaves
+// unpaid when it does not cover it, compounding monthly from today
+function eventPaysRef(d, startAge, age) {
+  const r = d.apr / 100 / 12
+  if (!(r > 0) || d.payment >= d.balance * r) return d.balance
+  let left = d.balance
+  for (let i = 0; i < (age - startAge) * 12; i++) left = left * (1 + r) - d.payment
+  return left
+}
+
 async function expectMatchesSim(page, model) {
   await expect.poll(async () => {
     const t = await readTable(page)
@@ -687,7 +723,41 @@ test.describe('saving each year', () => {
 
   test('no debts, no waterfall caption', async ({ page }) => {
     await setup(page)
-    await expect(main(page).getByText(/Once a debt from the Balances page is paid off/)).toHaveCount(0)
+    await expect(main(page).getByText(/so interest is included/)).toHaveCount(0)
+  })
+
+  test('the reference model gives the old numbers for debts with no APR', async ({ page }) => {
+    const debts = [
+      { id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250 },
+      { id: 'd2', name: 'Loan', balance: 6000, apr: 0, payment: 200 },
+    ]
+    await setup(page, { debts })
+    // 4 months and 30 months, as balance over payment
+    expect(freedRef(debts, 30)(30)).toBe(2000)
+    expect(freedRef(debts, 30)(32)).toBe(3000 + 1200)
+    await expectMatchesSim(page, sim({ freed: freedRef(debts, 30) }))
+  })
+
+  test('a debt with an APR is paid off later, and the caption says when, with interest', async ({ page }) => {
+    // 10,000 at 18% and 300 a month: 47 months with interest (34 without)
+    const debts = [{ id: 'd1', name: 'Car', balance: 10000, apr: 18, payment: 300 }]
+    expect(payoffMonthsRef(10000, 300, 18)).toBe(47)
+    await setup(page, { debts })
+    await expect(main(page).getByText(/so interest is included/)).toBeVisible()
+    await expect(main(page).getByText('Paid off in 3 years 11 months (age 33). Then $300 a month is freed up.')).toBeVisible()
+    // the last payment is in month 47, so age 33 frees 1 month
+    await expectRow(page, 32, { contrib: 25000 })
+    await expectRow(page, 33, { contrib: 25000 + 300 })
+    await expectRow(page, 34, { contrib: 25000 + 3600 })
+    await expectMatchesSim(page, sim({ freed: freedRef(debts, 30) }))
+  })
+
+  test('a payment that does not cover the interest never frees anything', async ({ page }) => {
+    const debts = [{ id: 'd1', name: 'Card', balance: 12000, apr: 24, payment: 200 }]
+    await setup(page, { debts })
+    await expect(main(page).getByText('Your payment does not cover the interest, so this debt is never paid off at this payment.')).toBeVisible()
+    await expectRow(page, 39, { contrib: 25000 })
+    await expectMatchesSim(page, sim({ freed: () => 0 }))
   })
 })
 
@@ -1188,6 +1258,32 @@ test.describe('events: paying off a debt', () => {
     await field(card, 'Amount').fill('4500')
     await expectRow(page, 33, { wd: 4500 })
     expect((await retireCalc(page)).events[0]).toMatchObject({ custom: true, amount: 4500 })
+  })
+
+  test('with an APR the payment covers the interest, so the event still pays the balance', async ({ page }) => {
+    const card = { id: 'd1', name: 'Card', balance: 6000, apr: 12, payment: 200 }
+    await setup(page, { debts: [card] })
+    await addDebtEvent(page, 33)
+    await expect(main(page).getByText('Paid off at age 33 by your Pay off a debt event. Then $200 a month is freed up.')).toBeVisible()
+    expect(eventPaysRef(card, 30, 33)).toBe(6000)
+    await expectMatchesSim(page, sim({
+      events: [{ kind: 'out', amount: 6000, age: 33, repeat: 'once' }],
+      freed: freedRef([card], 30, { d1: 33 }),
+    }))
+  })
+
+  test('a payment too small for the interest makes the event pay the bigger balance', async ({ page }) => {
+    // 12,000 at 12% is 120 a month in interest, and only 100 is paid
+    const loan = { id: 'd1', name: 'Loan', balance: 12000, apr: 12, payment: 100 }
+    await setup(page, { debts: [loan] })
+    const card = await addDebtEvent(page, 32)
+    const owed = eventPaysRef(loan, 30, 32)
+    expect(owed).toBeGreaterThan(12000)
+    await expect(autoValue(card, 'Amount')).toHaveText(`$${Math.round(owed).toLocaleString('en-US')}`)
+    await expectMatchesSim(page, sim({
+      events: [{ kind: 'out', amount: owed, age: 32, repeat: 'once' }],
+      freed: freedRef([loan], 30, { d1: 32 }),
+    }))
   })
 
   test('picking another debt changes the amount', async ({ page }) => {

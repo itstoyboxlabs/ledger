@@ -1,1 +1,1 @@
-export const DEBT_EVENT_TIP = 'Pays the whole debt off in one go at this age. Until then the money stays in your savings.'
+export const DEBT_EVENT_TIP = 'Pays the whole debt off in one go at this age, and its monthly payment is freed up from then on. Until then the money stays in your savings and you keep making the payment, which covers the interest. If the payment is too small to cover the interest, the unpaid interest is added to what this event pays.'

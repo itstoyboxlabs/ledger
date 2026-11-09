@@ -64,9 +64,6 @@ The same fact typed in more than one place.
 
 ### Inconsistent assumptions
 
-- **Debt interest.** Debt payoff uses APR and amortization. Retirement and Rent scenarios use
-  `balance / payment` and ignore APR. The same debt can show two payoff dates. Retirement should call the same
-  `payoffMonths` the tool uses.
 - **Which income.** When Budget income comes from statements, Retirement still uses the Take-home salary for the
   401k and Social Security. If the tool is a hypothetical job, the 401k and the savings leftover describe two
   different lives. Show a one-line warning when the tool's net pay and the statement income differ by more than
@@ -160,7 +157,6 @@ Impact means how much the gap can move "Money lasts" or the earliest safe age fo
 - **Safe spending finder.** The mirror of Find earliest age: at this retire age, the highest need per month that
   lasts. Same linear scan, over dollars.
 - **Debt-free age** in Debt payoff once age is shared.
-- **Same payoff math everywhere.** Retirement and Rent scenarios use the Debt payoff tool's APR math.
 - **Withdrawal order hint.** Once pools exist (savings, pre-tax, Roth), say which one each year drew from.
 - **Notes attached to a page.** A note can be pinned to Budget or Retirement and shows as a small icon there.
 - **Budget suggestion from Spending.** A dotted hint under manual rows with the last 3 months' average.

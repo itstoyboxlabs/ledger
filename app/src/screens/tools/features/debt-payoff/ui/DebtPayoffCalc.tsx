@@ -7,8 +7,9 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
-import { payoffMonths } from '@/screens/tools/features/debt-payoff/utils/payoffMonths'
+import { payoffMonths } from '@/shared/utils/payoffMonths'
 import { sumBalances } from '@/shared/utils/sumBalances'
+import { weightedApr } from '@/shared/utils/weightedApr'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useToolState } from '@/shared/hooks/useToolState'
 
@@ -26,7 +27,7 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
   const setContribution = (v: number) =>
     picked ? setC({ ...c, custom: { ...c.custom, [picked.id]: v } }) : setC({ ...c, perMonth: v })
   // all debts together use the balance-weighted rate
-  const apr = total > 0 ? sel.reduce((s, d) => s + d.apr * d.balance, 0) / total : 0
+  const apr = weightedApr(sel)
   const months = payoffMonths(total, contribution, apr)
   const ok = months !== null && contribution > 0
   const y = ok && months !== null ? Math.floor(months / 12) : 0
