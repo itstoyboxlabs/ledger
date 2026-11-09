@@ -11,7 +11,7 @@ export const HOW_STEPS = [
   },
   {
     title: 'Upload and go',
-    text: 'Upload the file it makes and start exploring your finances. In our demo, 15 statements took 78 seconds.',
+    text: 'Upload the file it makes to Ledger, never your statements, and start exploring your finances. In our demo, 15 statements took 78 seconds.',
     paths: ['M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2', 'M12 12v9M8 16l4-4 4 4'],
   },
 ]
