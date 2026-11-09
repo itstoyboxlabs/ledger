@@ -85,6 +85,6 @@ describe('Sidebar', () => {
   it('opens the phone menu drawer', async () => {
     setup()
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }))
-    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Menu' })).toBeInTheDocument()
   })
 })

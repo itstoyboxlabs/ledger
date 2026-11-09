@@ -210,6 +210,15 @@ so `dark:` variants apply.
 - **Sidebar**: wordmark, the pages from `NAV`, accounts, then one row of icon buttons named by tooltip
   (Export data, Upload file when available, Tutorial, GitHub) at the very bottom. `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
+- **Tutorial nudge** (`TutorialNudge`, wraps the Tutorial icon): in browser mode, until `ledger:tutorialAck` is `true`,
+  a bouncing arrow points at the Tutorial icon and a callout ("Watch the tutorials first") asks the person to watch the
+  tutorial videos. "Okay" sets the flag for good; so does clicking the Tutorial icon or "Open the tutorials" (both
+  still open the tutorial). Escape hides it until the next page load without saving the flag, so only a deliberate
+  Okay (or opening the tutorial) retires it. It is not a modal: no overlay, nothing else is blocked, and it never
+  shows in local mode. On wide screens the callout opens to the right of the sidebar; below `lg` it opens above the
+  icon inside the menu drawer, so phones see it when they open the menu. The arrow's `nudge-bounce` keyframe
+  (`styles/base.css`) is off under `prefers-reduced-motion`. `ledger:tutorialAck` is a normal `ledger:` key
+  (`useTutorialAck`): it is in the export's `settings.local`, and a file that has its own `ledger:tutorialAck` replaces it; a file or the sample without one keeps the person's acknowledgement (`importDataFile`), so loading data never brings the nudge back.
 - **Nav names and view ids**: About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
   (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
 - **Accounts in the sidebar**: each row toggles the `accounts` filter. Rows are grouped under a muted bank

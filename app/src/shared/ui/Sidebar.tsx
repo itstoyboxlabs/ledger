@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { getAccounts } from '@/shared/utils/getAccounts'
 import { Button } from '@/shared/ui/primitives/button'
 import { cn } from '@/shared/utils/cn'
@@ -13,6 +13,7 @@ import { Icon } from '@/shared/ui/Icon'
 import { MerchantIcon } from '@/shared/ui/MerchantIcon'
 import { NAV } from '@/shared/constants/NAV'
 import { NextStatementLine } from '@/shared/ui/NextStatementLine'
+import { TutorialNudge } from '@/shared/ui/TutorialNudge'
 import { TUTORIAL_URL } from '@/shared/constants/TUTORIAL_URL'
 
 // Left rail: wordmark, page nav, account filter. Collapses to a top strip
@@ -74,6 +75,10 @@ export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUplo
     )
   }
 
+  // the Tutorial icon carries the first-run nudge (its own click also counts as watching)
+  const wrapNudge = (label: string, node: ReactNode) =>
+    label === 'Tutorial' ? <TutorialNudge key={label}>{node}</TutorialNudge> : node
+
   // the rail's contents, shared by the desktop sidebar and the mobile drawer.
   // `done` closes the drawer after an action (a no-op on desktop).
   const body = (done: () => void = () => {}) => (
@@ -118,6 +123,7 @@ export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUplo
             { icon: 'play', label: 'Tutorial', tip: 'Tutorial: a video walk-through of every tab.', href: TUTORIAL_URL },
             { icon: 'github', label: 'GitHub', tip: 'GitHub: Ledger is open source, run it yourself.', href: GITHUB_URL },
           ] as (RailAction | null | undefined | false)[]).filter((a): a is RailAction => !!a).map((a) => (
+            wrapNudge(a.label, (
             <UITooltip key={a.label}>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" asChild={!!a.href}
@@ -134,6 +140,7 @@ export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUplo
               </TooltipTrigger>
               <TooltipContent side="top">{a.tip}</TooltipContent>
             </UITooltip>
+            ))
           ))}
         </div>
       </div>
@@ -149,7 +156,7 @@ export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUplo
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r border-[var(--grid)] bg-[var(--sidebar)] px-4 pb-6 pt-7 lg:flex">
+      <aside className="sticky top-0 z-20 hidden h-screen w-[232px] shrink-0 flex-col border-r border-[var(--grid)] bg-[var(--sidebar)] px-4 pb-6 pt-7 lg:flex">
         {wordmark('lg')}
         {body()}
       </aside>

@@ -21,6 +21,7 @@ To reuse a Chromium you already have, set `PW_CHROMIUM` to its executable path.
 - All numbers come from the fake `public/sample-data.json`, loaded with the "Try it with sample data" button.
 - `fixtures.js` refuses to run if the server answers `/api/budget` (a local-mode server).
 - `global-setup.js` hashes your data folder before the run and fails the run if anything in it changed.
+- `ledger:tutorialAck` is set before the app loads, so the first-run tutorial nudge stays out of the way. `tutorial-nudge.spec.js` opts out with `test.use({ tutorialAck: false })`.
 - The clock is pinned to Nov 8 2026, so "this month" is always the same.
 
 ## Writing a test
