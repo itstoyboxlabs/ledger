@@ -2,6 +2,7 @@ import type { NavEntry } from '@/shared/types/NavEntry'
 // top nav bar — title, view tabs, plus the account/filter strip
 // beneath it. Pinned to exactly 2 lines regardless of viewport width.
 export const NAV: readonly NavEntry[] = [
+  ['guide', 'Getting started', 'book', 'How Ledger works, how the tabs fit together and how to set up your plan, step by step.'],
   ['about', 'About you', 'user', 'Your birth date, filing status and tax state. The planning pages read them from here.'],
   ['actuals', 'Spending', 'dollar', 'Your real spending and income from your bank statements.'],
   ['budget', 'Budget', 'wallet', 'Your monthly plan and how the real numbers compare.'],

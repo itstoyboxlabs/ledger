@@ -119,7 +119,7 @@ export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUplo
         <div className="mb-1 flex items-center justify-between px-1.5">
           {([
             { icon: 'download', label: 'Export data', tip: 'Export data: download everything as one ledger-data.json, your statements and your settings. Keep it as a backup.', onClick: onExport },
-            onUpload && { icon: 'plus', label: 'Upload file', tip: 'Upload file: pick your ledger-data.json. It replaces what is stored on this device.', onClick: onUpload },
+            onUpload && { icon: 'plus', label: 'Upload file', tip: 'Upload file: load your data, or get the import prompt again.', onClick: onUpload },
             { icon: 'play', label: 'Tutorial', tip: 'Tutorial: a video walk-through of every tab.', href: TUTORIAL_URL },
             { icon: 'github', label: 'GitHub', tip: 'GitHub: Ledger is open source, run it yourself.', href: GITHUB_URL },
           ] as (RailAction | null | undefined | false)[]).filter((a): a is RailAction => !!a).map((a) => (

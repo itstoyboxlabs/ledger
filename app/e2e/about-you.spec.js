@@ -34,9 +34,9 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('page', () => {
-  test('sits at the top of the sidebar and explains itself', async ({ page }) => {
+  test('sits at the top of the sidebar, under Getting started, and explains itself', async ({ page }) => {
     const names = await page.getByRole('complementary').getByRole('navigation', { name: 'Pages' }).getByRole('button').allInnerTexts()
-    expect(names.map((n) => n.trim()).slice(0, 3)).toEqual(['About you', 'Spending', 'Budget'])
+    expect(names.map((n) => n.trim()).slice(0, 4)).toEqual(['Getting started', 'About you', 'Spending', 'Budget'])
     await expect(main(page)).toContainText('This is the starting point for planning')
     for (const t of ['Your birth date', 'Filing status', 'Tax state and city']) {
       await expect(main(page).getByRole('heading', { level: 2, name: new RegExp(t) })).toBeVisible()

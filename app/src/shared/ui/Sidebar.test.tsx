@@ -64,10 +64,10 @@ describe('Sidebar', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent('download everything as one ledger-data.json')
   })
 
-  it('says Upload file takes your ledger-data.json and replaces what is stored', async () => {
+  it('says Upload file loads your data or gives the import prompt again', async () => {
     setup({ onUpload: vi.fn() })
     await userEvent.hover(desktop().getByRole('button', { name: 'Upload file' }))
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('pick your ledger-data.json. It replaces what is stored on this device.')
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Upload file: load your data, or get the import prompt again.')
   })
 
   it('shows the upload button only when onUpload is given', async () => {

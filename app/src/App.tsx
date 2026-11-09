@@ -22,6 +22,7 @@ import { Card } from '@/shared/ui/Card'
 import { CoverageDot } from '@/shared/ui/CoverageDot'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { ExportModal } from '@/shared/ui/ExportModal'
+import { UploadModal } from '@/shared/ui/UploadModal'
 import { GroupTable } from '@/screens/spending/ui/GroupTable'
 import { Kpi } from '@/shared/ui/Kpi'
 import { NAV } from '@/shared/constants/NAV'
@@ -52,6 +53,7 @@ const AboutYouView = lazyNamed(() => import('@/screens/about-you/ui/AboutYouView
 const BalancesPresets = lazyNamed(() => import('@/screens/balances/ui/BalancesPresets'), 'BalancesPresets')
 const BalancesView = lazyNamed(() => import('@/screens/balances/ui/BalancesView'), 'BalancesView')
 const BudgetView = lazyNamed(() => import('@/screens/budget/ui/BudgetView'), 'BudgetView')
+const GettingStartedView = lazyNamed(() => import('@/screens/guide/ui/GettingStartedView'), 'GettingStartedView')
 const CashFlowChart = lazyNamed(() => import('@/screens/spending/ui/CashFlowChart'), 'CashFlowChart')
 const Donut = lazyNamed(() => import('@/screens/spending/ui/Donut'), 'Donut')
 const LogView = lazyNamed(() => import('@/screens/log/ui/LogView'), 'LogView')
@@ -63,7 +65,7 @@ const TrendsChart = lazyNamed(() => import('@/screens/spending/ui/TrendsChart'),
 const ChartWait = () => <div className="min-h-[300px]" aria-busy="true" />
 
 // downloaded while the browser is idle so the first visit to a tab or chart does not blank the page
-const IDLE_CHUNKS = [Donut, TrendsChart, CashFlowChart, BudgetView, LogView, ToolsView, RetirementView, BalancesView].map((c) => c.preload)
+const IDLE_CHUNKS = [Donut, TrendsChart, CashFlowChart, BudgetView, LogView, ToolsView, RetirementView, BalancesView, GettingStartedView].map((c) => c.preload)
 
 // runs once when the app loads: moves an old saved employer match onto the 401k deduction
 migrateEmployerMatch()
@@ -84,9 +86,10 @@ export default function App() {
   )
   const [view, setView] = usePersistedState(
     'view', 'actuals',
-    (v) => typeof v === 'string' && ['actuals', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
+    (v) => typeof v === 'string' && ['actuals', 'guide', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
   )
   const [showExport, setShowExport] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
   const dataCtx = useData()
   if (!dataCtx) throw new Error('App must be rendered inside the data provider.')
   const uploadRef = useRef<HTMLInputElement>(null)
@@ -165,7 +168,7 @@ export default function App() {
         accounts={accounts}
         setAccounts={setAccounts}
         onExport={() => setShowExport(true)}
-        onUpload={isLocal() ? null : () => uploadRef.current?.click()}
+        onUpload={isLocal() ? null : () => setShowUpload(true)}
       />
       {!isLocal() && (
         <Input
@@ -209,6 +212,13 @@ export default function App() {
         {view === 'balances' && <BalancesPresets />}
       </PageHeader>
       {showExport && <ExportModal onClose={() => setShowExport(false)} notify={dataCtx.notify} />}
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onChooseFile={() => uploadRef.current?.click()}
+          onReadMore={() => { setView('guide'); window.scrollTo({ top: 0 }) }}
+        />
+      )}
 
       {view === 'budget' && (
         <BudgetView
@@ -219,6 +229,15 @@ export default function App() {
             setView('tools')
             // the Tools view mounts on a later render
             scrollToWhenReady(anchor)
+          }}
+        />
+      )}
+      {view === 'guide' && (
+        <GettingStartedView
+          goTo={(v: string) => {
+            setView(v)
+            // the guide links from the middle of a long page, so open the next tab at its top
+            window.scrollTo({ top: 0 })
           }}
         />
       )}
