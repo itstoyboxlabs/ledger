@@ -16,7 +16,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   project as the app. They live in `app/src/screens/marketing` and are prerendered to HTML at build time
   (`npm run build` runs `scripts/prerender.mjs` after Vite). The app itself is a single-page app at `/app`.
 - **Code layout**: one thing per file. Each page lives in `app/src/screens/<page>` (spending, about-you, budget, log,
-  tools, retirement, balances, notes). Anything several pages use lives in `app/src/shared` (components, hooks, state,
+  tools, retirement, balances). Anything several pages use lives in `app/src/shared` (components, hooks, state,
   utils, constants). A feature never imports from another feature. `App.jsx` is only the shell: the sidebar, the
   page header and which page shows. Pages load lazily.
 - **Storage adapter**: pages never call `fetch('/api/...')` directly. They call the storage functions in
@@ -46,7 +46,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md).
   and never used in tests.
   The sample carries a full `settings` block, so loading it fills every page: Budget rows (including a Car loan and
   a Student loan row) with a leftover plan, three Budget presets (`Today`, `Leaner (easier job)`, `Retirement`),
-  Log entries, Notes, and `local` keys for Balances (`ledger:debts` linked to the loan rows, `ledger:assets` in the
+  Log entries, kept notes, and `local` keys for Balances (`ledger:debts` linked to the loan rows, `ledger:assets` in the
   savings and 401k pools, planning-variables presets), the Retirement plan, portfolio, presets and the Budget preset
   it follows (`ledger:retireNeedPreset`), plus Rent scenarios, Vacation, Debt payoff and two lists.
   Uploading a real file after trying the sample replaces all of it, settings included (see Import and export).
@@ -95,7 +95,7 @@ All files are plain JSON except where noted.
     merchant without a domain can still match the logo catalog by name.
 - `budget.json`: the Budget plan (rows, `dismissedSubs`, `leftover`).
 - `log.json`: Log entries.
-- `notes.json`: notes.
+- `notes.json`: notes (not shown in the app, kept so they survive an export).
 - `presets.json`: named presets, keyed by page or tool.
 
 ### Import and export
@@ -208,7 +208,7 @@ so `dark:` variants apply.
 ### Shell and layout
 
 - **Sidebar**: wordmark, the pages from `NAV`, accounts, then one row of icon buttons named by tooltip
-  (Export data, Upload file when available, Tutorial, GitHub), then Notes at the very bottom. `PageHeader` has the big title, a
+  (Export data, Upload file when available, Tutorial, GitHub) at the very bottom. `PageHeader` has the big title, a
   one-line subtitle from `NAV` and the right-side controls.
 - **Nav names and view ids**: About you (`about`), Spending (`actuals`), Budget (`budget`), Log (`log`), Tools
   (`tools`), Retirement (`retirement`), Balances (`balances`). The ids never change, so saved values keep working.
@@ -217,7 +217,7 @@ so `dark:` variants apply.
   is off, colored by type). The list scrolls when long. Toggling one jumps to Spending, the only page the filter
   affects. Accounts that arrive by import are switched on.
 - **Phones** (below `lg`): the sidebar becomes a top bar with the wordmark and a hamburger that opens a
-  full-screen drawer (`ui/sheet.jsx`) with the same nav, accounts, Notes and icon row. Picking a page closes it.
+  full-screen drawer (`ui/sheet.jsx`) with the same nav, accounts and icon row. Picking a page closes it.
   No page scrolls sideways at 375px. Below `sm` the `.card` bubbles turn into flat sections divided by
   hairlines, `body` gets `overflow-x: hidden`, and wide tables drop columns. The Retirement year table scrolls
   inside its card on purpose.
@@ -941,17 +941,11 @@ Flat return every year, today's dollars, no inflation. Stated in the page footer
 
 ---
 
-## Notes
+## Notes (hidden)
 
-A pencil icon in the sidebar, visible on every page. It opens a modal backed by `notes.json` through the storage
-adapter. Notes are structured, not one blob: `{ id, text, createdAt (epoch ms), pinned }`.
-
-- **Add**: a textarea and an Add button (Cmd or Ctrl plus Enter) at the top.
-- **Edit**: each note's text is a live textarea that autosaves about 400ms after typing stops.
-- **Delete**: an X, revealed on hover, with no confirm (the same convention as manual budget rows).
-- **Pin**: a pin toggle revealed on hover. Pinned notes show a static pin next to their date.
-- **Sort**: pinned first, then newest to oldest within each group.
-- Notes are included in the settings export.
+There is no Notes page or sidebar button for now. Notes that already sit in a data file are kept but not shown:
+`validateDataFile` still accepts them, `importDataFile` stores them (`getNotes` and `saveNotes`, `notes.json` in local
+mode) and `buildExport` writes them back out, so an export gives back exactly what was uploaded.
 
 ---
 

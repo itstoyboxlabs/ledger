@@ -44,7 +44,7 @@ folders, and components always live in `ui/`.
 ```
 app/src/
   screens/
-    spending/  about-you/  budget/  log/  balances/  retirement/  notes/  marketing/
+    spending/  about-you/  budget/  log/  balances/  retirement/  marketing/
     tools/
       constants/  enums/  hooks/  state/  types/  utils/  ui/    what the Tools screen itself uses
       features/                                                  one folder per calculator

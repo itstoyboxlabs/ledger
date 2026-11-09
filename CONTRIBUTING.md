@@ -57,7 +57,7 @@ Read [CODING_PATTERNS.md](CODING_PATTERNS.md) first. In short, `app/src/screens/
 `app/src/shared/` holds what several pages use, with one thing per file and a test beside it.
 
 - `app/src/App.jsx` is the shell: the sidebar, the page header and which page shows.
-- `app/src/screens/` has one folder per page: spending, budget, log, tools, retirement, balances, notes and marketing. The Tools calculators are in `screens/tools/features/`.
+- `app/src/screens/` has one folder per page: spending, budget, log, tools, retirement, balances and marketing. The Tools calculators are in `screens/tools/features/`.
 - `app/src/shared/utils/` has the money, month and tax helpers (`fmt`, `monthOf`, `taxOn` and so on) and
   `shared/state/dataStore.js` holds the loaded statements.
 - `app/src/shared/ui/primitives/` is shadcn/ui. Use these for every button, input, dropdown, dialog and table. Do not build your own primitives. `CLAUDE.md` has the install steps and the gotchas.

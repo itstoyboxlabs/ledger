@@ -55,7 +55,6 @@ const BudgetView = lazyNamed(() => import('@/screens/budget/ui/BudgetView'), 'Bu
 const CashFlowChart = lazyNamed(() => import('@/screens/spending/ui/CashFlowChart'), 'CashFlowChart')
 const Donut = lazyNamed(() => import('@/screens/spending/ui/Donut'), 'Donut')
 const LogView = lazyNamed(() => import('@/screens/log/ui/LogView'), 'LogView')
-const NotesModal = lazyNamed(() => import('@/screens/notes/ui/NotesModal'), 'NotesModal')
 const RetirementView = lazyNamed(() => import('@/screens/retirement/ui/RetirementView'), 'RetirementView')
 const ToolsView = lazyNamed(() => import('@/screens/tools/ui/ToolsView'), 'ToolsView')
 const TrendsChart = lazyNamed(() => import('@/screens/spending/ui/TrendsChart'), 'TrendsChart')
@@ -64,7 +63,7 @@ const TrendsChart = lazyNamed(() => import('@/screens/spending/ui/TrendsChart'),
 const ChartWait = () => <div className="min-h-[300px]" aria-busy="true" />
 
 // downloaded while the browser is idle so the first visit to a tab or chart does not blank the page
-const IDLE_CHUNKS = [Donut, TrendsChart, CashFlowChart, BudgetView, LogView, ToolsView, RetirementView, BalancesView, NotesModal].map((c) => c.preload)
+const IDLE_CHUNKS = [Donut, TrendsChart, CashFlowChart, BudgetView, LogView, ToolsView, RetirementView, BalancesView].map((c) => c.preload)
 
 // runs once when the app loads: moves an old saved employer match onto the 401k deduction
 migrateEmployerMatch()
@@ -87,7 +86,6 @@ export default function App() {
     'view', 'actuals',
     (v) => typeof v === 'string' && ['actuals', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
   )
-  const [showNotes, setShowNotes] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const dataCtx = useData()
   if (!dataCtx) throw new Error('App must be rendered inside the data provider.')
@@ -166,7 +164,6 @@ export default function App() {
         setView={setView}
         accounts={accounts}
         setAccounts={setAccounts}
-        onNotes={() => setShowNotes(true)}
         onExport={() => setShowExport(true)}
         onUpload={isLocal() ? null : () => uploadRef.current?.click()}
       />
@@ -211,11 +208,6 @@ export default function App() {
         {view === 'tools' && <ToolPicker />}
         {view === 'balances' && <BalancesPresets />}
       </PageHeader>
-      {showNotes && (
-        <Suspense fallback={null}>
-          <NotesModal onClose={() => setShowNotes(false)} />
-        </Suspense>
-      )}
       {showExport && <ExportModal onClose={() => setShowExport(false)} notify={dataCtx.notify} />}
 
       {view === 'budget' && (

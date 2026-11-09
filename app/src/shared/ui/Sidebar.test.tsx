@@ -12,7 +12,7 @@ beforeAll(() => {
 beforeEach(() => loadSampleData())
 
 const setup = (props: Partial<ComponentProps<typeof Sidebar>> = {}) => {
-  const fns = { setView: vi.fn(), setAccounts: vi.fn(), onNotes: vi.fn(), onExport: vi.fn() }
+  const fns = { setView: vi.fn(), setAccounts: vi.fn(), onExport: vi.fn() }
   render(<TooltipProvider><Sidebar view="actuals" accounts={['chk']} {...fns} {...props} /></TooltipProvider>)
   return fns
 }
@@ -52,11 +52,9 @@ describe('Sidebar', () => {
     expect(setAccounts).toHaveBeenLastCalledWith([])
   })
 
-  it('fires the notes and export actions', async () => {
-    const { onNotes, onExport } = setup()
-    await userEvent.click(desktop().getByRole('button', { name: 'Notes' }))
+  it('fires the export action', async () => {
+    const { onExport } = setup()
     await userEvent.click(desktop().getByRole('button', { name: 'Export data' }))
-    expect(onNotes).toHaveBeenCalled()
     expect(onExport).toHaveBeenCalled()
   })
 
