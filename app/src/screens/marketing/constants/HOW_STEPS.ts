@@ -6,7 +6,7 @@ export const HOW_STEPS = [
   },
   {
     title: 'Use the import prompt',
-    text: "Copy Ledger's prompt and give it to ChatGPT, Claude or Codex with your statements. It checks its own math against every statement.",
+    text: "Copy Ledger's prompt and read it first, so you know exactly what it asks for. Then give it to ChatGPT, Claude or Codex with your statements and let it make the file. It checks its own math against every statement.",
     paths: ['M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z', 'M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z'],
   },
   {
