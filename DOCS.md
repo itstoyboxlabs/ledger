@@ -135,8 +135,8 @@ All files are plain JSON except where noted.
   - **Local mode**: icons are served from `app/public/icons/<domain>.png`, using the domain in the `merchants` map.
     `scripts/fetch-icons.sh` downloads them, follows redirects and checks that each file is a real image. The
     folder is gitignored because it reflects one person's merchants.
-  - **Browser mode (the hosted site)**: icons come from a shared catalog of common merchants in the site's own
-    public Blob store, at `ICON_BASE_URL` (`.../icons/<domain>.png` plus `.../icons/index.json`). `useIconCatalog`
+  - **Browser mode (the hosted site)**: icons come from a shared catalog of common merchants in a public
+    Supabase Storage bucket (`ledger-public`), at `ICON_BASE_URL` (`.../icons/<domain>.png` plus `.../icons/index.json`). `useIconCatalog`
     asks for the index once, when the browser is idle after the first paint (`requestIconCatalog`,
     `loadIconCatalog`), caches it in sessionStorage and keeps it in `iconCatalogStore`. Failures are silent and
     leave the letters. The index is `{ domains, names }`. `catalogDomainFor` matches a merchant first by its
@@ -144,8 +144,8 @@ All files are plain JSON except where noted.
     digits, card processor prefixes like `SQ *` or filler like "inc" and "com"), trying the full name and then
     shorter leading word groups: "Uber Eats Delivery" tries "uber eats delivery", "uber eats", "uber". The index
     request is identical for every visitor, so it reveals nothing about anyone's merchants. The logo requests go
-    only to the site's own store. No third-party service is ever contacted. CSP: `img-src` and `connect-src` allow
-    the Blob host.
+    only to the project's own storage bucket. No other third-party service is ever contacted. CSP: `img-src` and `connect-src` allow
+    the Supabase storage host.
   - **The catalog** is built from `app/scripts/icon-domains.txt`, one merchant per line as
     `Brand name | domain | alias, alias`. It is public and hand-written, never derived from anyone's data. The
     import prompt links to it so an assistant can use the exact brand names. To change it, from `app/`:
@@ -155,9 +155,9 @@ All files are plain JSON except where noted.
        other formats to PNG with macOS `sips`, keeps each file under 6 KB, and writes `app/.icon-catalog/`
        (gitignored) with `<domain>.png` files and `index.json`. It skips logos it already has. Name keys that are
        everyday words ("rent", "budget", "acme") are left out of `names` so they never pick up a brand's logo;
-    3. `npm run icons` uploads new logos to `icons/<domain>.png` and always re-uploads `icons/index.json` (one day
-       cache; logos cache for a year). It reads the Blob token from the production environment through the
-       Vercel CLI and never prints it. `--force` re-uploads every logo.
+    3. `npm run icons` uploads every logo to `icons/<domain>.png` and `icons/index.json` in the bucket (30 day
+       cache). It needs `SUPABASE_SERVICE_ROLE_KEY` in the environment (kept outside the repo, never printed).
+       `npm run videos` does the same for the tutorial videos in `videos/`.
 
 ---
 
