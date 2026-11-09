@@ -5,6 +5,7 @@ import { Input } from '@/shared/ui/primitives/input'
 import { IMPORT_PROMPT } from '@/shared/constants/IMPORT_PROMPT'
 import { useData } from '@/shared/hooks/useData'
 import { isLocal } from '@/shared/utils/isLocal'
+import { copyText } from '@/shared/utils/copyText'
 
 // What Root shows before any statements are loaded: how to import them in local mode, or the
 // upload, copy prompt and sample data buttons in the browser.
@@ -14,12 +15,8 @@ export function EmptyState() {
   const { importFiles, importSample, notify } = ctx
   const fileRef = useRef<HTMLInputElement>(null)
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(IMPORT_PROMPT)
-      notify('Import prompt copied.')
-    } catch {
-      notify('Could not copy. Your browser blocked it.', 'error')
-    }
+    if (await copyText(IMPORT_PROMPT)) notify('Import prompt copied.')
+    else notify('Could not copy. Your browser blocked it.', 'error')
   }
   if (isLocal()) {
     return (

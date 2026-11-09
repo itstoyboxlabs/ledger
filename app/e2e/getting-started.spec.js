@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import { test, expect, openApp, goTo } from './fixtures'
 
 // The Getting started tab: a wiki-style guide with a sticky "On this page" table of contents that
@@ -122,4 +123,50 @@ test('on a phone the contents fold into an On this page button', async ({ page }
   await expect.poll(() => topOf(page.locator('#good-habits'))).toBeLessThan(80)
   // nothing scrolls sideways
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+})
+
+test.describe('the import prompt', () => {
+  test('is in the contents and its section', async ({ page }) => {
+    await goTo(page, 'Getting started')
+    const link = toc(page).getByRole('link', { name: 'Get the import prompt again' })
+    await expect(toc(page).locator('li', { has: page.getByRole('link', { name: 'Your data and your file', exact: true }) })).toContainText('Get the import prompt again')
+    await link.click()
+    await expect.poll(() => topOf(page.locator('#import-prompt'))).toBeLessThan(80)
+  })
+
+  test('Copy the prompt puts it on the clipboard', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await goTo(page, 'Getting started')
+    await main(page).getByRole('button', { name: 'Copy the prompt' }).click()
+    await expect(main(page).getByRole('button', { name: 'Copied' })).toBeVisible()
+    await expect(main(page).getByRole('status').filter({ hasText: 'The prompt is on your clipboard.' })).toBeVisible()
+    const text = await page.evaluate(() => navigator.clipboard.readText())
+    expect(text).toContain('You are helping me import my bank and credit card statements into Ledger')
+  })
+
+  test('Download the prompt saves IMPORT_PROMPT.md', async ({ page }) => {
+    await goTo(page, 'Getting started')
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      main(page).getByRole('button', { name: 'Download the prompt' }).click(),
+    ])
+    expect(download.suggestedFilename()).toBe('IMPORT_PROMPT.md')
+    expect(fs.readFileSync(await download.path(), 'utf8')).toContain('## Adding to my last file')
+  })
+
+  test('Show the prompt opens and closes the full text', async ({ page }) => {
+    await goTo(page, 'Getting started')
+    const toggle = main(page).getByRole('button', { name: 'Show the prompt' })
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByLabel('The import prompt', { exact: true })).toHaveCount(0)
+    await toggle.click()
+    const hide = main(page).getByRole('button', { name: 'Hide the prompt' })
+    await expect(hide).toHaveAttribute('aria-expanded', 'true')
+    const pre = page.getByLabel('The import prompt', { exact: true })
+    await expect(pre).toContainText('## Check your work')
+    // long, so it scrolls inside its own box
+    expect(await pre.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true)
+    await hide.click()
+    await expect(page.getByLabel('The import prompt', { exact: true })).toHaveCount(0)
+  })
 })

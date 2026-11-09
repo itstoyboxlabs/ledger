@@ -49,6 +49,7 @@ describe('GettingStartedView', () => {
     const tabs = new Set(NAV.map(([id]) => id))
     for (const s of GUIDE_SECTIONS) {
       for (const block of [...s.blocks, ...s.subsections.flatMap((x) => x.blocks)]) {
+        if (block.kind === 'importPrompt') continue
         const parts = block.kind === 'p' || block.kind === 'note' ? block.text : block.items.flat()
         for (const p of parts) if (typeof p === 'object' && 'tab' in p) expect(tabs.has(p.tab)).toBe(true)
       }

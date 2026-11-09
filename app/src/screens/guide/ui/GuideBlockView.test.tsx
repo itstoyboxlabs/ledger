@@ -27,4 +27,11 @@ describe('GuideBlockView', () => {
     expect(screen.getByRole('list').tagName).toBe('OL')
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['First', 'Second', 'Third'])
   })
+
+  it('renders the import prompt buttons', () => {
+    show({ kind: 'importPrompt' })
+    expect(screen.getByRole('button', { name: 'Copy the prompt' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Download the prompt' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show the prompt' })).toBeInTheDocument()
+  })
 })

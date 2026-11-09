@@ -289,7 +289,9 @@ export const GUIDE_SECTIONS: GuideSection[] = [
                 { label: 'Copy import prompt' },
                 ' puts it on your clipboard. It is also in ',
                 { href: `${GITHUB_URL}/blob/main/IMPORT_PROMPT.md`, text: 'IMPORT_PROMPT.md' },
-                ' on GitHub.',
+                ' on GitHub, and once you have data you can ',
+                { anchor: 'import-prompt', text: 'get the import prompt again' },
+                ' on this page.',
               ],
               [
                 'The assistant checks what it read against the totals printed on each statement, tells you how each one came out and gives you ',
@@ -330,7 +332,9 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           {
             kind: 'p',
             text: [
-              'Because it holds the whole picture, an export is a complete backup. Upload it in another browser, on another computer or after clearing this one, and Ledger looks exactly as it did when you exported.',
+              'Because it holds the whole picture, an export is a complete backup. Upload it in another browser, on another computer or after clearing this one, and Ledger looks exactly as it did when you exported. It is also the file you give your assistant, together with ',
+              { anchor: 'import-prompt', text: 'the import prompt' },
+              ', when you add new months.',
             ],
           },
         ],
@@ -342,7 +346,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           {
             kind: 'p',
             text: [
-              'Uploading a file replaces what this device has stored. Nothing is merged. A full export replaces everything. A file with only statements, like a first file, replaces your statements and keeps your budget and settings.',
+              'Uploading a file with the ',
+              { label: 'Upload file' },
+              ' icon replaces what this device has stored, and a file replaces only the parts it contains. Nothing is merged. A full export replaces everything. A file with only statements, like a first file or one your assistant made fresh from ',
+              { anchor: 'import-prompt', text: 'the import prompt' },
+              ', replaces your statements and keeps your budget and settings. Over the sample data, any file replaces everything.',
             ],
           },
           {
@@ -363,11 +371,42 @@ export const GUIDE_SECTIONS: GuideSection[] = [
             items: [
               ['Click ', { label: 'Export data' }, ' to save your latest ', { code: 'ledger-data.json' }, '.'],
               [
-                'Give that file and your new statements to your assistant with the import prompt. The prompt tells it to keep every account, transaction and setting exactly as it is and only add the new month.',
+                'Give that file and your new statements to your assistant with ',
+                { anchor: 'import-prompt', text: 'the import prompt' },
+                '. The prompt tells it to keep every account, transaction and setting exactly as it is and only add the new month.',
               ],
               ['Upload the file it gives back. It replaces what Ledger had, now with the new month added.'],
             ],
           },
+        ],
+      },
+      {
+        id: 'import-prompt',
+        title: 'Get the import prompt again',
+        blocks: [
+          {
+            kind: 'p',
+            text: [
+              'The empty screen\'s ',
+              { label: 'Copy import prompt' },
+              ' button goes away once Ledger has your data, so the same prompt is here too. You need it whenever your assistant has to read statements:',
+            ],
+          },
+          {
+            kind: 'list',
+            items: [
+              ['You are updating with new months. Give your assistant your last export, the new statements and the prompt.'],
+              ['You want to redo or replace your statements, for example to add an account you left out or to start over from a fresh set of statements.'],
+              ['Something went wrong, like a statement whose totals did not match, and you want to run the import again.'],
+            ],
+          },
+          {
+            kind: 'p',
+            text: [
+              'If you give your assistant only statements and no earlier file, it makes a file with only statements. Uploading that file replaces just your statements and keeps your About you, Balances, Budget, Tools and Retirement settings, because a file replaces only the parts it contains. Export first anyway, so you have a backup of everything.',
+            ],
+          },
+          { kind: 'importPrompt' },
         ],
       },
       {

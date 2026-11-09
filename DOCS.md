@@ -392,6 +392,11 @@ to the app, written to be read top to bottom or jumped into.
   (`aria-expanded`, `aria-controls`) above the article that closes after a pick.
 - **Links**: a tab name in the text (`{ tab }`) switches the app's view with `setView` and scrolls to the top, no
   reload. In-page links (`{ anchor }`) scroll to a heading. Outside links open in a new tab with `rel="noreferrer"`.
+- **Get the import prompt again** (under Your data and your file): once there is data the empty screen and its
+  Copy import prompt button are gone, so this subsection explains when the prompt is needed and that a statements-only
+  file replaces just the statements. `ImportPromptActions` has "Copy the prompt" (`copyText`, the same helper
+  `EmptyState` uses, with a short Copied state), "Download the prompt" (`downloadBlob` as `IMPORT_PROMPT.md`,
+  `text/markdown`) and a "Show the prompt" disclosure, closed by default, with the text in a scrolling monospace box.
 - Browser tests: `e2e/getting-started.spec.js`.
 
 ---
