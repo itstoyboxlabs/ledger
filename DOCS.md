@@ -380,7 +380,7 @@ read from it. Every field has a sentence or two saying what it is for and which 
   age. With a birth date it is your age on the Balances "as of" date (`ledger:assetsAsOf`), or today when that is
   empty. Balances are only as fresh as their date, so the plan's starting age moves forward only when Balances is
   updated and the plan does not drift. An old typed age is used as it is. Retirement reads it (see Retirement),
-  and the debt payoff ages there follow Retirement's current age. The Debt payoff tool shows a date, not an age.
+  and the debt payoff ages there (and on Balances, through `usePlanStartAge`) follow Retirement's current age. The Debt payoff tool shows a date, not an age.
 - **Filing status**: `ledger:filingStatus`, `single` or `mfj` (the `FilingStatus` enum, labels in
   `FILING_LABELS`). Only these two on purpose. Nothing saved, or anything else, reads as `single`, which is how the
   app always worked. It changes federal brackets, the standard deduction, the long-term gains bands, the
@@ -652,7 +652,9 @@ estimates, 2026 figures.
     says "includes interest". All debts uses the balance-weighted APR. A payment that does not cover the monthly
     interest shows a dash.
 - **Rent scenarios**: a table of hypothetical rents (from, to, step inputs) with leftover per month, leftover per
-  year and "Debt paid off in" (shared debts over that leftover, ignoring interest).
+  year and "Debt paid off in": all shared debts paid off with that leftover, using `payoffMonths` at their
+  balance-weighted APR (`weightedApr`), the same math as Debt payoff. "Never" means the leftover does not cover
+  the interest.
   - Income and non-rent expenses come live from Budget. The rent row is excluded because each scenario
     substitutes its own. Hidden rows are excluded.
   - The current rent is found through a saved link (`rentScenario3.rentRow`, a Budget row id, "Your rent comes
@@ -699,7 +701,17 @@ Presets menu sits in the page header row.
   what-if move is still one click. Old presets that still carry a `taxState` keep loading: the field is ignored on
   apply and dropped the next time the preset is saved. Old presets with debts as an object are converted on
   apply (`presetDebts`). Neither the tax state nor the filing status is part of the preset.
-- Debt payoff, Rent scenarios and Retirement's debt logic all read this list.
+- **How payoff flows into Retirement** is spelled out in a box right under "What you owe": Ledger uses the
+  balance, interest rate and monthly payment to work out when each debt is paid off, and Retirement then treats
+  that payment as freed up money after the payoff date and sends it where the Budget says, usually to savings.
+- **Per-debt payoff line** under each debt (`debtPayoffLine`): "Paid off in 6 years 2 months (age 44). Then $385
+  a month is freed up." Months come from `payoffMonths` (interest included), the age is `payoffAge` (age now plus
+  whole years) from `usePlanStartAge` (the age Retirement plans from: About you while its Auto age is on,
+  otherwise the age typed there; no age when neither is known). Other cases: "Your payment does not cover the
+  interest, so this debt is never paid off at this payment.", "Add a monthly payment to see when this debt is
+  paid off." and "This debt is already paid off." A linked payment waits for the Budget rows before it shows.
+- Debt payoff, Rent scenarios and Retirement's debt logic all read this list, and all three use the same
+  `payoffMonths` (shared), so a debt has one payoff time everywhere.
 
 ---
 
@@ -848,17 +860,22 @@ pay tool and its presets. Logic is in `utils/resolvePayPeriods.ts`, `utils/tidyP
   is gone from the card. `normalizeRetire` turns each line into a money-in event with the same name, amount and
   pool (`id: 'extra-<id>'`, from today's age, every year or every month for a monthly line, `untilRetire: true`),
   so saved numbers do not move. A regression test pins them.
-- **Debt payoff to savings**: each debt has its own monthly payment and is paid off independently, ignoring
-  interest and with no snowballing.
-  - Months to payoff are `ceil(balance / payment)`. That decides which simulated year it lands in and how many
-    months of that year are freed.
+- **Debt payoff to savings**: each debt has its own monthly payment and is paid off independently, with
+  interest at its own APR and with no snowballing.
+  - Months to payoff are `payoffMonths(balance, payment, apr)`, the same function the Debt payoff tool and Rent
+    scenarios use (amortization with an APR, `ceil(balance / payment)` with none, so a 0% debt gives exactly the
+    old numbers). That decides which simulated year it lands in and how many months of that year are freed
+    (`debtPayoffSchedule`). A payment that never covers the interest (`payoffMonths` is null) never clears, so
+    it frees nothing.
   - The payoff year gets a prorated credit for the freed months only. Later years get all 12. Landing exactly on
     a 12-month boundary frees 0 months that year, which is correct.
   - The freed payment follows the Budget allocation: its `savings` share goes into savings and the rest is
     spent. With no allocation at all, all of it goes to savings. This holds for self-cleared debts and for "Pay
     off a debt" events. A debt unticked on the starting balances frees nothing.
-  - It applies only while working. A caption under the fields shows each debt's payoff age, with "no payment
-    set on Budget" or "already clear" when relevant.
+  - It applies only while working. A caption under the fields says that interest is included and how the freed
+    payment is split, then gives each debt the same line as Balances (`debtPayoffLine`, from the plan's current
+    age), or "Paid off at age N by your Pay off a debt event." for a debt with an event, or "Left out of this
+    plan" for one unticked on the starting balances.
 
 #### The pay plan
 
@@ -920,7 +937,11 @@ one.
 - **Equity link**: an event's Auto badge pulls its amount and years from the Equity payout tool ("Net per
   year"), forces money in, repeating yearly. Like RSUs it pays only while you are still working.
 - **Pay off a debt** (`kind: 'debt'`): pick a debt and an age. The amount is the debt's balance (Auto badge,
-  click to type your own, `custom: true`). Only an age from today to the end age counts. The debt is then left out of the starting hole, its amount leaves the
+  click to type your own, `custom: true`). With an APR the Auto amount follows `debtEventAmount`: a debt's
+  balance leaves savings once, at the start (the hole) or at the event, and the monthly payment until then is a
+  Budget expense that covers the interest, so the event pays today's balance. Only when the payment does not
+  cover the interest does the unpaid interest pile up, and the event pays that bigger balance (12 months a year
+  from the current age to the event age). With no APR it is always the balance, exactly as before. Only an age from today to the end age counts. The debt is then left out of the starting hole, its amount leaves the
   liquid pool at that age, and its payment flows into savings from then on.
 - **Old shape**: saves without `events` are converted by `normalizeRetire` into the equivalent events. The
   stored value is only rewritten when something is edited. Stored presets are never rewritten.

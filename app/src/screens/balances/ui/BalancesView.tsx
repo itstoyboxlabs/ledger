@@ -2,7 +2,7 @@ import { fmt } from '@/shared/utils/fmt'
 import { Label } from '@/shared/ui/primitives/label'
 import { Input } from '@/shared/ui/primitives/input'
 import { Button } from '@/shared/ui/primitives/button'
-import { X } from 'lucide-react'
+import { Info, X } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
@@ -16,6 +16,9 @@ import { sumBalances } from '@/shared/utils/sumBalances'
 import { useAssets } from '@/shared/hooks/useAssets'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useDebts } from '@/shared/hooks/useDebts'
+import { usePlanStartAge } from '@/shared/hooks/usePlanStartAge'
+import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
+import { debtPayoffLine } from '@/shared/utils/debtPayoffLine'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { AssetKind } from '@/shared/enums/AssetKind'
 import { AssetPool } from '@/shared/enums/AssetPool'
@@ -29,6 +32,8 @@ export function BalancesView() {
   const [assets, setAssets] = useAssets()
   const [asOf, setAsOf] = usePersistedState('assetsAsOf', '', (v) => typeof v === 'string')
   const rows = useBudgetRows()
+  // the age Retirement plans from, so the payoff ages here match the ones there
+  const planAge = usePlanStartAge()
   const owed = sumBalances(debts)
   const owned = assets.reduce((s, a) => s + a.balance, 0)
   const today = todayIso()
@@ -64,12 +69,20 @@ export function BalancesView() {
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold">
           What you owe
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
-          The Debt payoff calculator on the Tools page uses the balance, APR and payment to show when
-          you will be debt free. The Retirement page uses the payment: once a debt is paid off, its
-          payment is split the way you set up on the Budget page, like half to savings and half
-          spent. Link a payment to a Budget row to keep it in sync.
-        </p>
+        <div data-testid="debt-explainer" className="mt-2 flex gap-2 rounded-lg bg-[var(--surface-2)] px-3 py-2.5 text-[12px] leading-relaxed text-[var(--text-secondary)] ring-1 ring-[var(--ring)]">
+          <Info className="mt-0.5 size-3.5 shrink-0 text-[var(--text-muted)]" aria-hidden />
+          <div>
+            <p>
+              Ledger uses your balance, interest rate and monthly payment to work out when each debt is
+              paid off. The Retirement page then treats that payment as freed up money after the payoff
+              date and sends it where your Budget says, usually to savings.
+            </p>
+            <p className="mt-1 text-[var(--text-muted)]">
+              The Debt payoff tool on the Tools page uses the same math. Link a payment to a Budget row to
+              keep it in sync.
+            </p>
+          </div>
+        </div>
         <div className="mt-4 flex flex-col gap-3">
           {debts.length === 0 && (
             <p className="text-[13px] text-[var(--text-secondary)]">No debts yet.</p>
@@ -126,6 +139,12 @@ export function BalancesView() {
                     <ToolField label="Payment per month" value={d.payment} onChange={(v) => patchDebt(d.id, { payment: Math.max(0, v) })} step={50} suffix="$" />
                   )}
                 </div>
+                {/* a linked payment reads 0 until the Budget rows load, so wait for them */}
+                {(!d.budgetRow || rows) && (
+                  <p data-testid="debt-payoff-line" className="mt-2 text-[12px] text-[var(--text-muted)]">
+                    {debtPayoffLine(d.balance, d.apr, debtPaymentOf(d, rows), planAge)}
+                  </p>
+                )}
               </div>
             )
           })}

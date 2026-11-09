@@ -20,6 +20,8 @@ import { PresetBar } from '@/shared/ui/PresetBar'
 import { ToolField } from '@/shared/ui/ToolField'
 import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { sumBalances } from '@/shared/utils/sumBalances'
+import { payoffMonths } from '@/shared/utils/payoffMonths'
+import { weightedApr } from '@/shared/utils/weightedApr'
 import { useBudgetIncome } from '@/shared/hooks/useBudgetIncome'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
@@ -95,15 +97,18 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
   const expenseTip = `Everything on your Budget tab EXCEPT the Rent row — each scenario substitutes its own rent. Currently ${fmt(nonRent)}/month of non-rent expenses${overriddenCount ? ` (${overriddenCount} row${overriddenCount > 1 ? 's' : ''} overridden just for this tool — see "Expenses used")` : ' (straight from the Budget tab)'}.`
 
   const totalDebt = sumBalances(debts)
+  // the same payoff math as the Debt payoff tool: all debts at their balance-weighted APR
+  const apr = weightedApr(debts)
   const payoffLabel = (leftPerMonth: number): string => {
     if (totalDebt <= 0 || leftPerMonth <= 0) return '—'
-    const months = Math.ceil(totalDebt / leftPerMonth)
+    const months = payoffMonths(totalDebt, leftPerMonth, apr)
+    if (months === null) return 'Never'
     if (months > 1200) return '100+ yrs'
     const y = Math.floor(months / 12)
     const m = months % 12
     return y > 0 ? `${y}y ${m}m` : `${m}m`
   }
-  const payoffTip = `Total debt from the shared debts above (${fmt(totalDebt)}) ÷ that row's monthly leftover, assuming every leftover dollar goes to debt. Ignores interest, so real payoff runs longer — especially on the card.`
+  const payoffTip = `Total debt from the shared debts above (${fmt(totalDebt)}) paid off with that row's monthly leftover, as if every leftover dollar goes to debt.${apr > 0 ? ` Interest is included at ${apr.toFixed(2)}% APR, the average rate across your debts weighted by balance, the same way the Debt payoff tool works it out. Never means the leftover does not cover the interest.` : ' Your debts have no APR, so this is the debt divided by the leftover. Add an APR on the Balances page to include interest.'}`
 
   return (
     <Card className="p-5">

@@ -22,6 +22,36 @@ describe('BalancesView', () => {
     expect(screen.getByText(/Retirement plans from your age on that day/)).toBeInTheDocument()
   })
 
+  it('explains how debt payoff flows into Retirement, right under What you owe', () => {
+    renderApp(<BalancesView />)
+    expect(screen.getByTestId('debt-explainer')).toHaveTextContent(
+      'Ledger uses your balance, interest rate and monthly payment to work out when each debt is paid off. The Retirement page then treats that payment as freed up money after the payoff date and sends it where your Budget says, usually to savings.',
+    )
+  })
+
+  it('says under each debt when it is paid off, at what age and what it frees up', () => {
+    seed('debts', [
+      { id: 'd1', name: 'Car', balance: 28490, apr: 0, payment: 385, budgetRow: null },
+      { id: 'd2', name: 'Card', balance: 12000, apr: 12, payment: 100, budgetRow: null },
+      { id: 'd3', name: 'Loan', balance: 1000, apr: 12, payment: 100, budgetRow: null },
+    ])
+    seed('retireCalc', { age: 38 })
+    seed('retireAgeAuto', false)
+    renderApp(<BalancesView />)
+    const lines = screen.getAllByTestId('debt-payoff-line').map((l) => l.textContent)
+    expect(lines).toEqual([
+      'Paid off in 6 years 2 months (age 44). Then $385 a month is freed up.',
+      'Your payment does not cover the interest, so this debt is never paid off at this payment.',
+      'Paid off in 11 months (age 38). Then $100 a month is freed up.',
+    ])
+  })
+
+  it('leaves the age out when it is not known', () => {
+    seed('debts', [{ id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250, budgetRow: null }])
+    renderApp(<BalancesView />)
+    expect(screen.getByTestId('debt-payoff-line')).toHaveTextContent('Paid off in 4 months. Then $250 a month is freed up.')
+  })
+
   it('starts empty with zero totals', () => {
     renderApp(<BalancesView />)
     expect(screen.getByText('No debts yet.')).toBeInTheDocument()

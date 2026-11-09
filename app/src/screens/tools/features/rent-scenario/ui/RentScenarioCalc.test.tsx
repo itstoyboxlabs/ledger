@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Debt } from '@/shared/types/Debt'
+import { payoffMonths } from '@/shared/utils/payoffMonths'
 import { renderApp } from '@/test-utils/renderApp'
 import { seedStorage } from '@/test-utils/seedStorage'
 import { RentScenarioCalc } from './RentScenarioCalc'
@@ -62,6 +63,18 @@ describe('RentScenarioCalc', () => {
     // 5000 - 600 - 5000 = -600
     expect(rows[1]).toHaveTextContent('−$600.00')
     expect(rows[1].querySelectorAll('td')[3].textContent).toBe('—')
+  })
+  it('includes interest in the debt payoff time, the same months as the Debt payoff tool', async () => {
+    localStorage.setItem('ledger:budgetIncomeOverride', JSON.stringify({ active: 'manual', amount: 5000 }))
+    localStorage.setItem('ledger:rentScenario3', JSON.stringify({ from: 4000, to: 4300, step: 300, rentRow: '' }))
+    // 5000 - 600 - 4000 = 400 left. 12,000 at 0% is 30 months, at 24% it is 47 (payoffMonths)
+    renderApp(<RentScenarioCalc debts={[{ id: 'd', name: 'Card', balance: 12000, apr: 24, payment: 0, budgetRow: null }]} />)
+    await screen.findByText('Rent scenarios')
+    const rows = screen.getAllByRole('row').slice(1)
+    expect(rows[0].querySelectorAll('td')[3].textContent).toBe(`${Math.floor(payoffMonths(12000, 400, 24) as number / 12)}y ${(payoffMonths(12000, 400, 24) as number) % 12}m`)
+    expect(rows[0].querySelectorAll('td')[3].textContent).toBe('3y 11m')
+    // 100 left does not cover the 240 a month in interest
+    expect(rows[1].querySelectorAll('td')[3].textContent).toBe('Never')
   })
   it('overriding an expense is flagged and can be reset', async () => {
     renderApp(<RentScenarioCalc debts={[]} />)

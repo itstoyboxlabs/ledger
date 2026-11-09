@@ -1022,13 +1022,34 @@ test.describe('rent scenarios', () => {
     await expect(r.locator('td').last()).toHaveText('—')
   })
 
-  test('with debts, "Debt paid off in" is the debt over the monthly leftover', async ({ page }) => {
+  test('with debts, "Debt paid off in" pays the debt from the monthly leftover, with interest', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'rentscenarios')
-    // 15,000 owed
+    // 15,000 owed at a balance-weighted 4% APR, the same as the Debt payoff tool's All debts
     await expect(line(card, 1000).locator('td').last()).toHaveText('5m')
     await expect(line(card, 2000).locator('td').last()).toHaveText('6m')
-    await expect(line(card, 4000).locator('td').last()).toHaveText('2y 1m')
+    // 611.80 a month: 25 months with no interest, 26 with it
+    await expect(line(card, 4000).locator('td').last()).toHaveText('2y 2m')
+  })
+
+  test('a leftover that does not cover the interest is never paid off', async ({ page }) => {
+    // 24% of 60,000 is 1,200 a month in interest, more than the 611.80 left at $4,000 rent
+    await seed(page, { debts: [{ id: 'd', name: 'Card', balance: 60000, apr: 24, payment: 0, budgetRow: null }] })
+    await expect(line(tool(page, 'rentscenarios'), 4000).locator('td').last()).toHaveText('Never')
+  })
+
+  test('the same debt pays off in the same months in Rent scenarios, Debt payoff, Balances and Retirement', async ({ page }) => {
+    // the $4,000 rent row leaves 611.80 a month, so the debt's own payment is set to that.
+    // 10,000 at 18% and 611.80 a month is 19 months (17 with no interest)
+    await seed(page, { debts: [{ id: 'd', name: 'Car', balance: 10000, apr: 18, payment: 611.8, budgetRow: null }] })
+    await expect(line(tool(page, 'rentscenarios'), 4000).locator('td').nth(1)).toHaveText('$611.80')
+    await expect(line(tool(page, 'rentscenarios'), 4000).locator('td').last()).toHaveText('1y 7m')
+    await expect(field(tool(page, 'debt'), 'Contribution per month')).toHaveValue('611.8')
+    await expect(row(tool(page, 'debt'), 'Time to pay off (includes interest)')).toContainText('1y 7m')
+    await goTo(page, 'Balances')
+    await expect(main(page).getByText(/^Paid off in 1 year 7 months/)).toBeVisible()
+    await goTo(page, 'Retirement')
+    await expect(main(page).getByText(/^Paid off in 1 year 7 months \(age \d+\)\. Then \$611\.80 a month is freed up\.$/)).toBeVisible()
   })
 
   test('with no debts it shows a dash', async ({ page }) => {

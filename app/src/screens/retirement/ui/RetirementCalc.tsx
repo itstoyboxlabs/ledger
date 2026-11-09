@@ -55,6 +55,8 @@ import { REPEAT_OPTIONS } from '@/screens/retirement/constants/REPEAT_OPTIONS'
 import { RETIRE_DEFAULTS } from '@/screens/retirement/constants/RETIRE_DEFAULTS'
 import { ssExplain } from '@/screens/retirement/utils/ssExplain'
 import { debtPayoffSchedule } from '@/screens/retirement/utils/debtPayoffSchedule'
+import { debtEventAmount } from '@/screens/retirement/utils/debtEventAmount'
+import { debtPayoffLine } from '@/shared/utils/debtPayoffLine'
 import { earliestSafeRetireAge } from '@/screens/retirement/utils/earliestSafeRetireAge'
 import { freedFromDebt } from '@/screens/retirement/utils/freedFromDebt'
 import { milestoneBalances } from '@/screens/retirement/utils/milestoneBalances'
@@ -222,13 +224,18 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const baseContrib401k = c.auto401k ? autoContrib401k : c.contrib401k
   const baseContribSavings = c.autoSavings ? autoContribSavings : c.contribSavings
   // events linked to the Equity payout tool take its net per year and its payout years
-  // a "pay off a debt" event costs the debt's balance (or a typed amount) once, at its age
+  // a "pay off a debt" event costs the debt's balance (or a typed amount) once, at its age.
+  // With an APR it is the balance plus any interest the payment leaves unpaid (debtEventAmount)
   const debtOf = (e: RetireEvent) => debts.find((d) => d.id === e.debtId)
+  const debtEventAuto = (e: RetireEvent) => {
+    const d = debtOf(e)
+    return d ? debtEventAmount(d.balance, debtPaymentOf(d, budgetRows), d.apr, (e.age - c.age) * 12) : 0
+  }
   const events = c.events.map((e): RetireEvent =>
     e.auto === 'equity'
       ? { ...e, kind: 'in', amount: autoOptAmt, years: stockPayout.years, repeat: e.repeat === 'once' ? 'once' : 'year' }
       : e.kind === 'debt'
-        ? { ...e, amount: e.custom ? e.amount : debtOf(e)?.balance ?? 0, repeat: 'once', years: 1 }
+        ? { ...e, amount: e.custom ? e.amount : debtEventAuto(e), repeat: 'once', years: 1 }
         : e,
   )
   // debts with a payoff event inside the plan leave the starting hole (they come out of
@@ -240,14 +247,15 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const removeEvent = (id: string) => setC({ ...c, events: c.events.filter((e) => e.id !== id) })
 
   // Debt payoff → savings waterfall: each debt is paid off independently at its own
-  // budgeted monthly payment (no snowballing between them). The payoff year gets a
+  // budgeted monthly payment (no snowballing between them), with interest at its APR (the
+  // same payoffMonths as the Debt payoff tool). The payoff year gets a
   // prorated credit for the months left after payoff; every year after gets all 12.
   // The freed payment follows the Budget's leftover split, whether the savings
   // number above it is auto or typed (see debtPayoffSchedule and freedFromDebt).
   const debtSchedules = debts.map((d, i): DebtSchedule =>
     payoffByDebt[d.id]
       ? { payoffAge: payoffByDebt[d.id].age, freedMonthsInPayoffYear: 12 }
-      : debtPayoffSchedule(d.balance, debtPayments[i], c.age),
+      : debtPayoffSchedule(d.balance, debtPayments[i], d.apr, c.age),
   )
   const autoTaxPct = gainsTaxPct(needMo * 12, taxState, filing)
   const taxPct = c.autoTax ? autoTaxPct : c.taxPct
@@ -331,14 +339,35 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     return { id: x.id ?? '', name: x.name, k401: m.own + m.match }
   })
   const budgetChoices = budgetPresets.map((x) => ({ id: x.id ?? '', name: x.name }))
+  // one line per debt saying when it is paid off, the same sentence Balances shows
+  const debtLine = (d: Debt, i: number): string => {
+    if (fromBalances && startOff.has(d.id)) return 'Left out of this plan, so it frees nothing.'
+    const ev = payoffByDebt[d.id]
+    if (ev) {
+      const p = debtPayments[i]
+      const freed = p > 0 ? ` Then ${Number.isInteger(p) ? fmt0(p) : fmt(p)} a month is freed up.` : ''
+      return `Paid off at age ${ev.age} by your Pay off a debt event.${freed}`
+    }
+    return debtPayoffLine(d.balance, d.apr, debtPayments[i], c.age)
+  }
   const debtNote = debts.length > 0 && (
-    <p className="col-span-2 mt-1 text-[11px] text-[var(--text-muted)]">
-      Once a debt from the Balances page is paid off, its monthly payment is split the way
-      you set up on the Budget page. For example, if you send 50% of what is left to savings
-      and 50% to something else, the freed payment is split 50 and 50 too. If you have not
-      set a split, all of it goes to savings.
-      {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
-    </p>
+    <div className="col-span-2 mt-1 text-[11px] text-[var(--text-muted)]">
+      <p>
+        Ledger works out when each debt from the Balances page is paid off from its balance, interest
+        rate and monthly payment, so interest is included. After that, its monthly payment is freed up
+        and split the way you set up on the Budget page. For example, if you send 50% of what is left to
+        savings and 50% to something else, the freed payment is split 50 and 50 too. If you have not set
+        a split, all of it goes to savings.
+        {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
+      </p>
+      <ul className="mt-1 flex flex-col gap-0.5">
+        {debts.map((d, i) => (
+          <li key={d.id} data-debt-line={d.id}>
+            <span className="font-medium text-[var(--text-secondary)]">{d.name || 'Unnamed debt'}:</span> <span>{debtLine(d, i)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
   const milestones = milestoneBalances(rows, c.age, c.endAge)
 
@@ -638,11 +667,13 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
                     auto={isDebt ? !raw.custom : linked}
                     onToggleAuto={() =>
                       isDebt
-                        ? patchEvent(e.id, { custom: !raw.custom, amount: raw.custom ? raw.amount : debt?.balance ?? 0 })
+                        ? patchEvent(e.id, { custom: !raw.custom, amount: raw.custom ? raw.amount : Math.round(debtEventAuto(e)) })
                         : patchEvent(e.id, linked ? { auto: undefined } : { auto: 'equity', kind: 'in', repeat: 'year' })}
-                    autoValue={isDebt ? debt?.balance ?? 0 : autoOptAmt}
+                    autoValue={isDebt ? debtEventAuto(e) : autoOptAmt}
                     autoTip={isDebt
-                      ? `The balance of ${debt?.name || 'this debt'} on the Balances page. Click Auto to type a different amount.`
+                      ? debt && debtEventAuto(e) > debt.balance
+                        ? `The balance of ${debt.name || 'this debt'} on the Balances page plus the interest your payment does not cover until this age. Click Auto to type a different amount.`
+                        : `The balance of ${debt?.name || 'this debt'} on the Balances page. ${debt && debt.apr > 0 ? 'Your monthly payment covers the interest until then. ' : ''}Click Auto to type a different amount.`
                       : `Pulled from the Equity payout tool on the Tools page: ${fmt0(stockPayout.gross)} before tax over ${stockPayout.years} ${stockPayout.years === 1 ? 'year' : 'years'}, taxed, is ${fmt0(autoOptAmt)} a year. It stops when you retire. Change the numbers there.`}
                     value={raw.amount}
                     onChange={(v) => patchEvent(e.id, { amount: v })}

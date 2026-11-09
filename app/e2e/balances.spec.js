@@ -47,6 +47,38 @@ test.describe('what you owe', () => {
     await expect(owe(page).locator('[data-slot=dropdown-menu-trigger]')).toContainText('Type it in')
   })
 
+  test('a box under What you owe explains how payoff flows into Retirement', async ({ page }) => {
+    await expect(owe(page).getByTestId('debt-explainer')).toContainText(
+      'Ledger uses your balance, interest rate and monthly payment to work out when each debt is paid off. The Retirement page then treats that payment as freed up money after the payoff date and sends it where your Budget says, usually to savings.',
+    )
+  })
+
+  test('each debt says when it is paid off and what it frees up, with interest included', async ({ page }) => {
+    await addDebt(page, { name: 'Car', balance: 28490, apr: 0, payment: 385 })
+    await addDebt(page, { name: 'Card', balance: 12000, apr: 12, payment: 100 })
+    const lines = owe(page).getByTestId('debt-payoff-line')
+    // no About you age and no Retirement plan yet, so no age
+    await expect(lines.nth(0)).toHaveText('Paid off in 6 years 2 months. Then $385 a month is freed up.')
+    await expect(lines.nth(1)).toHaveText('Your payment does not cover the interest, so this debt is never paid off at this payment.')
+    // a payment that covers the interest gets a payoff time
+    await nums(owe(page)).nth(5).fill('300')
+    await expect(lines.nth(1)).toHaveText('Paid off in 4 years 4 months. Then $300 a month is freed up.')
+  })
+
+  test('the payoff line shows the age Retirement plans from', async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.setItem('ledger:birthDate', JSON.stringify('1988-04-20'))
+      localStorage.setItem('ledger:assetsAsOf', JSON.stringify('2026-11-01'))
+    })
+    await page.reload()
+    await goTo(page, 'Balances')
+    // 38 on Nov 1 2026, and 74 months later is 44
+    await addDebt(page, { name: 'Car', balance: 28490, apr: 0, payment: 385 })
+    await expect(owe(page).getByTestId('debt-payoff-line')).toHaveText('Paid off in 6 years 2 months (age 44). Then $385 a month is freed up.')
+    await goTo(page, 'Retirement')
+    await expect(main(page).getByText('Paid off in 6 years 2 months (age 44). Then $385 a month is freed up.')).toBeVisible()
+  })
+
   test('total owed adds up every debt balance', async ({ page }) => {
     await addDebt(page, { name: 'Loans', balance: 20000, apr: 5, payment: 400 })
     await addDebt(page, { name: 'Card', balance: 3500.5, apr: 24, payment: 150 })

@@ -1,6 +1,7 @@
 // Months to clear `total` paying `perMonth`, or null when it never clears. With an APR
 // above 0 it uses the amortization formula (monthly interest on what is left); with no
-// APR it is balance divided by payment, rounded up.
+// APR it is balance divided by payment, rounded up. Debt payoff, Rent scenarios, Retirement and
+// Balances all use it, so a debt shows the same payoff time everywhere.
 export function payoffMonths(total: number, perMonth: number, apr: number): number | null {
   if (total <= 0) return 0
   if (!(perMonth > 0)) return null
