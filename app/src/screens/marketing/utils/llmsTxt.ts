@@ -23,7 +23,7 @@ export function llmsTxt(): string {
 ## Pages
 
 - [Home](${absoluteUrl('/')}): what Ledger is and how it works
-- [Tutorial](${absoluteUrl('/tutorial')}): nine short videos, one per page of the app
+- [Tutorial](${absoluteUrl('/tutorial')}): ten short videos, one per page of the app
 - [App](${absoluteUrl('/app')}): the app itself (empty until you upload your file)
 - [Source and docs](${PUBLISHER.github}): README, DOCS.md, the import prompt and how to contribute
 

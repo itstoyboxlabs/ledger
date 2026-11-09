@@ -15,7 +15,7 @@ export const PAGE_META = {
     head: `${FONTS}\n    ${GOOGLE_VERIFICATION}\n    ${BING_VERIFICATION}`,
   },
   tutorial: {
-    title: 'Ledger tutorial · Learn Ledger in 24 minutes',
+    title: 'Ledger tutorial · Learn Ledger in 48 minutes',
     description: 'Video tutorials for Ledger: getting started, then every tab from Spending to Retirement.',
     head: FONTS,
   },

@@ -19,7 +19,7 @@ export function TutorialPage() {
         <main id="main">
         <header>
           <span className="pill">Tutorial</span>
-          <h1>Learn Ledger in 24 minutes.</h1>
+          <h1>Learn Ledger in 48 minutes.</h1>
           <p>Start with getting set up, then go tab by tab. Every chapter uses made-up demo data, so you can follow along with the sample data in the app.</p>
         </header>
         <div className="layout">

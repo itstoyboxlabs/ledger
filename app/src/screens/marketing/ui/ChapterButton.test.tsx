@@ -7,7 +7,7 @@ describe('ChapterButton', () => {
     const onSelect = vi.fn()
     render(<ChapterButton chapter={TUTORIAL_CHAPTERS[4]} number={5} active onSelect={onSelect} />)
     expect(screen.getByText('Chapter 5')).toBeInTheDocument()
-    expect(screen.getByText('3:48')).toBeInTheDocument()
+    expect(screen.getByText('7:31')).toBeInTheDocument()
     expect(screen.getByRole('button')).toHaveClass('on')
     fireEvent.click(screen.getByRole('button'))
     expect(onSelect).toHaveBeenCalled()
