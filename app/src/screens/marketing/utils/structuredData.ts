@@ -57,7 +57,7 @@ export function structuredData(route: MarketingRoute): object[] {
         duration: isoDuration(c.length),
         thumbnailUrl: videoUrl(`${c.file}.jpg`),
         contentUrl: videoUrl(`${c.file}.mp4`),
-        uploadDate: '2026-11-08',
+        uploadDate: '2026-11-08T12:00:00+00:00',
       })
     }
   }
