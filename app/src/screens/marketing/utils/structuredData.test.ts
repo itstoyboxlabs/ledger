@@ -25,7 +25,7 @@ describe('structuredData', () => {
     const videos = graph('tutorial').filter((n) => n['@type'] === 'VideoObject')
     expect(videos).toHaveLength(TUTORIAL_CHAPTERS.length)
     expect(videos[0].duration).toMatch(/^PT\d+M\d+S$/)
-    expect(String(videos[0].contentUrl)).toMatch(/\/videos\/chapter-1-intro\.mp4$/)
+    expect(String(videos[0].contentUrl)).toMatch(/\/videos\/chapter-1-intro\.mp4(\?v=\d+)?$/)
   })
 
   it('is valid JSON with a schema.org context', () => {

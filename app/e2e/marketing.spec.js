@@ -20,18 +20,18 @@ test.describe('landing page', () => {
 })
 
 test.describe('tutorial page', () => {
-  test('lists all nine chapters', async ({ page }) => {
+  test('lists all ten chapters', async ({ page }) => {
     await page.goto('/tutorial')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Learn Ledger in 24 minutes.')
-    await expect(page.locator('button.ch')).toHaveCount(9)
-    await expect(page.getByText('Chapter 1 of 9')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Learn Ledger in 48 minutes.')
+    await expect(page.locator('button.ch')).toHaveCount(10)
+    await expect(page.getByText('Chapter 1 of 10')).toBeVisible()
   })
 
   test('picking a chapter loads its video', async ({ page }) => {
     await page.goto('/tutorial')
     await page.locator('button.ch').nth(3).click()
-    await expect(page.getByText('Chapter 4 of 9')).toBeVisible()
-    await expect(page.locator('video')).toHaveAttribute('src', /\/videos\/chapter-4-spending\.mp4$/)
+    await expect(page.getByText('Chapter 4 of 10')).toBeVisible()
+    await expect(page.locator('video')).toHaveAttribute('src', /\/videos\/chapter-4-spending\.mp4(\?v=\d+)?$/)
   })
 })
 
