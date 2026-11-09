@@ -24,6 +24,20 @@ async function showMarketing(route: MarketingRoute) {
   // page views for the public pages only; the app route carries no analytics
   const { inject } = await import('@vercel/analytics')
   inject()
+  countVisit()
+}
+
+// One anonymous count per browser session, by state, on the public pages only. The server reads the state from
+// the request and stores nothing else (see api/visit.js).
+function countVisit() {
+  if (import.meta.env.DEV) return
+  try {
+    if (sessionStorage.getItem('ledger:counted')) return
+    sessionStorage.setItem('ledger:counted', '1')
+    navigator.sendBeacon('/api/visit')
+  } catch {
+    // counting is best effort
+  }
 }
 
 // Pick the storage mode and load the transactions before the first render, so nothing in the app ever sees an
