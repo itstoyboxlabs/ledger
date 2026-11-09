@@ -5,7 +5,7 @@ export const HOW_STEPS = [
   },
   {
     title: 'Use the import prompt',
-    text: "Copy Ledger's prompt and read it first, so you know exactly what it asks for. Then give it to ChatGPT, Claude or Codex with your statements and let it make the file. It checks its own math against every statement.",
+    text: "Copy Ledger's prompt and read it first, so you know exactly what it asks for. Then give it to ChatGPT or Claude with your statements and let it make the file. It checks its own math against every statement.",
   },
   {
     title: 'Upload and go',
