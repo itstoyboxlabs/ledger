@@ -16,7 +16,7 @@ export function ExportModal({ onClose, notify }: ExportModalProps) {
       description={
         local
           ? 'Your data already lives in the data folder of this project, so exporting is optional. It saves your statements, budget and settings to one file, ledger-data.json, as a backup.'
-          : 'Saves everything to one file, ledger-data.json: your statements, budget, notes and settings. Keep it as a backup. Next month, give it to your assistant with your new statements and upload the file it gives back.'
+          : 'Saves everything to one file, ledger-data.json: your statements, budget and settings. Keep it as a backup. Next month, give it to your assistant with your new statements and upload the file it gives back.'
       }
       className="max-w-[420px] p-5"
     >

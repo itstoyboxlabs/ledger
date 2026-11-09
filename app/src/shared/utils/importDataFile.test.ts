@@ -110,6 +110,13 @@ describe('importDataFile', () => {
     expect(await getPresets()).toEqual({})
     expect(localStorage.getItem('ledger:age')).toBeNull()
   })
+  it('notes in an uploaded file survive an export', async () => {
+    const notes = [{ id: 'n1', text: 'keep me', pinned: true }]
+    await importDataFile({ version: 1, notes: ['top level'], transactions: [tx('a', '2026-01-01')], settings: { notes: { notes } } })
+    const out = await buildExport()
+    expect(out.settings?.notes).toEqual({ notes })
+    expect(out.notes).toEqual(['top level'])
+  })
   it('throws in local mode and changes nothing', async () => {
     storageModeStore.setState({ mode: 'local' })
     await expect(importDataFile({ version: 1, transactions: [tx('a', '2026-01-01')] })).rejects.toThrow('Importing is off in local mode')

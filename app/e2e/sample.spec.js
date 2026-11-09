@@ -32,7 +32,7 @@ test.describe('rich sample data', () => {
     await expect(main(page).getByText('Replace the car').or(main(page).locator('input[value="Replace the car"]')).first()).toBeVisible()
   })
 
-  test('Log and Notes have entries', async ({ page }) => {
+  test('Log has entries', async ({ page }) => {
     await goTo(page, 'Log')
     await expect(main(page).getByText('Farmers market')).toBeVisible()
   })

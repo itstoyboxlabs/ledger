@@ -45,7 +45,7 @@ monthly need and the About you tab have shipped and are not listed.
 | Balances assets | Retirement | Starting liquid and locked balances by pool |
 | Equity payout tool | Retirement | Money-in events while working |
 
-Islands: Log feeds nothing. Notes, Lists, Hourly, Rent-to-income and Effective rental cost read nothing and
+Islands: Log feeds nothing. Lists, Hourly, Rent-to-income and Effective rental cost read nothing and
 feed nothing.
 
 ### Duplicated inputs

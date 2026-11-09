@@ -15,14 +15,13 @@ import { NAV } from '@/shared/constants/NAV'
 import { NextStatementLine } from '@/shared/ui/NextStatementLine'
 import { TUTORIAL_URL } from '@/shared/constants/TUTORIAL_URL'
 
-// Left rail: wordmark, page nav, account filter, notes. Collapses to a top strip
+// Left rail: wordmark, page nav, account filter. Collapses to a top strip
 // of nav pills below the lg breakpoint.
 type SidebarProps = {
   view: string
   setView: (view: string) => void
   accounts: string[]
   setAccounts: (accounts: string[]) => void
-  onNotes: () => void
   onExport: () => void
   onUpload?: (() => void) | null
 }
@@ -31,7 +30,7 @@ type RailAction = { icon: string; label: string; tip: string; onClick?: () => vo
 
 type AccountGroup = { bank: string; items: [string, Account][] }
 
-export function Sidebar({ view, setView, accounts, setAccounts, onNotes, onExport, onUpload }: SidebarProps) {
+export function Sidebar({ view, setView, accounts, setAccounts, onExport, onUpload }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   // each account row is an on/off switch for the Actuals account filter
   const acctOn = (id: string) => accounts.includes(id)
@@ -137,18 +136,6 @@ export function Sidebar({ view, setView, accounts, setAccounts, onNotes, onExpor
             </UITooltip>
           ))}
         </div>
-        <UITooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost"
-              onClick={() => { done(); onNotes() }}
-              className="h-auto justify-start gap-4 rounded-xl px-3.5 py-2.5 text-[15px] font-normal text-[var(--text-secondary)] hover:text-white"
-            >
-              <Icon name="pencil" size={18} />
-              Notes
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Your personal notes.</TooltipContent>
-        </UITooltip>
       </div>
     </>
   )

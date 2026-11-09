@@ -1,5 +1,5 @@
 import type { NavEntry } from '@/shared/types/NavEntry'
-// top nav bar — title, notes button, view tabs, plus the account/filter strip
+// top nav bar — title, view tabs, plus the account/filter strip
 // beneath it. Pinned to exactly 2 lines regardless of viewport width.
 export const NAV: readonly NavEntry[] = [
   ['about', 'About you', 'user', 'Your birth date, filing status and tax state. The planning pages read them from here.'],
