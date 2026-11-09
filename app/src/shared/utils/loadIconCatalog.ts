@@ -20,7 +20,7 @@ function writeCache(catalog: IconCatalog) {
 }
 
 // Loads the shared logo catalog's index once per page: from this tab's sessionStorage if it is there, otherwise
-// from the site's own Blob store. The request carries nothing about the user's merchants. Any failure is silent
+// from the project's public Supabase storage bucket. The request carries nothing about the user's merchants. Any failure is silent
 // and leaves the letter avatars in place.
 export async function loadIconCatalog(): Promise<void> {
   const { status } = iconCatalogStore.getState()

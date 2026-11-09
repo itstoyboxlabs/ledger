@@ -6,9 +6,9 @@ import { test as base, expect } from '@playwright/test'
 // "this month" is always November 2026 and the sample data's last month is October 2026.
 export const NOW = '2026-11-08T12:00:00'
 
-// The hosted site loads a shared merchant logo catalog from the Blob store. Tests never reach it: by default the
+// The hosted site loads a shared merchant logo catalog from the Supabase storage bucket. Tests never reach it: by default the
 // request fails, so merchants show letter avatars as before. icons.spec.js mocks it instead.
-export const ICON_ROUTE = 'https://*.public.blob.vercel-storage.com/icons/**'
+export const ICON_ROUTE = 'https://newimvknbatgjauygmwu.supabase.co/storage/v1/object/public/ledger-public/icons/**'
 
 // The first-run "watch the tutorials" nudge would sit over the sidebar in every spec, so by default each test
 // starts with `ledger:tutorialAck` already set. Set `test.use({ tutorialAck: false })` to start like a new user.
