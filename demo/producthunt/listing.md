@@ -18,7 +18,7 @@ I built it because most money apps stop at a spending chart and a monthly budget
 
 Ledger connects all of it. Your statements feed Spending, Spending feeds the Budget, the Budget's income and leftover feed the calculators and the Retirement plan, and your balances feed both. Change your salary once and the budget, rent scenarios and retirement projection all move.
 
-How it works: download your statements from any bank, give them to an AI assistant (Claude, ChatGPT or Codex) with Ledger's import prompt, and upload the file it makes. Ledger itself never sees your statements, has no server and no accounts. Your data stays in your browser or on your own computer.
+How it works: download your statements from any bank, give them to an AI assistant (Claude or ChatGPT) with Ledger's import prompt, and upload the file it makes. Ledger itself never sees your statements, has no server and no accounts. Your data stays in your browser or on your own computer.
 
 It's free and open source (MIT), and I'd love to hear what is missing: https://github.com/itstoyboxlabs/ledger
 

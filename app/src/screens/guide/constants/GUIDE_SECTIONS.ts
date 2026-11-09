@@ -42,7 +42,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           {
             kind: 'p',
             text: [
-              'Ledger has no bank connections and no login. You download your statements from your bank, as PDF or CSV from any bank, and give them to an AI assistant you already use, such as Claude, ChatGPT or Codex, together with Ledger\'s import prompt. The assistant turns them into one file, ',
+              'Ledger has no bank connections and no login. You download your statements from your bank, as PDF or CSV from any bank, and give them to an AI assistant you already use, such as Claude or ChatGPT, together with Ledger\'s import prompt. The assistant turns them into one file, ',
               { code: 'ledger-data.json' },
               ', and you upload that file here.',
             ],

@@ -1,7 +1,7 @@
 export const FAQ_ITEMS = [
   {
     question: 'Is it safe to give my statements to an AI assistant?',
-    answer: 'Your statements never go to Ledger. You download them from your bank and give them to your own AI assistant (ChatGPT, Claude or Codex) with the import prompt. The prompt tells it to keep only the date, merchant, amount and category, plus the last four digits of each account, and to scrub out your name, address and anything else that identifies you. That is just an extra precaution, because nothing is uploaded to Ledger anyway. You upload only the file it makes, and it stays in your browser. If you would rather keep everything on your own computer, run Ledger yourself with a coding assistant like Claude Code or Codex.',
+    answer: 'Your statements never go to Ledger. You download them from your bank and give them to your own AI assistant (ChatGPT or Claude) with the import prompt. The prompt tells it to keep only the date, merchant, amount and category, plus the last four digits of each account, and to scrub out your name, address and anything else that identifies you. That is just an extra precaution, because nothing is uploaded to Ledger anyway. You upload only the file it makes, and it stays in your browser. If you would rather keep everything on your own computer, run Ledger yourself with a coding assistant like Claude Code or Codex.',
   },
   {
     question: 'Which banks work?',
@@ -17,7 +17,7 @@ export const FAQ_ITEMS = [
   },
   {
     question: 'Does it cost anything?',
-    answer: 'No. Ledger is free and open source. You only need an AI assistant like ChatGPT, Claude or Codex for the import.',
+    answer: 'No. Ledger is free and open source. You only need an AI assistant like ChatGPT or Claude for the import.',
   },
   {
     question: 'Is this financial advice?',

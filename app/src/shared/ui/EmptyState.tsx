@@ -42,7 +42,7 @@ export function EmptyState() {
         <h1 className="text-[26px] font-bold tracking-tight">There's nothing here yet.</h1>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-[14px] leading-relaxed text-[var(--text-secondary)]">
           <li>Download your statements from your bank.</li>
-          <li>Give them to an AI assistant (Claude, ChatGPT or Codex) with the import prompt.</li>
+          <li>Give them to an AI assistant (Claude or ChatGPT) with the import prompt.</li>
           <li>Upload the ledger-data.json file it gives you.</li>
         </ol>
         <p className="mt-3 text-[13px] text-[var(--text-muted)]">
