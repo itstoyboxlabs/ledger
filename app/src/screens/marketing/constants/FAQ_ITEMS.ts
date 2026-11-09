@@ -1,7 +1,7 @@
 export const FAQ_ITEMS = [
   {
     question: 'Is it safe to give my statements to an AI assistant?',
-    answer: 'The assistant reads your statements. Ledger itself never sees them, only the file the assistant makes. The import prompt keeps just the last four digits of each account, and you can black out account numbers before you share anything. If you would rather keep everything on your own computer, run Ledger yourself with a coding assistant like Claude Code or Codex.',
+    answer: 'Your statements never go to Ledger. You download them from your bank and give them to your own AI assistant (ChatGPT, Claude or Codex) with the import prompt. The prompt tells it to keep only the date, merchant, amount and category, plus the last four digits of each account, and to leave out your name, address and anything else that identifies you. Then you upload only the file it makes, and it stays in your browser. If you would rather keep everything on your own computer, run Ledger yourself with a coding assistant like Claude Code or Codex.',
   },
   {
     question: 'Which banks work?',
