@@ -6,6 +6,7 @@ import { IMPORT_PROMPT } from '@/shared/constants/IMPORT_PROMPT'
 import { useData } from '@/shared/hooks/useData'
 import { isLocal } from '@/shared/utils/isLocal'
 import { copyText } from '@/shared/utils/copyText'
+import { TUTORIAL_URL } from '@/shared/constants/TUTORIAL_URL'
 
 // What Root shows before any statements are loaded: how to import them in local mode, or the
 // upload, copy prompt and sample data buttons in the browser.
@@ -46,6 +47,13 @@ export function EmptyState() {
         </ol>
         <p className="mt-3 text-[13px] text-[var(--text-muted)]">
           Used Ledger before? Upload the last ledger-data.json you exported. It has your statements and settings, and it replaces what is stored on this device.
+        </p>
+        <p className="mt-3 text-[13px] text-[var(--text-muted)]">
+          New here? We suggest the{' '}
+          <a href={TUTORIAL_URL} target="_blank" rel="noreferrer" className="text-[var(--accent)] underline underline-offset-4 hover:text-white">
+            video tutorial
+          </a>
+          . It is about 48 minutes, slow and deliberate, so you understand how it all connects before you start.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <Input
