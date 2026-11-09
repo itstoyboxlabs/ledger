@@ -139,6 +139,10 @@ table.yr tr.hl td{background:rgba(110,128,255,.08)}
 .ph{display:inline-flex;align-items:center;gap:6px}
 .ph i{width:6px;height:6px;border-radius:50%;background:var(--green)}
 
+.heads-up{max-width:820px;margin:0 auto 40px;padding:18px 22px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)}
+.heads-up h2{font-size:15px;font-weight:700;margin-bottom:6px}
+.heads-up p{font-size:14px;color:var(--muted);line-height:1.6}
+.heads-up p.closing{margin-top:10px;color:var(--text)}
 .strip{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;margin:10px 0 30px}
 .strip>div{display:flex;gap:24px;align-items:flex-start;padding:0 36px}
 .strip>div+div{border-left:1px solid var(--line)}

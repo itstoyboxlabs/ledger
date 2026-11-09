@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FaqSection } from '@/screens/marketing/ui/FaqSection'
 import { FeaturesSection } from '@/screens/marketing/ui/FeaturesSection'
 import { FinalCta } from '@/screens/marketing/ui/FinalCta'
+import { HeadsUp } from '@/screens/marketing/ui/HeadsUp'
 import { Hero } from '@/screens/marketing/ui/Hero'
 import { HowSection } from '@/screens/marketing/ui/HowSection'
 import { IconSprite } from '@/screens/marketing/ui/IconSprite'
@@ -26,6 +27,7 @@ export function LandingPage() {
       <main id="main">
         <div className="wrap">
           <Hero />
+          <HeadsUp />
           <HowSection />
           <FeaturesSection tab={tab} onSelect={setTab} />
           <PrivacyStrip />
