@@ -24,11 +24,14 @@ export function useViewRoute(validate: (v: unknown) => boolean): [string, (view:
       if (next) {
         setViewState(next)
         setSaved(next)
+      } else {
+        // back onto an address that is no screen (like /app/upload after loading data): stay on the open screen
+        window.history.replaceState(null, '', pathForView(view))
       }
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [setSaved])
+  }, [setSaved, view])
 
   useEffect(() => track('screen_opened'), [view])
 

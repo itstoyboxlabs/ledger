@@ -32,4 +32,23 @@ describe('useViewRoute', () => {
     })
     expect(result.current[0]).toBe('actuals')
   })
+
+  it('stays on the open screen when back lands on an address that is no screen', () => {
+    window.history.replaceState(null, '', '/app/budget')
+    const { result } = renderHook(() => useViewRoute(ok))
+    act(() => {
+      window.history.replaceState(null, '', '/app/upload')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    expect(result.current[0]).toBe('budget')
+    expect(window.location.pathname).toBe('/app/budget')
+  })
+
+  it('shows the saved screen for an address that names none', () => {
+    localStorage.setItem('ledger:view', JSON.stringify('log'))
+    window.history.replaceState(null, '', '/app/upload')
+    const { result } = renderHook(() => useViewRoute(ok))
+    expect(result.current[0]).toBe('log')
+    expect(window.location.pathname).toBe('/app/log')
+  })
 })
