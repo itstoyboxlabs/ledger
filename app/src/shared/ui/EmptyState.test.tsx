@@ -11,6 +11,12 @@ afterEach(() => {
 })
 
 describe('EmptyState', () => {
+  it('moves a screen address to the upload address when there is no data', () => {
+    window.history.replaceState(null, '', '/app/spending')
+    renderApp(<EmptyState />)
+    expect(window.location.pathname).toBe('/app/upload')
+  })
+
   it('offers upload, the import prompt and sample data in the browser', async () => {
     const importSample = vi.fn(async () => {})
     renderApp(<EmptyState />, { context: { importSample } })

@@ -8,7 +8,7 @@ export function FinalCta() {
     <section className="final">
       <div className="wrap reveal-kids">
         <h2>Take control of your money.</h2>
-        <p>Private, powerful and free. Just your data, your plan and your goals.</p>
+        <p>Powerful and free. Just your data, your plan and your goals.</p>
         <div className="ctas">
           <a className="btn btn-g" href={LINKS.app}>
             Try Ledger

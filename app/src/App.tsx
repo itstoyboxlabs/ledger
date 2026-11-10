@@ -44,6 +44,7 @@ import { scrollToWhenReady } from '@/shared/utils/scrollToWhenReady'
 import { roundCents } from '@/shared/utils/roundCents'
 import { useDebtLinkMigration } from '@/shared/hooks/useDebtLinkMigration'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
+import { useViewRoute } from '@/shared/hooks/useViewRoute'
 import { migrateEmployerMatch } from '@/shared/utils/migrateEmployerMatch'
 import { lazyNamed } from '@/shared/utils/lazyNamed'
 import { prefetchChunks } from '@/shared/utils/prefetchChunks'
@@ -84,8 +85,8 @@ export default function App() {
     'path', [], // [] | [cat] | [cat, sub]
     (v) => Array.isArray(v) && v.length <= 2 && v.every((p) => typeof p === 'string'),
   )
-  const [view, setView] = usePersistedState(
-    'view', 'actuals',
+  // the open screen lives in the address (/app/spending ...) and is saved so /app opens where you left off
+  const [view, setView] = useViewRoute(
     (v) => typeof v === 'string' && ['actuals', 'guide', 'about', 'budget', 'log', 'tools', 'retirement', 'balances'].includes(v),
   )
   const [showExport, setShowExport] = useState(false)

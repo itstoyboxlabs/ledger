@@ -1,3 +1,4 @@
+import { track } from '@/shared/utils/track'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { getMonths } from '@/shared/utils/getMonths'
 import { useTaxState } from '@/shared/hooks/useTaxState'
@@ -221,6 +222,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     }
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
+      track('budget_changed')
       saveBudget({
         updated: new Date().toISOString().slice(0, 10),
         rows: next,

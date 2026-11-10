@@ -1,3 +1,4 @@
+import { track } from '@/shared/utils/track'
 import { isLocal } from '@/shared/utils/isLocal'
 import { downloadExport } from '@/shared/utils/downloadExport'
 import { Button } from '@/shared/ui/primitives/button'
@@ -26,6 +27,7 @@ export function ExportModal({ onClose, notify }: ExportModalProps) {
           onClick={async () => {
             try {
               await downloadExport()
+              track('export_downloaded')
               onClose()
             } catch {
               notify('Could not build the export file.', 'error')

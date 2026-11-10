@@ -188,12 +188,27 @@ function transactionsApi() {
 }
 
 // Ledger dashboard — pinned to :5150 (see ~/Dev/projects/CONVENTIONS.md port map)
+// vercel.json sends every /app/* address to the app shell. `vite preview` has no such rule and would serve the
+// landing page there, so this does the same rewrite for local previews of the build.
+function appShellRewrite() {
+  return {
+    name: 'app-shell-rewrite',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url && /^\/app\/[^.?]*(\?|$)/.test(req.url)) req.url = '/app/index.html'
+        next()
+      })
+    },
+  }
+}
+
 // `vite --mode browser` skips the file API plugins so the app runs in browser mode
 // (IndexedDB), same as the static hosted build.
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    appShellRewrite(),
     ...(mode === 'browser'
       ? []
       : [budgetApi(), notesApi(), presetsApi(), logApi(), transactionsApi()]),

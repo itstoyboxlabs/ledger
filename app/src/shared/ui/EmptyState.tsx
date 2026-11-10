@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Button } from '@/shared/ui/primitives/button'
 import { Card } from '@/shared/ui/primitives/card'
 import { Input } from '@/shared/ui/primitives/input'
@@ -7,6 +7,7 @@ import { useData } from '@/shared/hooks/useData'
 import { isLocal } from '@/shared/utils/isLocal'
 import { copyText } from '@/shared/utils/copyText'
 import { TUTORIAL_URL } from '@/shared/constants/TUTORIAL_URL'
+import { UPLOAD_PATH } from '@/shared/constants/UPLOAD_PATH'
 
 // What Root shows before any statements are loaded: how to import them in local mode, or the
 // upload, copy prompt and sample data buttons in the browser.
@@ -15,6 +16,10 @@ export function EmptyState() {
   if (!ctx) throw new Error('EmptyState must be rendered inside the data provider.')
   const { importFiles, importSample, notify } = ctx
   const fileRef = useRef<HTMLInputElement>(null)
+  // with nothing loaded, a screen address like /app/spending is moved to the upload address
+  useEffect(() => {
+    if (!isLocal() && window.location.pathname !== UPLOAD_PATH) window.history.replaceState(null, '', UPLOAD_PATH)
+  }, [])
   const copy = async () => {
     if (await copyText(IMPORT_PROMPT)) notify('Import prompt copied.')
     else notify('Could not copy. Your browser blocked it.', 'error')
