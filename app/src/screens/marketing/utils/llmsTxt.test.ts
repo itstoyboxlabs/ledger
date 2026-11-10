@@ -9,7 +9,7 @@ describe('llmsTxt', () => {
   it('states the price, where data lives and links the pages', () => {
     const t = llmsTxt()
     expect(t).toContain('Price: free')
-    expect(t).toContain('no analytics on your data')
+    expect(t).toContain('Usage details')
     expect(t).toContain('/tutorial')
     expect(t).toContain('github.com/itstoyboxlabs/ledger')
   })

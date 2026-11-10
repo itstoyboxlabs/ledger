@@ -1,3 +1,4 @@
+import { track } from '@/shared/utils/track'
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { BudgetFile } from '@/shared/types/BudgetFile'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
@@ -84,6 +85,7 @@ export function LogView() {
   // or deleting is one action, and a delay could lose it if the page closes.
   const persist = (change: (list: LogEntry[]) => LogEntry[]) => {
     setEntries((prev) => change(prev ?? []))
+    track('log_changed')
     setSaveState('saving')
     pendingLogWrites.current++
     queueWrite(async () => {
@@ -175,6 +177,7 @@ export function LogView() {
   const setTracked = (id: string, trackInLog: boolean) => {
     const patch = (rows: BudgetRow[]) => rows.map((r) => (r.id === id ? { ...r, trackInLog } : r))
     setBudgetFile((prev) => prev && { ...prev, rows: patch(prev.rows) })
+    track('budget_changed')
     queueWrite(async () => {
       const fresh = await getBudget()
       const next: BudgetFile = { ...fresh, updated: todayYmd(), rows: patch(fresh.rows) }

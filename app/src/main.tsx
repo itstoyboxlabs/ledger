@@ -5,6 +5,8 @@ import { getData } from '@/shared/utils/getData'
 import { applyData } from '@/shared/utils/applyData'
 import type { MarketingRoute } from '@/screens/marketing/types/MarketingRoute'
 import { routeFor } from '@/shared/utils/routeFor'
+import { track } from '@/shared/utils/track'
+import { installCrashTracking } from '@/shared/utils/installCrashTracking'
 
 const rootEl = document.getElementById('root') as HTMLElement
 
@@ -21,10 +23,14 @@ async function showMarketing(route: MarketingRoute) {
   )
   if (rootEl.hasChildNodes()) hydrateRoot(rootEl, page)
   else createRoot(rootEl).render(page)
-  // page views for the public pages only; the app route carries no analytics
+  await startAnalytics()
+  countVisit()
+}
+
+// Vercel Analytics page views. It follows the address bar, so every app screen (/app/spending ...) counts as its own page.
+async function startAnalytics() {
   const { inject } = await import('@vercel/analytics')
   inject()
-  countVisit()
 }
 
 // One anonymous count per browser per day, by state, on the public pages only. The server reads the state from
@@ -58,9 +64,12 @@ async function showApp() {
       <Root />
     </StrictMode>,
   )
+  await startAnalytics()
+  track('app_opened')
 }
 
 async function boot() {
+  installCrashTracking()
   let route = routeFor(window.location.pathname)
   // On the dev server with your own data folder (local mode), the root opens the app, as it always has.
   if (route === 'home' && import.meta.env.DEV && (await detectMode()) === 'local') route = 'app'

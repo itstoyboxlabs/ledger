@@ -57,12 +57,12 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         id: 'stays-on-your-device',
-        title: 'Everything stays on your device',
+        title: 'Where your data lives',
         blocks: [
           {
             kind: 'p',
             text: [
-              'On the website, your data lives in this browser\'s own storage and is never sent to a server. Ledger has no server, no database and no analytics on your data. The only thing the app loads from the network is a shared catalog of merchant logos, and that request is the same for every visitor, so it says nothing about you.',
+              'On the website, your statements and the numbers you enter live in this browser\'s own storage and are not uploaded anywhere. The app does send usage details, which are just which page and tool is used plus a random session ID. They help with product design, analytics and making sure the app works well. No personal information and no actual values you enter are ever sent.',
             ],
           },
           {
@@ -424,7 +424,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           {
             kind: 'p',
             text: [
-              'On the website, everything lives in this browser on this device. It is never sent to a server, and it does not follow you to another browser or another computer. When you run Ledger on your own computer, the data lives as plain files in a data folder instead.',
+              'On the website, everything lives in this browser on this device. It is not uploaded anywhere, and it does not follow you to another browser or another computer. When you run Ledger on your own computer, the data lives as plain files in a data folder instead.',
             ],
           },
           {
@@ -1037,12 +1037,12 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         id: 'privacy-promise',
-        title: 'The privacy promise',
+        title: 'What Ledger sends',
         blocks: [
           {
             kind: 'p',
             text: [
-              'Ledger never sends your data anywhere. There are no accounts, no server, no database and no analytics on your data, and every change has to keep it that way. Never post your own statements, account numbers or ',
+              'Ledger never uploads your statements or the values you enter. The only thing it sends is usage details: which page and tool is used, a random session ID and the message of a crash. Every change has to keep it that way and must not add personal information or entered values to what is sent. Never post your own statements, account numbers or ',
               { code: 'ledger-data.json' },
               ' in an issue or a pull request. Use the sample data instead.',
             ],

@@ -1,7 +1,7 @@
 export const STRIP_ITEMS = [
   {
-    title: 'Private by design',
-    text: 'Ledger never connects to your bank and your statements are never uploaded. Your own AI assistant turns them into a small file with no personal details, and that file is all you upload. No logins, no accounts and no server holding your data.',
+    title: 'No bank logins',
+    text: 'Ledger never connects to your bank and your statements are never uploaded to Ledger. Your own AI assistant turns them into a small file with no personal details, and that file is all you upload. No logins and no accounts.',
     paths: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 'm9 12 2 2 4-4'],
   },
   {

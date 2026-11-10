@@ -1,3 +1,4 @@
+import { track } from '@/shared/utils/track'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import App from './App'
 import { Button } from '@/shared/ui/primitives/button'
@@ -44,6 +45,7 @@ export default function Root() {
         })
         const { data, settings } = await importDataFile(combineDataFiles(files), { sample })
         setVersion((v) => v + 1)
+        track(sample ? 'sample_loaded' : 'import_completed')
         if (okMessage) notify(okMessage)
         else if (data && settings) notify('Loaded your statements and settings.')
         else if (data) notify(`Loaded ${getAllTxns().length.toLocaleString('en-US')} transactions.`)

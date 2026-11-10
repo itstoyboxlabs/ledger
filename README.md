@@ -54,7 +54,7 @@ Next month, click Export data to save your latest `ledger-data.json`. Give that 
 
 ## Two ways to run it
 
-**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Everything is stored in your browser and never sent anywhere. Clearing your browser data clears it, so use Export data now and then. It saves one `ledger-data.json` with your statements, budget and settings, and uploading it brings everything back.
+**In your browser.** Open [ledgerfinancialplanning.com/app](https://ledgerfinancialplanning.com/app) and upload your file. Your statements and numbers are stored in your browser and are not uploaded anywhere. Clearing your browser data clears it, so use Export data now and then. It saves one `ledger-data.json` with your statements, budget and settings, and uploading it brings everything back.
 
 **On your computer.** Clone the repo and run it. A coding assistant such as Claude Code or Codex can read your statements folder and write the data files for you, and nothing is lost when you clear your browser.
 
@@ -86,7 +86,7 @@ To add merchants to the catalog, add a line to `icon-domains.txt` and see "Merch
 
 ## Privacy
 
-Your statements are only ever read by the assistant you choose, the same way any file you attach to a chat is. Ledger itself has no server, no database and no analytics on your data. The only thing the app loads from the network is the shared merchant logo catalog, which is the same for everyone. You can read all of the code to check.
+Your statements are only ever read by the assistant you choose, the same way any file you attach to a chat is. Ledger does not upload your statements or the values you enter. The hosted site sends usage details only: which page and tool is used, a random session ID and crash messages. That is for product design, analytics and making sure the app works well. No personal information and no entered values are sent. You can read all of the code to check.
 
 ## Built with
 

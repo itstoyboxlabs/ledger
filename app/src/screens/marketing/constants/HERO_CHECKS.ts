@@ -1,1 +1,1 @@
-export const HERO_CHECKS = ['No bank logins or accounts', 'Your data stays in your browser', 'Free and open source']
+export const HERO_CHECKS = ['No bank logins or accounts', 'Free and open source', 'Works with any bank']
