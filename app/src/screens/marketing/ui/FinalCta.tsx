@@ -1,4 +1,3 @@
-import { FinalWave } from '@/screens/marketing/ui/FinalWave'
 import { Icon } from '@/screens/marketing/ui/Icon'
 import { MarketingFooter } from '@/screens/marketing/ui/MarketingFooter'
 import { LINKS } from '@/screens/marketing/constants/LINKS'
@@ -19,8 +18,9 @@ export function FinalCta() {
           </a>
         </div>
       </div>
-      <FinalWave />
-      <MarketingFooter />
+      <div className="wrap">
+        <MarketingFooter />
+      </div>
     </section>
   )
 }
