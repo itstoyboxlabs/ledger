@@ -5,14 +5,12 @@ import { LINKS } from '@/screens/marketing/constants/LINKS'
 
 export function HeroCopy() {
   return (
-    <div className="reveal-kids">
+    <div className="hero-copy reveal-kids">
       <span className="pill">Free &amp; Open Source</span>
       <h1>
-        Financial planning that{' '}
-        <em>doesn't oversimplify you.</em>
+        Financial planning that <em>doesn't oversimplify you.</em>
       </h1>
       <p className="lead">See where your money goes, plan your budget, track spending as the month goes and project when you could retire.</p>
-      <CheckList items={HERO_CHECKS} />
       <div className="ctas">
         <a className="btn btn-g" href={LINKS.app}>
           Try Ledger
@@ -22,6 +20,7 @@ export function HeroCopy() {
           View on GitHub
         </a>
       </div>
+      <CheckList items={HERO_CHECKS} />
     </div>
   )
 }

@@ -12,10 +12,10 @@ test.describe('landing page', () => {
     expect(errors.filter((e) => /hydrat|did not match/i.test(e))).toEqual([])
   })
 
-  test('feature tabs switch the panel', async ({ page }) => {
+  test('stacks a feature card for each main screen', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('tab', { name: 'Budget' }).click()
-    await expect(page.getByText('Plan what you can afford.')).toBeVisible()
+    await expect(page.locator('article.fcard')).toHaveCount(5)
+    await expect(page.getByText('Plan what you can afford.')).toBeAttached()
   })
 })
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { LandingPage } from '@/screens/marketing/ui/LandingPage'
 
 describe('LandingPage', () => {
@@ -8,14 +8,13 @@ describe('LandingPage', () => {
     expect(screen.getAllByRole('link', { name: 'Try Ledger' })[0]).toHaveAttribute('href', '/app')
     expect(screen.getAllByRole('link', { name: /GitHub/ })[0]).toHaveAttribute('href', 'https://github.com/itstoyboxlabs/ledger')
   })
-  it('switches the feature tab', () => {
+  it('has every section the nav links to', () => {
     const { container } = render(<LandingPage />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Budget' }))
-    expect(container.querySelector('.panel.on')).toHaveAttribute('data-p', 'budget')
+    for (const id of ['features', 'how', 'open-source', 'faq']) expect(container.querySelector(`#${id}`)).not.toBeNull()
   })
-  it('opens Retirement from the long-term plan button', () => {
+  it('stacks five feature cards and has no tabs', () => {
     const { container } = render(<LandingPage />)
-    fireEvent.click(screen.getByRole('link', { name: 'Explore Retirement' }))
-    expect(container.querySelector('.panel.on')).toHaveAttribute('data-p', 'retirement')
+    expect(container.querySelectorAll('article.fcard')).toHaveLength(5)
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 })

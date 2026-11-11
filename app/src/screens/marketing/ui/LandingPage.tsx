@@ -1,35 +1,36 @@
-import { useState } from 'react'
+import { BentoGrid } from '@/screens/marketing/ui/BentoGrid'
 import { FaqSection } from '@/screens/marketing/ui/FaqSection'
-import { FeaturesSection } from '@/screens/marketing/ui/FeaturesSection'
+import { FeatureShowcase } from '@/screens/marketing/ui/FeatureShowcase'
 import { FinalCta } from '@/screens/marketing/ui/FinalCta'
 import { Hero } from '@/screens/marketing/ui/Hero'
 import { HowSection } from '@/screens/marketing/ui/HowSection'
 import { IconSprite } from '@/screens/marketing/ui/IconSprite'
 import { MarketingNav } from '@/screens/marketing/ui/MarketingNav'
-import { PlanSection } from '@/screens/marketing/ui/PlanSection'
+import { Principles } from '@/screens/marketing/ui/Principles'
 import { SkipLink } from '@/screens/marketing/ui/SkipLink'
-import { PrivacyStrip } from '@/screens/marketing/ui/PrivacyStrip'
+import { Statement } from '@/screens/marketing/ui/Statement'
 import { useScrollReveal } from '@/screens/marketing/hooks/useScrollReveal'
-import type { FeatureTabId } from '@/screens/marketing/types/FeatureTabId'
 
 export function LandingPage() {
-  const [tab, setTab] = useState<FeatureTabId>('spending')
   useScrollReveal()
   return (
     <>
       <SkipLink />
       <div className="glow-top"></div>
       <IconSprite />
-      <div className="wrap">
-        <MarketingNav />
+      <div className="nav-bar">
+        <div className="wrap">
+          <MarketingNav />
+        </div>
       </div>
-      <main id="main">
+      <main id="main" className="land">
         <div className="wrap">
           <Hero />
+          <Statement />
+          <Principles />
           <HowSection />
-          <FeaturesSection tab={tab} onSelect={setTab} />
-          <PrivacyStrip />
-          <PlanSection onExplore={() => setTab('retirement')} />
+          <FeatureShowcase />
+          <BentoGrid />
           <FaqSection />
         </div>
         <FinalCta />
