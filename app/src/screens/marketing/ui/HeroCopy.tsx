@@ -6,7 +6,6 @@ import { LINKS } from '@/screens/marketing/constants/LINKS'
 export function HeroCopy() {
   return (
     <div className="hero-copy reveal-kids">
-      <span className="pill">Free &amp; Open Source</span>
       <h1>
         Financial planning that <em>doesn't oversimplify you.</em>
       </h1>
