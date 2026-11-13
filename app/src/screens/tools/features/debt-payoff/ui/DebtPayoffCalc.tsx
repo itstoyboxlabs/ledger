@@ -10,6 +10,9 @@ import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
 import { rollingPayoff } from '@/shared/utils/rollingPayoff'
 import { sumBalances } from '@/shared/utils/sumBalances'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
+import { usePresets } from '@/shared/hooks/usePresets'
+import type { BudgetPresetData } from '@/shared/types/BudgetPresetData'
+import type { BudgetRow } from '@/shared/types/BudgetRow'
 import { useBudgetSavingsMonthly } from '@/shared/hooks/useBudgetSavingsMonthly'
 import { CONTRIBUTION_SOURCES } from '@/screens/tools/features/debt-payoff/constants/CONTRIBUTION_SOURCES'
 import { toggleDebtPick } from '@/screens/tools/features/debt-payoff/utils/toggleDebtPick'
@@ -19,6 +22,7 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
   const [c, setC] = useToolState('debtPayoff', {
     picks: [] as string[],
     source: '',
+    budget: '',
     typed: 0,
     // the first version kept one debt, one amount for all and one amount per debt
     pick: 'all',
@@ -26,7 +30,9 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
     custom: {} as Record<string, number>,
   })
   const rows = useBudgetRows()
-  const budgetSavings = useBudgetSavingsMonthly()
+  const budgetSavings = useBudgetSavingsMonthly(c.budget)
+  const { presets: budgetPresets } = usePresets<BudgetPresetData | BudgetRow[]>('expenses', { ids: true })
+  const budgetOptions = [{ value: 'today', label: "Today's Budget" }, ...budgetPresets.filter((p) => p.id).map((p) => ({ value: p.id as string, label: p.name }))]
   const allIds = debts.map((d) => d.id)
   const legacyPicks = c.pick !== 'all' && allIds.includes(c.pick) ? [c.pick] : []
   const picks = (c.picks.length ? c.picks : legacyPicks).filter((id) => allIds.includes(id))
@@ -94,16 +100,36 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
                 />
               </div>
             </Label>
-            <div className="col-span-2">
-              <ToolField label="Contribution per month" value={contribution} onChange={setContribution} step={100} suffix="$" />
-              {source === 'budget' && (
-                <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
+            {source === 'budget' ? (
+              <>
+                <Label className="block">
+                  <span className="text-[12px] text-[var(--text-muted)]">Which Budget</span>
+                  <div className="mt-1">
+                    <Dropdown
+                      label="Budget"
+                      hideLabel
+                      value={c.budget && budgetOptions.some((o) => o.value === c.budget) ? c.budget : 'today'}
+                      onChange={(v: string) => setC({ ...c, budget: v === 'today' ? '' : v })}
+                      className="h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs"
+                      options={budgetOptions}
+                    />
+                  </div>
+                </Label>
+                <Label className="block">
+                  <span className="text-[12px] text-[var(--text-muted)]">Contribution per month</span>
+                  <div className="mt-1 rounded-lg bg-[var(--surface-1)] px-3 py-2 text-[13px] tnum ring-1 ring-[var(--ring)]">{fmt(contribution)}</div>
+                </Label>
+                <p className="col-span-2 text-[12px] text-[var(--text-muted)]">
                   {budgetSavings > 0
-                    ? 'The savings share of your Budget leftover. Retirement saves this same money, so it is not counted twice.'
-                    : 'Your Budget has no savings left over. Change what is left on the Budget page.'}
+                    ? 'The savings share of that Budget leftover. Retirement saves this same money, so it is not counted twice.'
+                    : 'That Budget has no savings left over. Change what is left on the Budget page.'}
                 </p>
-              )}
-            </div>
+              </>
+            ) : (
+              <div className="col-span-2">
+                <ToolField label="Contribution per month" value={contribution} onChange={setContribution} step={100} suffix="$" />
+              </div>
+            )}
           </div>
           <Table className="mt-4 w-full text-[13px]">
             <TableBody>

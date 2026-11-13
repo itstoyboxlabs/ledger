@@ -29,4 +29,16 @@ describe('useBudgetSavingsMonthly', () => {
     renderApp(<Probe />)
     expect(await screen.findByText('saves 300')).toBeInTheDocument()
   })
+  it('uses a preset\'s own rows when its id is given', async () => {
+    await seedStorage({
+      budget: { rows: [{ id: 'r1', name: 'Rent', amount: 2000 }] },
+      presets: { expenses: [{ id: 'p1', name: 'Lean', data: { rows: [{ id: 'r1', name: 'Rent', amount: 1000 }] } }] },
+    })
+    localStorage.setItem('ledger:budgetIncomeOverride', JSON.stringify({ active: 'manual', amount: 3000 }))
+    function PresetProbe() {
+      return <span>lean {Math.round(useBudgetSavingsMonthly('p1'))}</span>
+    }
+    renderApp(<PresetProbe />)
+    expect(await screen.findByText('lean 2000')).toBeInTheDocument()
+  })
 })

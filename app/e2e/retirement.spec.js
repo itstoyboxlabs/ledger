@@ -122,6 +122,10 @@ function planAt(periods, age, startAge, retireAge) {
   }
   return null
 }
+// money going to debts comes out of what is saved but never takes more than it saves
+function withFreed(saved, freed) {
+  return saved + (freed < 0 ? -Math.min(-freed, Math.max(0, saved)) : freed)
+}
 function sim(o) {
   const c = {
     age: 30, retireAge: 40, accessAge: 60, endAge: 90, k0: 10000, s0: 50000, hole: 0,
@@ -141,7 +145,7 @@ function sim(o) {
     const open = age >= c.accessAge
     const rate = working ? c.r : (c.rAfter ?? c.r)
     let cK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k) : 0
-    let cS = working ? c.contribS + c.freed(age) : 0
+    let cS = working ? withFreed(c.contribS, c.freed(age)) : 0
     if (c.periods.length > 0 && working) {
       const hit = planAt(c.periods, age, c.age, c.retireAge)
       const seg = hit ? hit.i : -1
@@ -151,7 +155,7 @@ function sim(o) {
       else {
         const p = c.periods[hit.i]
         cK = p.k401 * hit.grow * (first ? 0.75 : 1)
-        cS = p.savings * hit.grow + c.freed(age)
+        cS = withFreed(p.savings * hit.grow, c.freed(age))
       }
     }
     const ssNow = c.ssMonthly > 0 && age >= c.claim ? c.ssMonthly : 0
@@ -278,6 +282,37 @@ function freedRef(debts, startAge, eventAges = {}) {
     const freedMonths = Math.max(0, Math.min(12, (age + 1) * 12 - Math.max(end, age * 12)))
     return sum + d.payment * freedMonths
   }, 0)
+}
+// Debts come first: every month the debts get all their payments plus the monthly savings. Each
+// debt takes its own payment, the rest goes to the first one still owing, and a cleared debt's
+// payment rolls on. What that does to the savings in a year: money beyond the payments comes out,
+// payments no longer needed are freed (all of them once the last debt clears).
+function debtsFirstRef(debts, poolYear, startAge) {
+  const pool = poolYear / 12
+  const sumPay = debts.reduce((t, d) => t + d.payment, 0)
+  const left = debts.map((d) => d.balance)
+  const months = debts.map((d) => (d.balance <= 0.005 ? 0 : null))
+  const spent = []
+  for (let m = 1; m <= 1200 && months.includes(null); m++) {
+    let avail = sumPay + pool
+    const open = debts.map((_, i) => i).filter((i) => months[i] === null)
+    for (const i of open) left[i] *= 1 + debts[i].apr / 1200
+    for (const i of open) { const p = Math.min(debts[i].payment, left[i], avail); left[i] -= p; avail -= p }
+    for (const i of open) { const p = Math.min(avail, left[i]); left[i] -= p; avail -= p }
+    for (const i of open) if (left[i] <= 0.005) months[i] = m
+    spent.push(sumPay + pool - avail)
+  }
+  const never = months.includes(null)
+  const freed = (age) => {
+    let net = 0
+    for (let k = 1; k <= 12; k++) {
+      const n = (age - startAge) * 12 + k
+      const sp = n <= spent.length ? spent[n - 1] : never ? sumPay + pool : 0
+      net += sp >= sumPay ? -(sp - sumPay) : sumPay - sp
+    }
+    return net
+  }
+  return { months, freed }
 }
 // What a Pay off a debt event at `age` pays: the balance, plus the interest the payment leaves
 // unpaid when it does not cover it, compounding monthly from today
@@ -560,10 +595,10 @@ test.describe('starting balances', () => {
     await expect(main(page).locator('label', { hasText: 'Visa' })).toContainText('−$8,000')
   })
 
-  test('from Balances: savings are assets minus debts, the retirement account is the 401k pool', async ({ page }) => {
+  test('from Balances: savings are the assets, debts are paid off first, the retirement account is the 401k pool', async ({ page }) => {
     await setup(page, { retire: { startFrom: 'balances' }, assets, debts })
-    await expect(main(page).getByText(/Savings start at \$42,000/)).toBeVisible()
-    await expect(main(page).getByText('($50,000 minus $8,000 owed)')).toBeVisible()
+    await expect(main(page).getByText(/Savings start at \$50,000/)).toBeVisible()
+    await expect(main(page).getByText('(and you owe $8,000, paid off first)')).toBeVisible()
     await expect(main(page).getByText(/Retirement account starts at \$40,000\./)).toBeVisible()
     // the first year: 40,000 + 3,750 and 42,000 + 20,000
     await expectRow(page, 30, { k: 43750, total: 62000 })
@@ -572,7 +607,7 @@ test.describe('starting balances', () => {
   test('unticking an asset leaves it out and is saved in startOff', async ({ page }) => {
     await setup(page, { retire: { startFrom: 'balances' }, assets, debts })
     await main(page).getByRole('checkbox', { name: /Brokerage/ }).click()
-    await expect(main(page).getByText(/Savings start at \$12,000/)).toBeVisible()
+    await expect(main(page).getByText(/Savings start at \$20,000/)).toBeVisible()
     await expectRow(page, 30, { total: 32000 })
     expect((await retireCalc(page)).startOff).toEqual(['a2'])
     await main(page).getByRole('checkbox', { name: /Old 401k/ }).click()
@@ -580,11 +615,11 @@ test.describe('starting balances', () => {
     expect((await retireCalc(page)).startOff.sort()).toEqual(['a2', 'a3'])
   })
 
-  test('unticking a debt takes it out of the hole', async ({ page }) => {
+  test('unticking a debt leaves it out of what is owed', async ({ page }) => {
     await setup(page, { retire: { startFrom: 'balances' }, assets, debts })
     await main(page).getByRole('checkbox', { name: /Visa/ }).click()
     await expect(main(page).getByText(/Savings start at \$50,000/)).toBeVisible()
-    await expect(main(page).getByText(/minus .* owed/)).toHaveCount(0)
+    await expect(main(page).getByText(/paid off first\)/)).toHaveCount(0)
     await expectRow(page, 30, { total: 70000 })
   })
 
@@ -614,22 +649,16 @@ test.describe('starting balances', () => {
     await expect(page.locator('h1', { hasText: 'Balances' })).toBeVisible()
   })
 
-  test('Start in debt (typed mode) subtracts the Balances debts from savings', async ({ page }) => {
-    await setup(page, { includeDebt: true, debts })
-    const btn = main(page).locator('button', { hasText: /Yes, owing \$8,000 \(from Balances\)/ })
-    await expect(btn).toHaveAttribute('aria-pressed', 'true')
+  test('typed mode says what you owe and pays it off first from your savings', async ({ page }) => {
+    await setup(page, { debts })
+    await expect(main(page).getByText(/You owe \$8,000 on the Balances page. It is paid off first/)).toBeVisible()
+    // 50,000 and 20,000 saved, less the 8,000 that goes to the debt in the first year
     await expectRow(page, 30, { total: 62000 })
-    await btn.click()
-    await expect(main(page).locator('button', { hasText: /No, start at \$0/ })).toBeVisible()
-    await expectRow(page, 30, { total: 70000 })
-    expect(await ls(page, 'retireIncludeDebt')).toBe(false)
   })
 
-  test('the footnote says whether savings start below zero', async ({ page }) => {
-    await setup(page, { includeDebt: true, debts })
-    await expect(main(page).getByText(/Savings start below zero by the amount you owe/)).toBeVisible()
-    await main(page).locator('button', { hasText: /Yes, owing/ }).click()
-    await expect(main(page).getByText(/Savings start at your savings balance/)).toBeVisible()
+  test('the footnote says debts are paid off first', async ({ page }) => {
+    await setup(page, { debts })
+    await expect(main(page).getByText(/Debts on the Balances page are paid off first, with your saving/)).toBeVisible()
   })
 })
 
@@ -726,38 +755,36 @@ test.describe('saving each year', () => {
     await expect(main(page).getByText(/so interest is included/)).toHaveCount(0)
   })
 
-  test('the reference model gives the old numbers for debts with no APR', async ({ page }) => {
+  test('two debts with no APR are paid in order and the page matches the reference model', async ({ page }) => {
     const debts = [
       { id: 'd1', name: 'Card', balance: 1000, apr: 0, payment: 250 },
       { id: 'd2', name: 'Loan', balance: 6000, apr: 0, payment: 200 },
     ]
     await setup(page, { debts })
-    // 4 months and 30 months, as balance over payment
-    expect(freedRef(debts, 30)(30)).toBe(2000)
-    expect(freedRef(debts, 30)(32)).toBe(3000 + 1200)
-    await expectMatchesSim(page, sim({ freed: freedRef(debts, 30) }))
+    const ref = debtsFirstRef(debts, 20000, 30)
+    // 2,117 a month in all: the card clears in month 1, the loan in month 3
+    expect(ref.months).toEqual([1, 3])
+    await expectMatchesSim(page, sim({ freed: ref.freed }))
   })
 
-  test('a debt with an APR is paid off later, and the caption says when, with interest', async ({ page }) => {
-    // 10,000 at 18% and 300 a month: 47 months with interest (34 without)
+  test('a debt with an APR includes the interest, and the caption says when', async ({ page }) => {
+    // 10,000 at 18% with 300 a month and the savings on top
     const debts = [{ id: 'd1', name: 'Car', balance: 10000, apr: 18, payment: 300 }]
-    expect(payoffMonthsRef(10000, 300, 18)).toBe(47)
     await setup(page, { debts })
-    await expect(main(page).getByText(/so interest is included/)).toBeVisible()
-    await expect(main(page).getByText('Paid off in 3 years 11 months (age 33). Then $300 a month is freed up.')).toBeVisible()
-    // the last payment is in month 47, so age 33 frees 1 month
-    await expectRow(page, 32, { contrib: 25000 })
-    await expectRow(page, 33, { contrib: 25000 + 300 })
-    await expectRow(page, 34, { contrib: 25000 + 3600 })
-    await expectMatchesSim(page, sim({ freed: freedRef(debts, 30) }))
+    const ref = debtsFirstRef(debts, 20000, 30)
+    const months = ref.months[0]
+    expect(months).toBeLessThan(12)
+    await expect(main(page).getByText(`Paid off in ${months} months (age 30).`)).toBeVisible()
+    await expectMatchesSim(page, sim({ freed: ref.freed }))
   })
 
-  test('a payment that does not cover the interest never frees anything', async ({ page }) => {
-    const debts = [{ id: 'd1', name: 'Card', balance: 12000, apr: 24, payment: 200 }]
+  test('a debt the savings cannot outrun takes all the savings and says it is never paid off', async ({ page }) => {
+    // 12% of 1,000,000 is 10,000 a month in interest, far above the payment and savings together
+    const debts = [{ id: 'd1', name: 'Card', balance: 1000000, apr: 12, payment: 200 }]
     await setup(page, { debts })
-    await expect(main(page).getByText('Your payment does not cover the interest, so this debt is never paid off at this payment.')).toBeVisible()
-    await expectRow(page, 39, { contrib: 25000 })
-    await expectMatchesSim(page, sim({ freed: () => 0 }))
+    await expect(main(page).getByText('Never paid off with your payments and savings.')).toBeVisible()
+    await expectRow(page, 39, { contrib: 5000 })
+    await expectMatchesSim(page, sim({ freed: debtsFirstRef(debts, 20000, 30).freed }))
   })
 })
 

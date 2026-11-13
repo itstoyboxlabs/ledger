@@ -285,8 +285,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   // event and is left out of this, and so is one unticked on the starting balances.
   const owedDebts = debts.filter((d) => !payoffByDebt[d.id] && (!fromBalances || !startOff.has(d.id)))
   const holeDebt = sumBalances(owedDebts)
-  const countDebt = fromBalances ? true : includeDebt
-  const planDebts = countDebt ? owedDebts : []
+  const planDebts = owedDebts
   const planPay = planDebts.map((d) => debtPaymentOf(d, budgetRows))
   const planPaySum = planPay.reduce((t, p) => t + p, 0)
   const savingsMo = (c.pay.periods.length > 0 ? autoContribSavings : baseContribSavings) / 12
@@ -511,15 +510,11 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
             <>
               <ToolField label="401k now" value={c.start401k} onChange={f('start401k')} step={1000} suffix="$" />
               <ToolField label="Savings now" value={c.startSavings} onChange={f('startSavings')} step={1000} suffix="$" />
-              <Label className="col-span-2 flex flex-col justify-end pb-1">
-                <span className="text-[12px] text-[var(--text-muted)]">Start in debt</span>
-                <Button variant="outline" aria-pressed={includeDebt}
-                  onClick={() => setIncludeDebt(!includeDebt)}
-                  className={cn('mt-1 h-auto justify-start whitespace-normal px-3 py-2 text-left font-normal', includeDebt ? 'border-[var(--bad)]/40 bg-[var(--bad)]/15 font-medium text-[var(--bad)] hover:bg-[var(--bad)]/20 hover:text-[var(--bad)]' : 'text-[var(--text-muted)]')}
-                >
-                  {includeDebt ? `Yes, owing ${fmt0(holeDebt)} (from Balances)` : 'No, start at $0'}
-                </Button>
-              </Label>
+              {holeDebt > 0 && (
+                <p className="col-span-2 self-end pb-1 text-[12px] text-[var(--text-muted)]">
+                  You owe {fmt0(holeDebt)} on the Balances page. It is paid off first, from your savings each month.
+                </p>
+              )}
             </>
           )}
         </FieldGroup>
@@ -979,7 +974,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
         and down. Everything is in today's dollars, so there is no inflation.
         {c.ss.on ? ' Social Security is included.' : ' Social Security is left out.'}
         {taxed && ' 401k withdrawals are taxed at today\'s brackets, and Social Security is not counted as taxable income.'} Savings start
-        {countDebt ? ' below zero by the amount you owe, and your saving pays that off first' : ' at your savings balance'}.
+        at your savings balance. Debts on the Balances page are paid off first, with your saving.
       </p>
     </div>
   )

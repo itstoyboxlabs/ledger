@@ -172,11 +172,10 @@ describe('RetirementCalc', () => {
     expect(screen.getByText(/of it Roth/)).toHaveTextContent('($10,000 of it Roth)')
   })
 
-  it('a payoff event outside the plan does not take the debt out of the hole', async () => {
-    localStorage.setItem('ledger:retireIncludeDebt', 'true')
+  it('a payoff event outside the plan does not stop the debt being owed', async () => {
     seedPlan({ events: [{ id: 'e1', name: '', amount: 0, kind: 'debt', age: 20, repeat: 'once', years: 1, debtId: 'd1' }] })
     renderApp(<RetirementCalc debts={[debt({ balance: 6000, payment: 0 })]} />)
-    expect(screen.getByText(/Yes, owing \$6,000/)).toBeInTheDocument()
+    expect(screen.getByText(/You owe \$6,000 on the Balances page/)).toBeInTheDocument()
   })
 
   it('an unticked debt frees no payment into savings', () => {

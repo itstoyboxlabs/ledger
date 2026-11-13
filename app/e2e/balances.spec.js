@@ -76,7 +76,8 @@ test.describe('what you owe', () => {
     await addDebt(page, { name: 'Car', balance: 28490, apr: 0, payment: 385 })
     await expect(owe(page).getByTestId('debt-payoff-line')).toHaveText('Paid off in 6 years 2 months (age 44). Then $385 a month is freed up.')
     await goTo(page, 'Retirement')
-    await expect(main(page).getByText('Paid off in 6 years 2 months (age 44). Then $385 a month is freed up.')).toBeVisible()
+    // Retirement pays debts first, so its line counts the savings too and starts from the same age
+    await expect(main(page).getByText(/^Paid off in .+ \(age (3[89]|4\d)\)\.$/)).toBeVisible()
   })
 
   test('total owed adds up every debt balance', async ({ page }) => {

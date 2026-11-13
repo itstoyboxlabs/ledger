@@ -78,7 +78,9 @@ describe('DebtPayoffCalc', () => {
     await userEvent.click(screen.getByText('What I pay now'))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Budget savings' }))
     // 1000 income less the 250 row
-    await waitFor(() => expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(750))
+    await waitFor(() => expect(screen.getByText('$750.00')).toBeInTheDocument())
+    expect(screen.queryByLabelText(/Contribution per month/)).not.toBeInTheDocument()
+    expect(screen.getByText("Today's Budget")).toBeInTheDocument()
     expect(screen.getByText('2m')).toBeInTheDocument()
     expect(screen.getByText(/Retirement saves this same money/)).toBeInTheDocument()
   })
