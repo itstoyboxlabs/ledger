@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Debt } from '@/shared/types/Debt'
 import { renderApp } from '@/test-utils/renderApp'
@@ -59,5 +59,33 @@ describe('DebtPayoffCalc', () => {
   it('uses the typed payment when the linked budget row was deleted', async () => {
     renderApp(<DebtPayoffCalc debts={[debt({ budgetRow: 'deleted', payment: 100 })]} />)
     expect(await screen.findByText('10m')).toBeInTheDocument()
+  })
+  it('unticking a debt takes it out of the total', async () => {
+    renderApp(<DebtPayoffCalc debts={[debt(), debt({ id: 'd2', name: 'Loan', balance: 500 })]} />)
+    await userEvent.click(screen.getByText('All debts'))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Loan' }))
+    expect(screen.getByText('$1,000.00')).toBeInTheDocument()
+  })
+  it('keeps the last ticked debt', async () => {
+    renderApp(<DebtPayoffCalc debts={[debt()]} />)
+    await userEvent.click(screen.getByText('All debts'))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Card' }))
+    expect(screen.getByText('$1,000.00')).toBeInTheDocument()
+  })
+  it('can take the contribution from the Budget savings', async () => {
+    localStorage.setItem('ledger:budgetIncomeOverride', JSON.stringify({ active: 'manual', amount: 1000 }))
+    renderApp(<DebtPayoffCalc debts={[debt()]} />)
+    await userEvent.click(screen.getByText('What I pay now'))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Budget savings' }))
+    // 1000 income less the 250 row
+    await waitFor(() => expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(750))
+    expect(screen.getByText('2m')).toBeInTheDocument()
+    expect(screen.getByText(/Retirement saves this same money/)).toBeInTheDocument()
+  })
+  it('reads the amounts saved by the first version', () => {
+    localStorage.setItem('ledger:debtPayoff', JSON.stringify({ pick: 'd2', perMonth: 0, custom: { d2: 500 } }))
+    renderApp(<DebtPayoffCalc debts={[debt(), debt({ id: 'd2', name: 'Loan', balance: 1500 })]} />)
+    expect(screen.getByText('$1,500.00')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(500)
   })
 })

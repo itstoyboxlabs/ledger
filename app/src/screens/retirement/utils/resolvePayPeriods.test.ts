@@ -1,5 +1,5 @@
 import { resolvePayPeriods } from './resolvePayPeriods'
-import { budgetSavingsYearly } from './budgetSavingsYearly'
+import { budgetSavingsYearly } from '@/shared/utils/budgetSavingsYearly'
 import type { PayContext } from '@/screens/retirement/types/PayContext'
 import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
