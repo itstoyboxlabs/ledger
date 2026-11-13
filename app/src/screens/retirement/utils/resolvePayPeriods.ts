@@ -2,6 +2,7 @@ import type { PayContext } from '@/screens/retirement/types/PayContext'
 import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
 import type { ResolvedPayPeriod } from '@/screens/retirement/types/ResolvedPayPeriod'
 import { budgetSavingsYearly } from '@/shared/utils/budgetSavingsYearly'
+import { readBudgetPreset } from '@/shared/utils/readBudgetPreset'
 import { payBreakdown } from '@/screens/retirement/utils/payBreakdown'
 
 // Looks up each period's presets. The 401k comes from today's Take-home tool or a
@@ -18,10 +19,15 @@ export function resolvePayPeriods(periods: PayPeriod[], ctx: PayContext): Resolv
     const m = typedPay ? null : payBreakdown(th, ctx.taxState, ctx.filing)
     const rowsPreset = p.saveFrom === 'preset' ? ctx.budgetPresets.find((x) => x.id === p.savePreset) : undefined
     const missingSave = p.saveFrom === 'preset' && !rowsPreset
-    const rows = p.saveFrom === 'today' ? ctx.budget?.rows : rowsPreset?.data
+    const preset = rowsPreset ? readBudgetPreset(rowsPreset.data) : null
+    const rows = p.saveFrom === 'today' ? ctx.budget?.rows : preset?.rows
+    // a preset brings its own leftover split and removed subscriptions, unless it was saved before it held them
+    const source = ctx.budget && p.saveFrom === 'preset' && preset
+      ? { leftover: preset.leftover ?? ctx.budget.leftover, dismissedSubs: preset.dismissedSubs ?? ctx.budget.dismissedSubs }
+      : ctx.budget
     const saving = p.saveFrom === 'typed' || missingSave
       ? p.savings
-      : ctx.budget && rows ? budgetSavingsYearly(ctx.budget, rows, ctx.incomeOf(th)) : 0
+      : source && rows ? budgetSavingsYearly(source, rows, ctx.incomeOf(th)) : 0
     return {
       id: p.id,
       sim: {

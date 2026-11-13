@@ -1,4 +1,5 @@
 import type { BudgetFile } from '@/shared/types/BudgetFile'
+import type { BudgetPresetData } from '@/shared/types/BudgetPresetData'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
 import type { Preset } from '@/shared/types/Preset'
 import type { FilingStatus } from '@/shared/enums/FilingStatus'
@@ -11,7 +12,7 @@ export interface PayContext {
   takeHome: RawTakeHome
   takeHomePresets: Preset<RawTakeHome>[]
   budget: BudgetFile | null
-  budgetPresets: Preset<BudgetRow[]>[]
+  budgetPresets: Preset<BudgetPresetData | BudgetRow[]>[]
   taxState: string
   // single when left out, which is how every number worked before About you
   filing?: FilingStatus

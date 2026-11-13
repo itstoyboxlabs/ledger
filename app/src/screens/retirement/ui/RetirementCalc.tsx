@@ -93,6 +93,7 @@ import { usePresets } from '@/shared/hooks/usePresets'
 import { useToolState } from '@/shared/hooks/useToolState'
 import { NeedPerMonthField } from '@/screens/retirement/ui/NeedPerMonthField'
 import { retireNeed } from '@/screens/retirement/utils/retireNeed'
+import type { BudgetPresetData } from '@/shared/types/BudgetPresetData'
 import { budgetPresetOptions } from '@/screens/retirement/utils/budgetPresetOptions'
 import { useRetireNeedPreset } from '@/screens/retirement/hooks/useRetireNeedPreset'
 import { useRetireAge } from '@/screens/retirement/hooks/useRetireAge'
@@ -137,7 +138,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const { presets, save, remove } = usePresets<RetirePresetData>('retirement')
   // what pay periods and Need per month can point at, by id so a rename does not break them
   const { presets: takeHomePresets } = usePresets<RawTakeHome>('takeHome', { ids: true })
-  const { presets: budgetPresets, loaded: budgetPresetsLoaded } = usePresets<BudgetRow[]>('expenses', { ids: true })
+  const { presets: budgetPresets, loaded: budgetPresetsLoaded } = usePresets<BudgetPresetData | BudgetRow[]>('expenses', { ids: true })
   const presetData: RetirePresetData = { c: typedC, port, portAfter, includeDebt }
   const applyPreset = (d: Partial<RetirePresetData> | null | undefined) => {
     // presets saved before Events, Social Security and the split portfolio are in the
