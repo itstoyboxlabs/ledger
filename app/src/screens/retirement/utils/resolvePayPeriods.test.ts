@@ -42,6 +42,12 @@ describe('resolvePayPeriods', () => {
     expect(r.sim.saving).toBeCloseTo((takeHomeMonthly(noK, 'tx') - 1000) * 12, 6)
   })
 
+  it('a Budget preset in the new shape saves its own leftover split', () => {
+    const data = { rows: cheap, leftover: [{ id: 'a', target: 'savings', pct: 25 }] }
+    const [r] = resolvePayPeriods([period({ takeHomeFrom: 'preset', takeHomePreset: 'th1', saveFrom: 'preset', savePreset: 'b1' })], { ...ctx, budgetPresets: [{ id: 'b1', name: 'Frugal', data }] })
+    expect(r.sim.saving).toBeCloseTo((takeHomeMonthly(noK, 'tx') - 1000) * 0.25 * 12, 6)
+  })
+
   it('typed values are dollars a year', () => {
     const [r] = resolvePayPeriods([period({ takeHomeFrom: 'typed', saveFrom: 'typed' })], ctx)
     expect(r.sim).toMatchObject({ own: 3000, match: 0, capOwn: false, saving: 7000 })

@@ -25,6 +25,11 @@ describe('budgetPresetOptions', () => {
     expect(o.monthly).toBe(1200 + 260 + 15)
   })
 
+  it('reads a preset saved with its own removed subscriptions', () => {
+    const presets: Preset[] = [{ name: 'A', data: { rows: [{ id: 'r', name: 'Rent', amount: 1000 }], dismissedSubs: { Netflix: '2026-10-12' } } }]
+    expect(budgetPresetOptions(presets, undefined)[0].monthly).toBe(1000)
+  })
+
   it('leaves out subscriptions dismissed today', () => {
     const presets: Preset[] = [{ name: 'A', data: [{ id: 'r', name: 'Rent', amount: 1000 }] }]
     expect(budgetPresetOptions(presets, { Netflix: '2026-10-12' })[0].monthly).toBe(1000)
@@ -35,8 +40,8 @@ describe('budgetPresetOptions', () => {
     expect(budgetPresetOptions(presets, { Netflix: '2026-10-12' })[0].monthly).toBe(300)
   })
 
-  it('skips presets that are not a row list', () => {
-    const presets = [{ name: 'Bad', data: { rows: [] } }, { id: 'pr1', name: 'Ok', data: [] }] as Preset[]
+  it('skips presets that hold no rows', () => {
+    const presets = [{ name: 'Bad', data: { items: [] } }, { id: 'pr1', name: 'Ok', data: [] }] as Preset[]
     expect(budgetPresetOptions(presets, { Netflix: '2026-10-12' })).toEqual([{ id: 'pr1', name: 'Ok', monthly: 0 }])
   })
 })

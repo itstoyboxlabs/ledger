@@ -44,6 +44,8 @@ import { Kpi } from '@/shared/ui/Kpi'
 import { LeftoverBadge } from '@/screens/budget/ui/LeftoverBadge'
 import { MerchantIcon } from '@/shared/ui/MerchantIcon'
 import { PresetBar } from '@/shared/ui/PresetBar'
+import type { BudgetPresetData } from '@/shared/types/BudgetPresetData'
+import { readBudgetPreset } from '@/shared/utils/readBudgetPreset'
 import { BUDGET_PRESET_HINT } from '@/screens/budget/constants/BUDGET_PRESET_HINT'
 import { RETIRE_ROW_RE } from '@/screens/budget/constants/RETIRE_ROW_RE'
 import { RoundedAmountInput } from '@/screens/budget/ui/RoundedAmountInput'
@@ -127,7 +129,7 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     remove: removeExpensePreset,
     rename: renameExpensePreset,
     // ids let the Retirement pay plan point at a preset through a rename
-  } = usePresets<BudgetRow[]>('expenses', { ids: true })
+  } = usePresets<BudgetPresetData | BudgetRow[]>('expenses', { ids: true })
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // counts edits: only the newest save may settle the state, so an older POST that
   // resolves while a newer edit is pending can't mark it saved (and let a focus
@@ -296,6 +298,13 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
     { value: 'savings', label: 'Savings' },
     ...rows.filter((r) => r.source !== 'subscription').map((r) => ({ value: r.id, label: r.name || 'Unnamed row' })),
   ]
+  // a preset is the rows, the removed subscriptions and what to do with what is left. One saved
+  // before it held the last two takes today's, so applying it leaves them alone.
+  const presetNow: BudgetPresetData = { rows, dismissedSubs: dismissed, leftover: leftoverAlloc }
+  const barPresets = expensePresets.flatMap((p) => {
+    const d = readBudgetPreset(p.data)
+    return d ? [{ ...p, data: { rows: d.rows.map(normalizeBudgetRow), dismissedSubs: d.dismissedSubs ?? dismissed, leftover: d.leftover ?? leftoverAlloc } }] : []
+  })
   const setAlloc = (id: string, p: Partial<LeftoverAllocation>) => persist(rows, undefined, patchAllocation(leftoverAlloc, id, p))
   const addAlloc = () =>
     persist(rows, undefined, [
@@ -571,10 +580,10 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
                 hideTrigger
                 open={presetsOpen}
                 onOpenChange={setPresetsOpen}
-                presets={expensePresets.map((p) => ({ ...p, data: p.data.map(normalizeBudgetRow) }))}
-                currentData={rows}
-                onApply={(data) => persist(data.map(normalizeBudgetRow))}
-                onSave={(name) => saveExpensePreset(name, rows)}
+                presets={barPresets}
+                currentData={presetNow}
+                onApply={(d) => persist(d.rows.map(normalizeBudgetRow), d.dismissedSubs, d.leftover)}
+                onSave={(name) => saveExpensePreset(name, presetNow)}
                 scope="expenses"
                 hint={BUDGET_PRESET_HINT}
                 onDelete={removeExpensePreset}
@@ -588,10 +597,10 @@ export function BudgetView({ goToTools, goToLog }: BudgetViewProps) {
             )}
             {!restMode && (
               <PresetBar
-                presets={expensePresets.map((p) => ({ ...p, data: p.data.map(normalizeBudgetRow) }))}
-                currentData={rows}
-                onApply={(data) => persist(data.map(normalizeBudgetRow))}
-                onSave={(name) => saveExpensePreset(name, rows)}
+                presets={barPresets}
+                currentData={presetNow}
+                onApply={(d) => persist(d.rows.map(normalizeBudgetRow), d.dismissedSubs, d.leftover)}
+                onSave={(name) => saveExpensePreset(name, presetNow)}
                 scope="expenses"
                 hint={BUDGET_PRESET_HINT}
                 onDelete={removeExpensePreset}
