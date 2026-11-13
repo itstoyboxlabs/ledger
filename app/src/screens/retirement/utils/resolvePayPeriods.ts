@@ -1,7 +1,7 @@
 import type { PayContext } from '@/screens/retirement/types/PayContext'
 import type { PayPeriod } from '@/screens/retirement/types/PayPeriod'
 import type { ResolvedPayPeriod } from '@/screens/retirement/types/ResolvedPayPeriod'
-import { budgetSavingsYearly } from '@/screens/retirement/utils/budgetSavingsYearly'
+import { budgetSavingsYearly } from '@/shared/utils/budgetSavingsYearly'
 import { payBreakdown } from '@/screens/retirement/utils/payBreakdown'
 
 // Looks up each period's presets. The 401k comes from today's Take-home tool or a

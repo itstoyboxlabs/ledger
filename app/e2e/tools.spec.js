@@ -56,6 +56,22 @@ async function pick(card, page, current, option) {
   }).toPass({ timeout: 15000 })
 }
 
+// Pay off is a multi-select: tick or untick debts until only these are ticked
+async function onlyDebts(card, page, current, names) {
+  await trigger(card, current).first().click()
+  const items = page.getByRole('menuitemcheckbox')
+  for (const name of names) {
+    const item = items.filter({ hasText: new RegExp(`^${name}$`) })
+    if ((await item.getAttribute('aria-checked')) !== 'true') await item.click()
+  }
+  const all = await items.allTextContents()
+  for (const name of all.filter((n) => !names.includes(n))) {
+    const item = items.filter({ hasText: new RegExp(`^${name}$`) })
+    if ((await item.getAttribute('aria-checked')) === 'true') await item.click()
+  }
+  await page.keyboard.press('Escape')
+}
+
 const DEBTS = [
   { id: 'd1', name: 'Student loans', balance: 12000, apr: 0, payment: 400, budgetRow: null },
   { id: 'd2', name: 'Card', balance: 3000, apr: 20, payment: 150, budgetRow: null },
@@ -1219,7 +1235,7 @@ test.describe('debt payoff', () => {
   test('a single zero-interest debt is balance over payment, rounded up', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'debt')
-    await pick(card, page, 'All debts', 'Student loans')
+    await onlyDebts(card, page, 'All debts', ['Student loans'])
     await expect(field(card, 'Contribution per month')).toHaveValue('400')
     await expect(row(card, 'Total debt')).toContainText('$12,000.00')
     await expect(row(card, 'Time to pay off')).toContainText('2y 6m')
@@ -1232,7 +1248,7 @@ test.describe('debt payoff', () => {
   test('an interest-bearing debt uses the amortization formula', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'debt')
-    await pick(card, page, 'All debts', 'Card')
+    await onlyDebts(card, page, 'All debts', ['Card'])
     await expect(row(card, 'Total debt')).toContainText('$3,000.00')
     await expect(row(card, 'Time to pay off (includes interest)')).toContainText('2y 1m')
     await expect(row(card, 'Debt-free date')).toContainText('Dec 2028')
@@ -1241,7 +1257,7 @@ test.describe('debt payoff', () => {
   test('a payment that does not cover the interest never clears', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'debt')
-    await pick(card, page, 'All debts', 'Card')
+    await onlyDebts(card, page, 'All debts', ['Card'])
     // 20% of 3,000 is $50 a month in interest
     await type(field(card, 'Contribution per month'), 40)
     await expect(row(card, 'Time to pay off')).toContainText('—')
@@ -1251,7 +1267,7 @@ test.describe('debt payoff', () => {
   test('a contribution of zero shows dashes', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'debt')
-    await pick(card, page, 'All debts', 'Student loans')
+    await onlyDebts(card, page, 'All debts', ['Student loans'])
     await type(field(card, 'Contribution per month'), 0)
     await expect(row(card, 'Time to pay off')).toContainText('—')
     await expect(row(card, 'Debt-free date')).toContainText('—')
@@ -1262,22 +1278,27 @@ test.describe('debt payoff', () => {
     const card = tool(page, 'debt')
     await type(field(card, 'Contribution per month'), 1000)
     await expect(row(card, 'Time to pay off (includes interest)')).toContainText('1y 4m')
-    expect((await ls(page, 'debtPayoff')).perMonth).toBe(1000)
+    expect((await ls(page, 'debtPayoff')).typed).toBe(1000)
     await reload(page)
     await expect(field(tool(page, 'debt'), 'Contribution per month')).toHaveValue('1000')
   })
 
-  test('each debt remembers its own contribution', async ({ page }) => {
+  test('a typed contribution stays when you change the debts', async ({ page }) => {
     await seed(page, { debts: DEBTS })
     const card = tool(page, 'debt')
-    await pick(card, page, 'All debts', 'Card')
+    await onlyDebts(card, page, 'All debts', ['Card'])
     await type(field(card, 'Contribution per month'), 60)
-    await pick(card, page, 'Card', 'Student loans')
-    await expect(field(card, 'Contribution per month')).toHaveValue('400')
-    await pick(card, page, 'Student loans', 'Card')
-    await expect(field(card, 'Contribution per month')).toHaveValue('60')
     await expect(row(card, 'Time to pay off')).toContainText('9y 1m')
-    expect((await ls(page, 'debtPayoff')).custom).toEqual({ d2: 60 })
+    await onlyDebts(card, page, 'Card', ['Card', 'Student loans'])
+    await expect(field(card, 'Contribution per month')).toHaveValue('60')
+    expect((await ls(page, 'debtPayoff')).typed).toBe(60)
+  })
+
+  test('the contribution can come from the Budget savings', async ({ page }) => {
+    await seed(page, { debts: DEBTS })
+    const card = tool(page, 'debt')
+    await pick(card, page, 'What I pay now', 'Budget savings')
+    await expect(card).toContainText('Retirement saves this same money')
   })
 
   test('a debt linked to a Budget row takes that row as its payment', async ({ page }) => {
