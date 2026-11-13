@@ -172,11 +172,10 @@ describe('RetirementCalc', () => {
     expect(screen.getByText(/of it Roth/)).toHaveTextContent('($10,000 of it Roth)')
   })
 
-  it('a payoff event outside the plan does not take the debt out of the hole', async () => {
-    localStorage.setItem('ledger:retireIncludeDebt', 'true')
+  it('a payoff event outside the plan does not stop the debt being owed', async () => {
     seedPlan({ events: [{ id: 'e1', name: '', amount: 0, kind: 'debt', age: 20, repeat: 'once', years: 1, debtId: 'd1' }] })
     renderApp(<RetirementCalc debts={[debt({ balance: 6000, payment: 0 })]} />)
-    expect(screen.getByText(/Yes, owing \$6,000/)).toBeInTheDocument()
+    expect(screen.getByText(/You owe \$6,000 on the Balances page/)).toBeInTheDocument()
   })
 
   it('an unticked debt frees no payment into savings', () => {
@@ -192,31 +191,33 @@ describe('RetirementCalc', () => {
     expect(yearRow(30)[3]).toBe('$25,750')
   })
 
-  it('a debt with no APR keeps the old numbers and says when it is paid off', () => {
+  it('debts come first: the savings pay a debt off in the first month and its payment is freed', () => {
     seedPlan()
     renderApp(<RetirementCalc debts={[debt()]} />)
-    // 1,000 at 250 is 4 months: 8 months of 250 freed in the first year, 3,000 a year after
+    // 1,000 owed against 250 a month plus the savings, so it clears in month 1: 750 comes out of
+    // savings that month and 11 months of 250 are freed
     expect(yearRow(30)[3]).toBe('$25,750')
     expect(yearRow(31)[3]).toBe('$28,000')
-    expect(screen.getByText(/so interest is included/)).toBeInTheDocument()
-    expect(screen.getByText('Paid off in 4 months (age 30). Then $250 a month is freed up.')).toBeInTheDocument()
+    expect(screen.getByText(/Debts come first/)).toBeInTheDocument()
+    expect(screen.getByText('Paid off in 1 month (age 30).')).toBeInTheDocument()
   })
 
-  it('a debt with an APR is paid off later, the same months as the Debt payoff tool', () => {
+  it('a debt with an APR includes the interest in what the debt takes', () => {
     seedPlan()
-    // 1,000 at 12% and 250 a month takes 5 months, so only 7 months are freed in the first year
+    // 1,000 at 12% a year is 10 of interest in month 1: 1,010 owed, 760 from savings
     renderApp(<RetirementCalc debts={[debt({ apr: 12 })]} />)
-    expect(yearRow(30)[3]).toBe(`$${(23750 + 7 * 250).toLocaleString('en-US')}`)
+    expect(yearRow(30)[3]).toBe('$25,740')
     expect(yearRow(31)[3]).toBe('$28,000')
-    expect(screen.getByText('Paid off in 5 months (age 30). Then $250 a month is freed up.')).toBeInTheDocument()
+    expect(screen.getByText('Paid off in 1 month (age 30).')).toBeInTheDocument()
   })
 
-  it('a payment that never covers the interest never frees anything and the caption says so', () => {
+  it('a debt the savings cannot outrun takes all the savings and the caption says so', () => {
     seedPlan()
-    // 12% of 12,000 is 120 a month in interest
-    renderApp(<RetirementCalc debts={[debt({ balance: 12000, apr: 12, payment: 100 })]} />)
-    expect(yearRow(35)[3]).toBe('$25,000')
-    expect(screen.getByText('Your payment does not cover the interest, so this debt is never paid off at this payment.')).toBeInTheDocument()
+    // 12% of 1,000,000 is 10,000 a month in interest, far more than the payment and savings together
+    renderApp(<RetirementCalc debts={[debt({ balance: 1000000, apr: 12, payment: 100 })]} />)
+    // only the 5,000 into the 401k is left, none of the 20,000 savings
+    expect(yearRow(35)[3]).toBe('$5,000')
+    expect(screen.getByText('Never paid off with your payments and savings.')).toBeInTheDocument()
   })
 
   it('a payoff event names its age in the caption and frees the payment from then on', () => {

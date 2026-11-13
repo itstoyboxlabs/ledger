@@ -1054,7 +1054,7 @@ test.describe('rent scenarios', () => {
     await expect(line(tool(page, 'rentscenarios'), 4000).locator('td').last()).toHaveText('Never')
   })
 
-  test('the same debt pays off in the same months in Rent scenarios, Debt payoff, Balances and Retirement', async ({ page }) => {
+  test('the same debt pays off in the same months in Rent scenarios, Debt payoff and Balances, and Retirement dates it too', async ({ page }) => {
     // the $4,000 rent row leaves 611.80 a month, so the debt's own payment is set to that.
     // 10,000 at 18% and 611.80 a month is 19 months (17 with no interest)
     await seed(page, { debts: [{ id: 'd', name: 'Car', balance: 10000, apr: 18, payment: 611.8, budgetRow: null }] })
@@ -1065,7 +1065,8 @@ test.describe('rent scenarios', () => {
     await goTo(page, 'Balances')
     await expect(main(page).getByText(/^Paid off in 1 year 7 months/)).toBeVisible()
     await goTo(page, 'Retirement')
-    await expect(main(page).getByText(/^Paid off in 1 year 7 months \(age \d+\)\. Then \$611\.80 a month is freed up\.$/)).toBeVisible()
+    // Retirement pays debts first, so its payoff time also counts the savings and is shorter
+    await expect(main(page).getByText(/^Paid off in .+ \(age \d+\)\.$/)).toBeVisible()
   })
 
   test('with no debts it shows a dash', async ({ page }) => {

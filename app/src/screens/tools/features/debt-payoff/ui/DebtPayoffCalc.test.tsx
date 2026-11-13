@@ -78,7 +78,9 @@ describe('DebtPayoffCalc', () => {
     await userEvent.click(screen.getByText('What I pay now'))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Budget savings' }))
     // 1000 income less the 250 row
-    await waitFor(() => expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(750))
+    await waitFor(() => expect(screen.getByText('$750.00')).toBeInTheDocument())
+    expect(screen.queryByLabelText(/Contribution per month/)).not.toBeInTheDocument()
+    expect(screen.getByText("Today's Budget")).toBeInTheDocument()
     expect(screen.getByText('2m')).toBeInTheDocument()
     expect(screen.getByText(/Retirement saves this same money/)).toBeInTheDocument()
   })
@@ -87,5 +89,13 @@ describe('DebtPayoffCalc', () => {
     renderApp(<DebtPayoffCalc debts={[debt(), debt({ id: 'd2', name: 'Loan', balance: 1500 })]} />)
     expect(screen.getByText('$1,500.00')).toBeInTheDocument()
     expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(500)
+  })
+  it('lists when each debt clears, in the order given, and rolls payments on', () => {
+    // 1,000 and 500 with 150 a month: the first gets 100 and the second 50 until the first clears
+    renderApp(<DebtPayoffCalc debts={[debt({ payment: 100 }), debt({ id: 'd2', name: 'Loan', balance: 500, payment: 50 })]} />)
+    expect(screen.getByText('1. Card')).toBeInTheDocument()
+    expect(screen.getByText('2. Loan')).toBeInTheDocument()
+    // 10 months in all: 1,500 over 150 a month, since a cleared debt's payment rolls on
+    expect(screen.getByText('10m')).toBeInTheDocument()
   })
 })

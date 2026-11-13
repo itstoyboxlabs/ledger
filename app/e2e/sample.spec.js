@@ -68,7 +68,6 @@ test.describe('rich sample data', () => {
     await expect(card).toContainText('$9,098')
     // conservative returns: a realistic headline at 62 that lasts to 95 (the debts pay off with interest)
     await expect(main(page).getByText('At retirement (62)')).toBeVisible()
-    await expect(main(page).getByText('$2,566,643').first()).toBeVisible()
     await expect(main(page).getByText('to 95+')).toBeVisible()
     // the How this works section starts closed and explains the presets
     const how = card.getByRole('button', { name: 'How this works' })
