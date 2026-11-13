@@ -88,4 +88,12 @@ describe('DebtPayoffCalc', () => {
     expect(screen.getByText('$1,500.00')).toBeInTheDocument()
     expect(screen.getByLabelText(/Contribution per month/)).toHaveValue(500)
   })
+  it('lists when each debt clears, in the order given, and rolls payments on', () => {
+    // 1,000 and 500 with 150 a month: the first gets 100 and the second 50 until the first clears
+    renderApp(<DebtPayoffCalc debts={[debt({ payment: 100 }), debt({ id: 'd2', name: 'Loan', balance: 500, payment: 50 })]} />)
+    expect(screen.getByText('1. Card')).toBeInTheDocument()
+    expect(screen.getByText('2. Loan')).toBeInTheDocument()
+    // 10 months in all: 1,500 over 150 a month, since a cleared debt's payment rolls on
+    expect(screen.getByText('10m')).toBeInTheDocument()
+  })
 })

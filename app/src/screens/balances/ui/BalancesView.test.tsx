@@ -127,4 +127,36 @@ describe('BalancesView', () => {
     expect(screen.queryByRole('button', { name: 'Open About you' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^State/ })).not.toBeInTheDocument()
   })
+
+  it('sorts the debts by highest APR', async () => {
+    seed('debts', [
+      { id: 'd1', name: 'Car', balance: 5000, apr: 4, payment: 100, budgetRow: null },
+      { id: 'd2', name: 'Card', balance: 2000, apr: 22, payment: 100, budgetRow: null },
+    ])
+    renderApp(<BalancesView />)
+    await userEvent.click(screen.getByRole('button', { name: 'Sort by highest APR' }))
+    const names = screen.getAllByPlaceholderText('Student loans').map((i) => (i as HTMLInputElement).value)
+    expect(names).toEqual(['Card', 'Car'])
+  })
+
+  it('moves a debt down the order', async () => {
+    seed('debts', [
+      { id: 'd1', name: 'Car', balance: 5000, apr: 4, payment: 100, budgetRow: null },
+      { id: 'd2', name: 'Card', balance: 2000, apr: 22, payment: 100, budgetRow: null },
+    ])
+    renderApp(<BalancesView />)
+    await userEvent.click(screen.getByRole('button', { name: 'Move Car down' }))
+    const names = screen.getAllByPlaceholderText('Student loans').map((i) => (i as HTMLInputElement).value)
+    expect(names).toEqual(['Card', 'Car'])
+    expect(screen.getByRole('button', { name: 'Move Card up' })).toBeDisabled()
+  })
+
+  it('says when you are debt free with the debts paid in order', () => {
+    seed('debts', [
+      { id: 'd1', name: 'Car', balance: 1000, apr: 0, payment: 100, budgetRow: null },
+      { id: 'd2', name: 'Card', balance: 1000, apr: 0, payment: 100, budgetRow: null },
+    ])
+    renderApp(<BalancesView />)
+    expect(screen.getByTestId('debt-order-line')).toHaveTextContent(/you are debt free in/)
+  })
 })

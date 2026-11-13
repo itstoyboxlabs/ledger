@@ -57,6 +57,9 @@ import { ssExplain } from '@/screens/retirement/utils/ssExplain'
 import { debtPayoffSchedule } from '@/screens/retirement/utils/debtPayoffSchedule'
 import { debtEventAmount } from '@/screens/retirement/utils/debtEventAmount'
 import { debtPayoffLine } from '@/shared/utils/debtPayoffLine'
+import { payoffAge } from '@/shared/utils/payoffAge'
+import { formatMonthsLong } from '@/shared/utils/formatMonthsLong'
+import { rollingPayoff } from '@/shared/utils/rollingPayoff'
 import { earliestSafeRetireAge } from '@/screens/retirement/utils/earliestSafeRetireAge'
 import { freedFromDebt } from '@/screens/retirement/utils/freedFromDebt'
 import { milestoneBalances } from '@/screens/retirement/utils/milestoneBalances'
@@ -276,15 +279,38 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
   const startRoth = fromBalances ? kindSum('roth') : 0
   const startK = fromBalances ? kindSum('pretax') + (taxed ? 0 : startRoth) : c.start401k
   const startS = fromBalances ? incAssets.filter((a) => assetPool(a) === 'savings').reduce((t, a) => t + a.balance, 0) : c.startSavings
-  const holeDebt = sumBalances(debts.filter((d) => !payoffByDebt[d.id] && (!fromBalances || !startOff.has(d.id))))
+  // Debts come first. What you save each month goes to them, in the order of the Balances page, and
+  // a paid off debt's payment rolls on to the next. Only when the last one clears do the freed
+  // payments and the savings start building savings. A debt with its own payoff event keeps that
+  // event and is left out of this, and so is one unticked on the starting balances.
+  const owedDebts = debts.filter((d) => !payoffByDebt[d.id] && (!fromBalances || !startOff.has(d.id)))
+  const holeDebt = sumBalances(owedDebts)
   const countDebt = fromBalances ? true : includeDebt
+  const planDebts = countDebt ? owedDebts : []
+  const planPay = planDebts.map((d) => debtPaymentOf(d, budgetRows))
+  const planPaySum = planPay.reduce((t, p) => t + p, 0)
+  const savingsMo = (c.pay.periods.length > 0 ? autoContribSavings : baseContribSavings) / 12
+  const debtPlan = rollingPayoff(planDebts.map((d, i) => ({ ...d, payment: planPay[i] })), planPaySum + savingsMo)
   const toggleStart = (id: string) =>
     setC({ ...c, startOff: startOff.has(id) ? c.startOff.filter((x) => x !== id) : [...c.startOff, id] })
 
-  // a debt unticked on the starting balances is left out entirely, so it frees nothing
-  const freedPerYear = (age: number) =>
-    debtSchedules.reduce((sum, sched, i) =>
-      fromBalances && startOff.has(debts[i].id) ? sum : sum + freedFromDebt(sched, debtPayments[i], age), 0) * freedToSavings
+  // Debts with a payoff event free their payment from that age. The rest are paid off together:
+  // until the last one clears the savings go to them (taken off here, a year at a time), and from then
+  // on every payment is freed. Both follow the Budget's leftover split, as before.
+  const freedPerYear = (age: number) => {
+    const events = debtSchedules.reduce((sum, sched, i) =>
+      !payoffByDebt[debts[i].id] || (fromBalances && startOff.has(debts[i].id)) ? sum : sum + freedFromDebt(sched, debtPayments[i], age), 0) * freedToSavings
+    if (planDebts.length === 0) return events
+    // month by month: money the debts take beyond the payments comes out of savings, and a payment
+    // they no longer need is freed (all of them once the last debt clears)
+    let net = 0
+    for (let k = 1; k <= 12; k++) {
+      const n = (age - c.age) * 12 + k
+      const spent = n <= debtPlan.spent.length ? debtPlan.spent[n - 1] : debtPlan.total === null ? planPaySum + savingsMo : 0
+      net += spent >= planPaySum ? -(spent - planPaySum) : (planPaySum - spent) * freedToSavings
+    }
+    return events + net
+  }
   // the model itself is simulateRetirement; this is a function of retireAge so "Find"
   // (below) can replay it against candidate ages
   // the pay plan: each period points at a Take-home preset and a Budget preset, or uses
@@ -302,7 +328,7 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
     : undefined
   const simInput: RetireSimInput = {
     age: c.age, accessAge: c.accessAge, endAge: c.endAge, pay: simPay, raisePct: c.raisePct,
-    start401k: startK, startSavings: startS - (countDebt ? holeDebt : 0),
+    start401k: startK, startSavings: startS,
     // with a plan, a working year no period covers uses today's Take-home and Budget
     base401k: hasPlan ? autoContrib401k : baseContrib401k,
     contribSavings: hasPlan ? autoContribSavings : baseContribSavings, freed: freedPerYear,
@@ -349,16 +375,22 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
       const freed = p > 0 ? ` Then ${Number.isInteger(p) ? fmt0(p) : fmt(p)} a month is freed up.` : ''
       return `Paid off at age ${ev.age} by your Pay off a debt event.${freed}`
     }
+    const at = planDebts.findIndex((x) => x.id === d.id)
+    if (at >= 0 && d.balance > 0) {
+      const months = debtPlan.months[at]
+      return months === null
+        ? 'Never paid off with your payments and savings.'
+        : `Paid off in ${formatMonthsLong(months)} (age ${payoffAge(c.age, months)}).`
+    }
     return debtPayoffLine(d.balance, d.apr, debtPayments[i], c.age)
   }
   const debtNote = debts.length > 0 && (
     <div className="col-span-2 mt-1 text-[11px] text-[var(--text-muted)]">
       <p>
-        Ledger works out when each debt from the Balances page is paid off from its balance, interest
-        rate and monthly payment, so interest is included. After that, its monthly payment is freed up
-        and split the way you set up on the Budget page. For example, if you send 50% of what is left to
-        savings and 50% to something else, the freed payment is split 50 and 50 too. If you have not set
-        a split, all of it goes to savings.
+        Debts come first. Your savings each month go to the debts from the Balances page, in the order
+        listed there, and when one is paid off its payment rolls on to the next. Interest is included.
+        Once the last one is paid off, all of those payments are freed up and split the way you set up on
+        the Budget page, and your savings start to grow. If you have not set a split, all of it goes to savings.
         {debtPayments.some((p) => !(p > 0)) && ' Add a payment on the Balances page to include it.'}
       </p>
       <ul className="mt-1 flex flex-col gap-0.5">
@@ -463,8 +495,8 @@ export function RetirementCalc({ debts, goToBalances }: RetirementCalcProps) {
               ))}
               <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2 border-t border-[var(--grid)] pt-2 text-[12px] text-[var(--text-secondary)]">
                 <span>
-                  Savings start at <span className="tnum font-medium text-white">{fmt0(startS - holeDebt)}</span>
-                  {holeDebt > 0 && <span className="text-[var(--text-muted)]"> ({fmt0(startS)} minus {fmt0(holeDebt)} owed)</span>}
+                  Savings start at <span className="tnum font-medium text-white">{fmt0(startS)}</span>
+                  {holeDebt > 0 && <span className="text-[var(--text-muted)]"> (and you owe {fmt0(holeDebt)}, paid off first)</span>}
                   . Retirement account starts at <span className="tnum font-medium text-white">{fmt0(startK + (taxed ? startRoth : 0))}</span>
                   {taxed && startRoth > 0 && <span className="text-[var(--text-muted)]"> ({fmt0(startRoth)} of it Roth)</span>}.
                 </span>

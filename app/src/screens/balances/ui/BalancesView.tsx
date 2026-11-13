@@ -2,7 +2,7 @@ import { fmt } from '@/shared/utils/fmt'
 import { Label } from '@/shared/ui/primitives/label'
 import { Input } from '@/shared/ui/primitives/input'
 import { Button } from '@/shared/ui/primitives/button'
-import { Info, X } from 'lucide-react'
+import { ArrowDownUp, ChevronDown, ChevronUp, Info, X } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { DraftNumberInput } from '@/shared/ui/DraftNumberInput'
 import { Dropdown } from '@/shared/ui/Dropdown'
@@ -17,6 +17,11 @@ import { useAssets } from '@/shared/hooks/useAssets'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useDebts } from '@/shared/hooks/useDebts'
 import { usePlanStartAge } from '@/shared/hooks/usePlanStartAge'
+import { useBudgetSavingsMonthly } from '@/shared/hooks/useBudgetSavingsMonthly'
+import { moveDebt } from '@/screens/balances/utils/moveDebt'
+import { sortDebtsByApr } from '@/screens/balances/utils/sortDebtsByApr'
+import { rollingPayoff } from '@/shared/utils/rollingPayoff'
+import { formatMonthsLong } from '@/shared/utils/formatMonthsLong'
 import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
 import { debtPayoffLine } from '@/shared/utils/debtPayoffLine'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
@@ -35,6 +40,10 @@ export function BalancesView() {
   // the age Retirement plans from, so the payoff ages here match the ones there
   const planAge = usePlanStartAge()
   const owed = sumBalances(debts)
+  const budgetSavings = useBudgetSavingsMonthly()
+  // every payment plus the Budget savings, paid in the order of the list
+  const payments = debts.map((d) => debtPaymentOf(d, rows))
+  const plan = rollingPayoff(debts, payments.reduce((t, p) => t + p, 0) + budgetSavings)
   const owned = assets.reduce((s, a) => s + a.balance, 0)
   const today = todayIso()
 
@@ -87,7 +96,7 @@ export function BalancesView() {
           {debts.length === 0 && (
             <p className="text-[13px] text-[var(--text-secondary)]">No debts yet.</p>
           )}
-          {debts.map((d) => {
+          {debts.map((d, i) => {
             const linked = d.budgetRow && rows ? rows.find((r) => r.id === d.budgetRow) : null
             return (
               <div key={d.id} className="rounded-xl bg-[var(--surface-2)] p-3 ring-1 ring-[var(--ring)]">
@@ -102,6 +111,15 @@ export function BalancesView() {
                       onChange={(e) => patchDebt(d.id, { name: e.target.value })}
                     />
                   </Label>
+                  <span title="Paid off in this order" className="mt-7 w-4 text-center text-[12px] font-semibold text-[var(--text-muted)] tnum">{i + 1}</span>
+                  <div className="mt-6 flex">
+                    <Button variant="ghost" size="icon-xs" aria-label={`Move ${d.name || 'debt'} up`} disabled={i === 0} onClick={() => setDebts(moveDebt(debts, d.id, -1))} className="text-[var(--text-muted)]">
+                      <ChevronUp className="size-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon-xs" aria-label={`Move ${d.name || 'debt'} down`} disabled={i === debts.length - 1} onClick={() => setDebts(moveDebt(debts, d.id, 1))} className="text-[var(--text-muted)]">
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon-xs"
@@ -149,15 +167,30 @@ export function BalancesView() {
             )
           })}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => setDebts([...debts, { id: newId('d'), name: '', balance: 0, apr: 0, payment: 0, budgetRow: null }])}
-        >
-          <Icon name="plus" size={13} />
-          Add a debt
-        </Button>
+        {debts.length > 1 && (
+          <p data-testid="debt-order-line" className="mt-3 text-[12px] text-[var(--text-muted)]">
+            Debts are paid off in this order, and a paid off debt's payment rolls on to the next.{' '}
+            {plan.total === null
+              ? 'With your payments and Budget savings, at least one never clears.'
+              : `With your payments and Budget savings you are debt free in ${formatMonthsLong(plan.total)}.`}
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDebts([...debts, { id: newId('d'), name: '', balance: 0, apr: 0, payment: 0, budgetRow: null }])}
+          >
+            <Icon name="plus" size={13} />
+            Add a debt
+          </Button>
+          {debts.length > 1 && (
+            <Button variant="outline" size="sm" onClick={() => setDebts(sortDebtsByApr(debts))}>
+              <ArrowDownUp className="size-3.5" />
+              Sort by highest APR
+            </Button>
+          )}
+        </div>
       </Card>
 
       <Card className="p-5">

@@ -23,6 +23,10 @@ import { periodAt } from '@/screens/retirement/utils/periodAt'
 // first year today. A working year no period covers keeps today's numbers. A period that
 // runs past the retire age keeps saving after you retire, while withdrawals go on.
 // Money-in events for the retirement account count as 401k money (the pre-tax pool).
+// What a year saves once debts take their share: freed money adds to it, and money going to debts
+// comes out of it but never takes more than it saves.
+const withFreed = (saved: number, freed: number): number => saved + (freed < 0 ? -Math.min(-freed, Math.max(0, saved)) : freed)
+
 export function simulateRetirement(c: RetireSimInput, retireAge: number): RetireSimResult {
   const rows: RetireSimRow[] = []
   const pay = c.pay && c.pay.periods.length > 0 ? c.pay : null
@@ -52,7 +56,7 @@ export function simulateRetirement(c: RetireSimInput, retireAge: number): Retire
       const grow = c.raisePct ? Math.pow(1 + c.raisePct / 100, age - c.age) : 1
       // first year: 401k eligibility starts 3 months into employment -> 9/12 of the contribution
       contribK = working ? (age === c.age ? c.base401k * 0.75 : c.base401k * grow) : 0
-      contribS = working ? c.contribSavings * grow + c.freed(age) : 0
+      contribS = working ? withFreed(c.contribSavings * grow, c.freed(age)) : 0
     } else {
       const hit = periodAt(pay.periods, age, c.age, retireAge, pay.planRetireAge)
       const seg = hit ? hit.index : working ? -1 : null
@@ -64,11 +68,11 @@ export function simulateRetirement(c: RetireSimInput, retireAge: number): Retire
         const own = p.capOwn ? Math.min(p.own * grow, K401_DEFERRAL_LIMIT) : p.own * grow
         const match = p.own > 0 ? own * (p.match / p.own) : 0
         contribK = (own + match) * (first ? 0.75 : 1)
-        contribS = p.saving * grow + c.freed(age)
+        contribS = withFreed(p.saving * grow, c.freed(age))
       } else if (working) {
         // a year no period covers keeps today's numbers
         contribK = first ? c.base401k * 0.75 : c.base401k
-        contribS = c.contribSavings + c.freed(age)
+        contribS = withFreed(c.contribSavings, c.freed(age))
       } else {
         contribK = 0
         contribS = 0

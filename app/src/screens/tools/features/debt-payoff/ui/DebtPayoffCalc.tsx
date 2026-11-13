@@ -7,9 +7,8 @@ import { Dropdown } from '@/shared/ui/Dropdown'
 import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { debtPaymentOf } from '@/shared/utils/debtPaymentOf'
-import { payoffMonths } from '@/shared/utils/payoffMonths'
+import { rollingPayoff } from '@/shared/utils/rollingPayoff'
 import { sumBalances } from '@/shared/utils/sumBalances'
-import { weightedApr } from '@/shared/utils/weightedApr'
 import { useBudgetRows } from '@/shared/hooks/useBudgetRows'
 import { useBudgetSavingsMonthly } from '@/shared/hooks/useBudgetSavingsMonthly'
 import { CONTRIBUTION_SOURCES } from '@/screens/tools/features/debt-payoff/constants/CONTRIBUTION_SOURCES'
@@ -34,24 +33,28 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
   const sel = picks.length ? debts.filter((d) => picks.includes(d.id)) : debts
   const total = sumBalances(sel)
   // what the Balances page says you pay now (a linked Budget row or a typed payment)
-  const usual = sel.reduce((s, d) => s + debtPaymentOf(d, rows), 0)
+  const usualEach = sel.map((d) => debtPaymentOf(d, rows))
+  const usual = usualEach.reduce((t, p) => t + p, 0)
   const legacyTyped = sel.length === 1 && typeof c.custom[sel[0].id] === 'number' ? c.custom[sel[0].id] : sel.length > 1 ? c.perMonth : 0
   const source = c.source || (legacyTyped > 0 ? 'typed' : 'usual')
   const typed = c.source ? c.typed : legacyTyped
   const contribution = source === 'budget' ? Math.round(budgetSavings) : source === 'typed' ? typed : usual
   const setContribution = (v: number) => setC({ ...c, source: 'typed', typed: v })
   const setPicks = (next: string[]) => setC({ ...c, picks: next, pick: 'all' })
-  // all debts together use the balance-weighted rate
-  const apr = weightedApr(sel)
-  const months = payoffMonths(total, contribution, apr)
+  // paid in the order of the Balances page: each debt its own payment first, the rest to the first
+  // one still owing, and a cleared debt's payment rolls on to the next
+  const plan = rollingPayoff(sel.map((d, i) => ({ ...d, payment: usualEach[i] })), contribution)
+  const months = plan.total
+  const interest = sel.some((d) => d.apr > 0)
   const ok = months !== null && contribution > 0
   const y = ok && months !== null ? Math.floor(months / 12) : 0
   const m = ok && months !== null ? months % 12 : 0
   // from the 1st, so adding months from the 29th to 31st never rolls into the month after
   const now = new Date()
   const done = new Date(now.getFullYear(), now.getMonth() + (ok && months !== null ? months : 0), 1)
-  const doneLabel = done.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  const mixed = sel.length > 1 && sel.filter((d) => d.apr > 0).length > 0
+  const labelOf = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const doneLabel = labelOf(done)
+  const dateOf = (n: number | null) => (n === null ? '—' : labelOf(new Date(now.getFullYear(), now.getMonth() + n, 1)))
 
   return (
     <Card className="p-5">
@@ -106,17 +109,23 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
             <TableBody>
               <ToolRow label="Total debt" value={fmt(total)} />
               <ToolRow
-                label={apr > 0 ? 'Time to pay off (includes interest)' : 'Time to pay off'}
+                label={interest ? 'Time to pay off (includes interest)' : 'Time to pay off'}
                 value={ok ? (y > 0 ? `${y}y ${m}m` : `${m}m`) : '—'}
                 bold
                 tone="var(--good)"
                 tip={
-                  apr > 0
-                    ? `Uses ${apr.toFixed(2)}% APR${mixed ? ' (the average rate across your debts, weighted by balance)' : ''}. If the payment does not cover the monthly interest the debt never clears.`
-                    : 'Total debt divided by what you put in each month. Add an APR on the Balances page to include interest.'
+                  sel.length > 1
+                    ? 'Debts are paid in the order on the Balances page. Each keeps its own rate. The contribution covers every payment first, then the rest goes to the first debt, and a debt that clears passes its payment on to the next. If the money does not cover the monthly interest a debt never clears.'
+                    : interest
+                      ? `Uses ${sel[0].apr.toFixed(2)}% APR. If the payment does not cover the monthly interest the debt never clears.`
+                      : 'Total debt divided by what you put in each month. Add an APR on the Balances page to include interest.'
                 }
               />
               <ToolRow label="Debt-free date" value={ok ? doneLabel : '—'} />
+              {sel.length > 1 &&
+                sel.map((d, i) => (
+                  <ToolRow key={d.id} label={`${i + 1}. ${d.name || 'Unnamed debt'}`} value={ok ? dateOf(plan.months[i]) : '—'} />
+                ))}
             </TableBody>
           </Table>
         </>
