@@ -762,8 +762,8 @@ test.describe('saving each year', () => {
     ]
     await setup(page, { debts })
     const ref = debtsFirstRef(debts, 20000, 30)
-    // 2,117 a month in all: the card clears in month 1, the loan in month 3
-    expect(ref.months).toEqual([1, 3])
+    // 2,117 a month in all: the card clears in month 1, the loan in month 4
+    expect(ref.months).toEqual([1, 4])
     await expectMatchesSim(page, sim({ freed: ref.freed }))
   })
 
@@ -1251,7 +1251,9 @@ test.describe('events: paying off a debt', () => {
     await setup(page, { debts })
     await addDebtEvent(page, 33)
     // Card pays 200 a month. The event replaces its normal 30-month schedule: full 2,400 from 33
-    const freed = (age) => (age >= 33 ? 2400 : 0)
+    // the Loan has no payment of its own, so the savings pay it off first
+    const loanFirst = debtsFirstRef([debts[1]], 20000, 30)
+    const freed = (age) => (age >= 33 ? 2400 : 0) + loanFirst.freed(age)
     await expectRow(page, 32, { contrib: 25000 - 0 + 0 })
     await expectRow(page, 33, { contrib: 25000 + 2400, wd: 6000 })
     await expectMatchesSim(page, sim({
@@ -1260,21 +1262,21 @@ test.describe('events: paying off a debt', () => {
     }))
   })
 
-  test('the paid-off debt is left out of the Start in debt hole', async ({ page }) => {
-    await setup(page, { debts, includeDebt: true })
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$15,000 \(from Balances\)/ })).toBeVisible()
+  test('the paid-off debt is left out of what you owe', async ({ page }) => {
+    await setup(page, { debts })
+    await expect(main(page).getByText(/You owe \$15,000 on the Balances page/)).toBeVisible()
     await addDebtEvent(page, 33)
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$9,000 \(from Balances\)/ })).toBeVisible()
+    await expect(main(page).getByText(/You owe \$9,000 on the Balances page/)).toBeVisible()
   })
 
-  test('a payoff age before today or after the plan leaves the debt in the hole', async ({ page }) => {
-    await setup(page, { debts, includeDebt: true })
+  test('a payoff age before today or after the plan leaves the debt owed', async ({ page }) => {
+    await setup(page, { debts })
     const card = await addDebtEvent(page, 25)
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$15,000 \(from Balances\)/ })).toBeVisible()
+    await expect(main(page).getByText(/You owe \$15,000 on the Balances page/)).toBeVisible()
     await field(card, 'Pay off at age').fill('95')
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$15,000 \(from Balances\)/ })).toBeVisible()
+    await expect(main(page).getByText(/You owe \$15,000 on the Balances page/)).toBeVisible()
     await field(card, 'Pay off at age').fill('33')
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$9,000 \(from Balances\)/ })).toBeVisible()
+    await expect(main(page).getByText(/You owe \$9,000 on the Balances page/)).toBeVisible()
   })
 
   test('clicking Auto lets you type your own amount, and it is used', async ({ page }) => {
@@ -1842,9 +1844,9 @@ test.describe('presets', () => {
     await expect(page.getByPlaceholder('Preset name')).toHaveCount(0)
   })
 
-  test('applying a preset restores the whole plan: fields, funds, events, Start in debt', async ({ page }) => {
+  test('applying a preset restores the whole plan: fields, funds and events', async ({ page }) => {
     const debts = [{ id: 'd1', name: 'Card', balance: 8000, apr: 0, payment: 0 }]
-    await setup(page, { debts, includeDebt: true, port: [{ name: 'Fund', alloc: 100, perf: 6 }] })
+    await setup(page, { debts, port: [{ name: 'Fund', alloc: 100, perf: 6 }] })
     await page.getByRole('button', { name: 'Add event' }).click()
     await field(eventCards(page).last(), 'Amount').fill('5000')
     await savePreset(page, 'Plan A')
@@ -1852,14 +1854,12 @@ test.describe('presets', () => {
     await field(main(page), 'Need per month').fill('2000')
     await field(main(page), 'Retire at').fill('50')
     await portCard(page).locator('input[type=number]').nth(1).fill('3')
-    await main(page).locator('button', { hasText: /Yes, owing/ }).click()
     await eventCards(page).first().getByRole('button', { name: 'Remove event' }).click()
     await openMenu(page, 'Plan A')
     await page.getByRole('menuitem', { name: 'Plan A' }).click()
     await expect(field(main(page), 'Need per month')).toHaveValue('1000')
     await expect(field(main(page), 'Retire at')).toHaveValue('40')
     await expect(portCard(page).locator('tr', { hasText: 'Weighted avg return' })).toContainText('6.00%')
-    await expect(main(page).locator('button', { hasText: /Yes, owing \$8,000 \(from Balances\)/ })).toBeVisible()
     await expect(eventCards(page)).toHaveCount(1)
     expect((await retireCalc(page)).events[0].amount).toBe(5000)
   })
