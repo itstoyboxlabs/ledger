@@ -14,6 +14,7 @@ const SEED = {
       { id: 'r5', name: 'Groceries', amount: 600, prorate: true },
     ],
   },
+  presets: { expenses: [{ id: 'p1', name: 'Lean', data: { rows: [{ id: 'q1', name: 'Rent', amount: 2000, day: 1 }] } }] },
 }
 
 beforeEach(async () => {
@@ -37,6 +38,14 @@ describe('CashRangeCalc', () => {
     // 1000 + 30 + 600 * 15 / 30
     expect(screen.getAllByText('$1,330.00')).toHaveLength(2)
     expect(screen.getByText('Day 1 to 15 (15 days)')).toBeInTheDocument()
+  })
+  it('picking a saved Budget uses its rows instead of today\'s', async () => {
+    renderApp(<CashRangeCalc />)
+    await screen.findByText('Rent')
+    await userEvent.click(screen.getByText("Today's Budget"))
+    await userEvent.click(await screen.findByText('Lean'))
+    expect(screen.getAllByText('$2,000.00').length).toBeGreaterThan(1)
+    expect(screen.queryByText('Groceries')).toBeNull()
   })
   it('sorts rows by amount, largest first', async () => {
     renderApp(<CashRangeCalc />)
