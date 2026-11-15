@@ -13,7 +13,8 @@ describe('ToolHeading', () => {
   it('opens the video window from the video button', async () => {
     render(<ToolHeading id="cash" title="Cash tool">What it does</ToolHeading>)
     await userEvent.click(screen.getByRole('button', { name: 'Watch the Cash tool video' }))
-    expect(await screen.findByText('The video for this tool is coming soon.')).toBeInTheDocument()
+    await screen.findByRole('dialog')
+    expect(document.querySelector('video')).not.toBeNull()
   })
   it('shows the action at the right', () => {
     render(<ToolHeading id="cash" title="Cash tool" action={<button>Swap</button>}>x</ToolHeading>)
