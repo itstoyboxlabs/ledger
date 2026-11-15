@@ -11,6 +11,7 @@ import { TaxedInCaption } from '@/screens/tools/ui/TaxedInCaption'
 import { ToolField } from '@/shared/ui/ToolField'
 import { useFilingStatus } from '@/shared/hooks/useFilingStatus'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 // Hourly calculator for a W-2 employee (employee-side FICA only), with tax math from the shared engine
 export function HourlyCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
@@ -29,12 +30,11 @@ export function HourlyCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   const net = gross - tax.total
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Hourly calculator</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="hourly" title="Hourly calculator">
         See what an hourly rate adds up to per week and per year, and what you'd keep after tax.
         Assumes you are a W-2 employee and work all 52 weeks. Freelance or 1099 pay owes more,
         since you pay both halves of Social Security and Medicare.
-      </p>
+      </ToolHeading>
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <ToolField label="Hours / week" value={c.hoursPerWeek} onChange={f('hoursPerWeek')} />
         <ToolField label="Pay / hour" value={c.rate} onChange={f('rate')} step={1} suffix="$" />

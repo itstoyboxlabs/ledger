@@ -33,6 +33,7 @@ import { usePresets } from '@/shared/hooks/usePresets'
 import { PresetBar } from '@/shared/ui/PresetBar'
 import type { TakeHome } from '@/shared/types/TakeHome'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   // the shared tax state and filing status, set on the About you page; also used by the Budget income override
@@ -55,9 +56,11 @@ export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
   const dropdownClass = 'h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs'
   return (
     <Card id="take-home-pay" className="p-5 scroll-mt-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-[15px] font-semibold">Take-home pay</h2>
-        <PresetBar
+      <ToolHeading
+        id="takehome"
+        title="Take-home pay"
+        action={
+          <PresetBar
           presets={presets}
           currentData={c}
           onApply={(d) => setC(normalizeTakeHome(d))}
@@ -67,12 +70,12 @@ export function TakeHomeCalc({ goToAboutYou }: { goToAboutYou: () => void }) {
           scope="takeHome"
           hint={TAKE_HOME_PRESET_HINT}
         />
-      </div>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+        }
+      >
         See what a salary actually turns into after taxes, 401k and health insurance come out,
         per year, per month and per paycheck. A $80,000 salary isn't $6,667 a month, and this
         shows where the rest goes.
-      </p>
+      </ToolHeading>
       <div className="mt-4 grid grid-cols-2 items-end gap-3">
         <ToolField label="Salary per year" value={c.salary} onChange={(v: number) => setC({ ...c, salary: v })} step={5000} suffix="$" />
         <TaxedInCaption state={taxState} onChange={goToAboutYou} />

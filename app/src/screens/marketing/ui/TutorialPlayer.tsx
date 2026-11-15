@@ -1,4 +1,4 @@
-import { videoUrl } from '@/screens/marketing/utils/videoUrl'
+import { videoUrl } from '@/shared/utils/videoUrl'
 import type { TutorialChapter } from '@/screens/marketing/types/TutorialChapter'
 import type { Ref } from 'react'
 type TutorialPlayerProps = {

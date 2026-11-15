@@ -9,6 +9,7 @@ import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { useBudgetIncome } from '@/shared/hooks/useBudgetIncome'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 // "Vaction Planning" — trip cost with per-night and one-time pieces
 export function VacationCalc() {
@@ -37,11 +38,10 @@ export function VacationCalc() {
       : '')
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Vacation planning</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="vacation" title="Vacation planning">
         Add up what a trip will cost and how long it takes to save for it. Hotel and food are per
         night, everything else is for the whole trip.
-      </p>
+      </ToolHeading>
       <div className="mt-4 text-[12px] font-medium text-[var(--text-secondary)]">How long</div>
       <div className="mt-1.5 grid grid-cols-2 items-end gap-3 lg:grid-cols-4">
         <ToolField label="Nights" value={c.nights} onChange={f('nights')} />

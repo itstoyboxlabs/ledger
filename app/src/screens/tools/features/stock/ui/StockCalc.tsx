@@ -15,6 +15,7 @@ import { FilingNote } from '@/screens/tools/ui/FilingNote'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { equityPayout } from '@/shared/utils/equityPayout'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 type StockCalcProps = {
   taxState: string
@@ -29,11 +30,10 @@ export function StockCalc({ taxState, filing = 'single', goToAboutYou }: StockCa
   const { delta, gross, years, tax: perYearTax, net } = equityPayout(c, taxState, filing)
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Equity payout</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="stock" title="Equity payout">
         If your company's stock pays out, see what you would actually keep after tax. Pick what you have
         and it handles the tax rules for you.
-      </p>
+      </ToolHeading>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Label className="block">
           <span className="text-[12px] text-[var(--text-muted)]">What you have</span>

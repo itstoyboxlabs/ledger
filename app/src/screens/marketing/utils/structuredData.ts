@@ -5,7 +5,7 @@ import { SITE_NAME } from '@/screens/marketing/constants/SITE_NAME'
 import { TUTORIAL_CHAPTERS } from '@/screens/marketing/constants/TUTORIAL_CHAPTERS'
 import type { MarketingRoute } from '@/screens/marketing/types/MarketingRoute'
 import { absoluteUrl } from '@/screens/marketing/utils/absoluteUrl'
-import { videoUrl } from '@/screens/marketing/utils/videoUrl'
+import { videoUrl } from '@/shared/utils/videoUrl'
 
 // 'mm:ss' -> 'PT1M44S' (ISO 8601 duration, what VideoObject wants)
 const isoDuration = (length: string) => {

@@ -22,8 +22,9 @@ describe('HourlyCalc', () => {
     expect(num(cells[3].textContent)).toBeLessThan(num(cells[1].textContent))
     expect(num(cells[3].textContent) + num(cells[2].textContent)).toBeGreaterThanOrEqual(104000 - 1)
   })
-  it('says it assumes a W-2 employee, not freelance pay', () => {
+  it('says it assumes a W-2 employee, not freelance pay', async () => {
     renderApp(<HourlyCalc goToAboutYou={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: 'About Hourly calculator' }))
     expect(screen.getByText(/Assumes you are a W-2 employee/)).toBeInTheDocument()
     expect(screen.getByText(/Freelance or 1099 pay owes more/)).toBeInTheDocument()
   })

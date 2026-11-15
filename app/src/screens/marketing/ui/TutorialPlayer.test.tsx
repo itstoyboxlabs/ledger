@@ -1,4 +1,4 @@
-import { videoUrl } from '@/screens/marketing/utils/videoUrl'
+import { videoUrl } from '@/shared/utils/videoUrl'
 import { render, screen } from '@testing-library/react'
 import { TutorialPlayer } from '@/screens/marketing/ui/TutorialPlayer'
 import { TUTORIAL_CHAPTERS } from '@/screens/marketing/constants/TUTORIAL_CHAPTERS'

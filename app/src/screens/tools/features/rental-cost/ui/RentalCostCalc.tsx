@@ -4,6 +4,7 @@ import { Card } from '@/shared/ui/Card'
 import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 // "Effective Rental costs" — what a concession deal really costs per month
 export function RentalCostCalc() {
@@ -13,11 +14,10 @@ export function RentalCostCalc() {
   const effective = (c.rent * (12 - monthsFree)) / 12
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Effective rental cost</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="rentalcost" title="Effective rental cost">
         Figure out what you'll really pay per month when a listing offers something like
         "2 months free", spread over a 12-month lease.
-      </p>
+      </ToolHeading>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <ToolField label="Rental cost / mo" value={c.rent} onChange={(v: number) => setC({ ...c, rent: v })} step={50} suffix="$" />
         <ToolField label="Months free" value={c.monthsFree} onChange={(v: number) => setC({ ...c, monthsFree: v })} />
