@@ -21,6 +21,7 @@ import { X } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { Icon } from '@/shared/ui/Icon'
+import { LogEntryAmount } from '@/screens/log/ui/LogEntryAmount'
 import { LogMeter } from '@/screens/log/ui/LogMeter'
 import { MerchantIcon } from '@/shared/ui/MerchantIcon'
 import { Stepper } from '@/shared/ui/Stepper'
@@ -172,6 +173,9 @@ export function LogView() {
     amountRef.current?.focus()
   }
   const deleteEntry = (id: string) => persist((list) => list.filter((e) => e.id !== id))
+  // change which row an entry counts against, or its amount
+  const editEntry = (id: string, patch: Partial<Pick<LogEntry, 'rowId' | 'amount'>>) =>
+    persist((list) => list.map((e) => (e.id === id ? { ...e, ...patch } : e)))
   // hide or restore a meter: `trackInLog` is saved on the budget row itself. The budget is
   // read again first and only that field changes, so newer edits from Budget are kept.
   const setTracked = (id: string, trackInLog: boolean) => {
@@ -348,12 +352,24 @@ export function LogView() {
                   <TableCell className="py-1.5 pr-3 tnum text-[var(--text-muted)]">{logDayLabel(e.date)}</TableCell>
                   <TableCell className="py-1.5 pr-3">{e.note || <span className="text-[var(--text-muted)]">—</span>}</TableCell>
                   <TableCell className="py-1.5 pr-3">
-                    <span className="flex items-center gap-2 text-[var(--text-secondary)]">
-                      <MerchantIcon name={rowById[e.rowId]?.name ?? '?'} size={14} />
-                      {rowById[e.rowId]?.name ?? 'Removed row'}
-                    </span>
+                    <Dropdown
+                      label="Counts against"
+                      hideLabel
+                      value={e.rowId}
+                      onChange={(id: string) => editEntry(e.id, { rowId: id })}
+                      className="-ml-2 h-7 justify-between gap-2 rounded-lg border-0 bg-transparent px-2 text-[var(--text-secondary)] shadow-none hover:bg-[var(--surface-1)]"
+                      options={[
+                        ...logRows.map((r) => ({ value: r.id, label: r.name, badge: <MerchantIcon name={r.name} size={14} /> })),
+                        // a hidden row or a removed one still shows what the entry counts against
+                        ...(logRows.some((r) => r.id === e.rowId)
+                          ? []
+                          : [{ value: e.rowId, label: rowById[e.rowId]?.name ?? 'Removed row', badge: <MerchantIcon name={rowById[e.rowId]?.name ?? '?'} size={14} /> }]),
+                      ]}
+                    />
                   </TableCell>
-                  <TableCell className="py-1.5 text-right tnum" style={e.amount < 0 ? { color: 'var(--good)' } : undefined}>{fmt(e.amount)}</TableCell>
+                  <TableCell className="py-1.5 text-right">
+                    <LogEntryAmount value={e.amount} onChange={(n) => editEntry(e.id, { amount: n })} label={e.note || logDayLabel(e.date)} />
+                  </TableCell>
                   <TableCell className="py-1.5 pl-3 text-right">
                     <Button variant="ghost" size="icon-xs"
                       onClick={() => deleteEntry(e.id)}

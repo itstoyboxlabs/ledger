@@ -1,6 +1,7 @@
 // Uploads the tutorial videos and the merchant logo catalog to the public `ledger-public` bucket in Supabase
 // Storage. The site reads them from there (VIDEO_BASE_URL and ICON_BASE_URL), so a deploy never carries them.
 //   node scripts/upload-assets.mjs videos   chapter videos and posters from ../demo/video  -> videos/
+//   node scripts/upload-assets.mjs videos tools   only the tool videos in ../demo/video/tools -> videos/tool-<id>.*
 //   node scripts/upload-assets.mjs icons    logos and index.json from .icon-catalog         -> icons/
 // Set SUPABASE_SERVICE_ROLE_KEY (kept outside the repo, never printed). SUPABASE_URL is optional.
 // Files already uploaded are replaced. Run it only when a video or the catalog changes.
@@ -23,10 +24,21 @@ if (!fs.existsSync(source)) {
   console.log(`no ${source}, nothing to upload`)
   process.exit(0)
 }
-const files = fs.readdirSync(source).filter((f) => keep.test(f))
+// Each upload is { from: file on disk, name: name in the bucket }. The tool videos in demo/video/tools are
+// uploaded as tool-<tool id>.mp4 and .jpg. A file whose name is not the tool id is renamed here.
+const TOOL_ID = { equity: 'stock' }
+const onlyTools = process.argv[3] === 'tools'
+const files = fs.readdirSync(source).filter((f) => keep.test(f) && !onlyTools).map((f) => ({ from: path.join(source, f), name: f }))
+const toolDir = path.join(source, 'tools')
+if (what === 'videos' && fs.existsSync(toolDir)) {
+  for (const f of fs.readdirSync(toolDir).filter((f) => /^[a-z]+\.(mp4|jpg)$/.test(f))) {
+    const [base, ext] = f.split('.')
+    files.push({ from: path.join(toolDir, f), name: `tool-${TOOL_ID[base] || base}.${ext}` })
+  }
+}
 
-async function upload(file) {
-  const body = fs.readFileSync(path.join(source, file))
+async function upload({ from, name: file }) {
+  const body = fs.readFileSync(from)
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch(`${URL_BASE}/storage/v1/object/${BUCKET}/${what}/${file}`, {
       method: 'POST',
@@ -54,7 +66,7 @@ async function worker() {
     if (await upload(file)) done++
     else {
       failed++
-      console.log('failed', file)
+      console.log('failed', file.name)
     }
   }
 }
