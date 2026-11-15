@@ -6,6 +6,7 @@ import { Card } from '@/shared/ui/Card'
 import { ToolField } from '@/shared/ui/ToolField'
 import { ToolRow } from '@/screens/tools/ui/ToolRow'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 // "Rent-to-Income Calculation" — the NYC 40× rule. Two directions, swappable:
 // know the rent -> get the multiple; know the multiple -> get the max rent.
@@ -15,15 +16,10 @@ export function RentToIncomeCalc() {
   const times = c.rent > 0 ? c.income / c.rent : 0
   return (
     <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-semibold">Rent-to-income</h2>
-          <p className="mt-1 text-[12px] text-[var(--text-muted)]">
-            {byRent
-              ? 'Landlords often want your yearly income to be some multiple of the monthly rent, usually 40 times, sometimes less. Enter your income, a rent and what they ask for to see if you clear it.'
-              : 'Landlords often want your yearly income to be some multiple of the monthly rent, usually 40 times, sometimes less. Enter your income and what they ask for to see the most rent you qualify for.'}
-          </p>
-        </div>
+      <ToolHeading
+        id="renttoincome"
+        title="Rent-to-income"
+        action={
         <Button variant="outline" size="sm"
           onClick={() => setC({ ...c, mode: byRent ? 1 : 0 })}
           title="Swap direction"
@@ -36,7 +32,12 @@ export function RentToIncomeCalc() {
           </svg>
           Swap
         </Button>
-      </div>
+        }
+      >
+        {byRent
+          ? 'Landlords often want your yearly income to be some multiple of the monthly rent, usually 40 times, sometimes less. Enter your income, a rent and what they ask for to see if you clear it.'
+          : 'Landlords often want your yearly income to be some multiple of the monthly rent, usually 40 times, sometimes less. Enter your income and what they ask for to see the most rent you qualify for.'}
+      </ToolHeading>
       <div className={cn('mt-4 grid grid-cols-2 gap-3', byRent && 'lg:grid-cols-3')}>
         <ToolField label="Annual income" value={c.income} onChange={(v: number) => setC({ ...c, income: v })} step={5000} suffix="$" />
         {byRent && (

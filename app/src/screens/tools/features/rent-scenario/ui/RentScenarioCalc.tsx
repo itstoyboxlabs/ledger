@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getBudget } from '@/shared/utils/getBudget'
+import { useEffect, useMemo, useState } from 'react'
+import { BudgetPicker } from '@/shared/ui/BudgetPicker'
+import { useChosenBudget } from '@/shared/hooks/useChosenBudget'
 import { budgetEffRows } from '@/shared/utils/budgetEffRows'
 import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
 import { NO_RENT_ROW } from '@/screens/tools/features/rent-scenario/constants/NO_RENT_ROW'
@@ -26,12 +27,13 @@ import { useBudgetIncome } from '@/shared/hooks/useBudgetIncome'
 import { usePersistedState } from '@/shared/hooks/usePersistedState'
 import { usePresets } from '@/shared/hooks/usePresets'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 // Rent scenario table — "if my rent were X, what's left over per month / per year?"
 // Income and non-rent expenses come live from the Budget tab.
 export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToAboutYou?: () => void }) {
-  const [c, setC] = useToolState('rentScenario3', { from: 1000, to: 4000, step: 500, rentRow: '' })
-  const [budget, setBudget] = useState<RentScenarioBudget | null>(null)
+  const [c, setC] = useToolState('rentScenario3', { from: 1000, to: 4000, step: 500, rentRow: '', budgetId: '' })
+  const { budget: chosen, options: budgetOptions } = useChosenBudget(c.budgetId)
   // scenario-local expense overrides (by budget row id) — never touch the real budget
   const [overrides, setOverrides] = usePersistedState<Record<string, number>>(
     'rentScenarioOverrides', {},
@@ -39,30 +41,25 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
   )
   const [showExpenses, setShowExpenses] = useState(false)
   const { presets, save, remove } = usePresets<Record<string, number>>('rentScenario')
+  // read the rows the way the Budget page does, so subscriptions count here too
+  const effective = useMemo(() => (chosen ? budgetEffRows(chosen.rows.map(normalizeBudgetRow), chosen.dismissedSubs) : null), [chosen])
+  // the rent row is a saved link (rentRow). First run: link the row named Rent.
   useEffect(() => {
-    getBudget()
-      .then((d) => {
-        // the rent row is a saved link (rentRow). First run: link the row named Rent.
-        // Read the rows the way the Budget page does, so subscriptions count here too.
-        const effective = budgetEffRows(d.rows.map(normalizeBudgetRow), d.dismissedSubs)
-        let rentRow = effective.find((r) => r.id === c.rentRow)
-        if (!c.rentRow) {
-          const byName = effective.find((r) => r.name === 'Rent')
-          if (byName) {
-            rentRow = byName
-            setC((prev) => (prev.rentRow ? prev : { ...prev, rentRow: byName.id }))
-          }
-        }
-        setBudget({
-          currentRent: Number(rentRow?.amount) || 0,
-          allRows: effective.filter((r) => !r.hidden && !isBudgetRowHidden(r)),
-          rows: effective
-            .filter((r) => r !== rentRow && !r.hidden && !isBudgetRowHidden(r))
-            .map((r) => ({ id: r.id, name: r.name, amount: Number(r.amount) || 0 })),
-        })
-      })
-      .catch(() => {})
-  }, [c.rentRow]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!effective || c.rentRow) return
+    const byName = effective.find((r) => r.name === 'Rent')
+    if (byName) setC((prev) => (prev.rentRow ? prev : { ...prev, rentRow: byName.id }))
+  }, [effective, c.rentRow]) // eslint-disable-line react-hooks/exhaustive-deps
+  const budget: RentScenarioBudget | null = useMemo(() => {
+    if (!effective) return null
+    const rentRow = effective.find((r) => r.id === c.rentRow)
+    return {
+      currentRent: Number(rentRow?.amount) || 0,
+      allRows: effective.filter((r) => !r.hidden && !isBudgetRowHidden(r)),
+      rows: effective
+        .filter((r) => r !== rentRow && !r.hidden && !isBudgetRowHidden(r))
+        .map((r) => ({ id: r.id, name: r.name, amount: Number(r.amount) || 0 })),
+    }
+  }, [effective, c.rentRow])
 
   const income = useBudgetIncome()
   if (!budget) {
@@ -112,14 +109,14 @@ export function RentScenarioCalc({ debts, goToAboutYou }: { debts: Debt[]; goToA
 
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Rent scenarios</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="rentscenarios" title="Rent scenarios">
         This helps you figure out how much rent you can afford. Try a few rents,
         like $3,000 or $5,000, and see what you'd have left each month after everything else. Income
         and expenses come from your Budget tab: {fmt0(income)} a month coming in,{' '}
         {fmt0(nonRent)} going out besides rent.
-      </p>
+      </ToolHeading>
       <FilingNote onOpen={goToAboutYou} />
+      <BudgetPicker className="mt-4 block max-w-xs" value={c.budgetId} onChange={(v) => setC({ ...c, budgetId: v })} options={budgetOptions} />
       <div className="mt-4 grid grid-cols-3 gap-3">
         <ToolField label="From" value={c.from} onChange={(v: number) => setC({ ...c, from: v })} step={250} suffix="$" />
         <ToolField label="To" value={c.to} onChange={(v: number) => setC({ ...c, to: v })} step={250} suffix="$" />

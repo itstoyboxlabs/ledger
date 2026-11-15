@@ -17,6 +17,7 @@ import { useBudgetSavingsMonthly } from '@/shared/hooks/useBudgetSavingsMonthly'
 import { CONTRIBUTION_SOURCES } from '@/screens/tools/features/debt-payoff/constants/CONTRIBUTION_SOURCES'
 import { toggleDebtPick } from '@/screens/tools/features/debt-payoff/utils/toggleDebtPick'
 import { useToolState } from '@/shared/hooks/useToolState'
+import { ToolHeading } from '@/screens/tools/ui/ToolHeading'
 
 export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
   const [c, setC] = useToolState('debtPayoff', {
@@ -64,11 +65,10 @@ export function DebtPayoffCalc({ debts }: { debts: Debt[] }) {
 
   return (
     <Card className="p-5">
-      <h2 className="text-[15px] font-semibold">Debt payoff</h2>
-      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+      <ToolHeading id="debt" title="Debt payoff">
         Pick the debts to pay off and say how much you put toward them each month. This shows how long
         it takes to pay off and the date you are debt free. Debts come from the Balances page.
-      </p>
+      </ToolHeading>
       {debts.length === 0 ? (
         <p className="mt-4 text-[13px] text-[var(--text-secondary)]">Add a debt on the Balances page to use this.</p>
       ) : (

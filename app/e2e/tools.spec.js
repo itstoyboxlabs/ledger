@@ -28,6 +28,14 @@ const field = (card, label) =>
   card.locator('label').filter({ hasText: new RegExp('^\\s*' + escapeRe(label)) }).locator('input').first()
 const row = (card, label) => card.getByRole('row', { name: label })
 
+// What a tool says about itself sits behind its info button: open it, check the text, close it
+async function expectAbout(page, card, text) {
+  await card.getByRole('button', { name: /^About / }).click()
+  await expect(page.locator('[data-slot=popover-content]')).toContainText(text)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-slot=popover-content]')).toHaveCount(0)
+}
+
 async function setLS(page, key, value) {
   await page.evaluate(([k, v]) => localStorage.setItem(`ledger:${k}`, JSON.stringify(v)), [key, value])
 }
@@ -311,7 +319,7 @@ test.describe('hourly calculator', () => {
     await expect(row(card, 'Per year')).toHaveText(/Per year\s*\$104,000\s*−\$22,006\s*\$81,994/)
     await expect(card).toContainText('Tax is about 21.2% in Texas, federal, FICA and state combined')
     await expect(card).toContainText('Taxed in Texas.')
-    await expect(card).toContainText('Assumes you are a W-2 employee')
+    await expectAbout(page, card, 'Assumes you are a W-2 employee')
   })
 
   test('changing hours and rate recomputes the table', async ({ page }) => {
@@ -459,7 +467,7 @@ test.describe('rent-to-income', () => {
     await expect(field(card, 'Monthly rent')).toHaveCount(0)
     await expect(row(card, 'Max monthly rent at 40×')).toContainText('$2,500.00')
     await expect(row(card, 'Per year at that rent')).toContainText('$30,000.00')
-    await expect(card).toContainText('to see the most rent you qualify for')
+    await expectAbout(page, card, 'to see the most rent you qualify for')
     expect((await ls(page, 'rentIncomeCalc2')).mode).toBe(1)
   })
 
@@ -975,8 +983,8 @@ test.describe('rent scenarios', () => {
 
   test('defaults: $1,000 to $4,000 in steps of $500 against the Budget', async ({ page }) => {
     const card = tool(page, 'rentscenarios')
-    await expect(card).toContainText('$5,821 a month coming in')
-    await expect(card).toContainText('$1,209 going out besides rent')
+    await expectAbout(page, card, '$5,821 a month coming in')
+    await expectAbout(page, card, '$1,209 going out besides rent')
     await expect(table(card).locator('tbody tr')).toHaveCount(7)
     await expect(line(card, 1000)).toContainText('$3,611.80')
     await expect(line(card, 1000)).toContainText('$43,341.60')
@@ -1094,7 +1102,7 @@ test.describe('rent scenarios', () => {
     await card.getByRole('button', { name: /Expenses used/ }).click()
     await type(card.locator('tr', { hasText: 'Groceries' }).locator('input'), 600)
     await expect(card.getByRole('button', { name: /Expenses used/ })).toContainText('1 overridden')
-    await expect(card).toContainText('$1,359 going out besides rent')
+    await expectAbout(page, card, '$1,359 going out besides rent')
     await expect(line(card, 2000)).toContainText('$2,461.80')
     expect(await ls(page, 'rentScenarioOverrides')).toEqual({ b005: 600 })
     // the real budget is untouched
@@ -1117,7 +1125,7 @@ test.describe('rent scenarios', () => {
     await type(card.locator('tr', { hasText: 'Transit' }).locator('input'), 0)
     await expect(card.getByRole('button', { name: /Expenses used/ })).toContainText('2 overridden')
     await card.getByRole('button', { name: 'Reset to budget defaults' }).click()
-    await expect(card).toContainText('$1,209 going out besides rent')
+    await expectAbout(page, card, '$1,209 going out besides rent')
     await expect(card.getByRole('button', { name: 'Reset to budget defaults' })).toHaveCount(0)
   })
 
@@ -1126,7 +1134,7 @@ test.describe('rent scenarios', () => {
     await card.getByRole('button', { name: /Expenses used/ }).click()
     await type(card.locator('tr', { hasText: 'Groceries' }).locator('input'), 600)
     await reload(page)
-    await expect(tool(page, 'rentscenarios')).toContainText('$1,359 going out besides rent')
+    await expectAbout(page, tool(page, 'rentscenarios'), '$1,359 going out besides rent')
   })
 
   test('"Your rent comes from" lists every visible row, and "No budget row" sticks', async ({ page }) => {
@@ -1136,14 +1144,14 @@ test.describe('rent scenarios', () => {
     await page.getByRole('menuitem', { name: 'No budget row' }).click()
     // with no rent row, Rent counts as an ordinary expense: 1,209 + 1,850
     await expect.poll(async () => (await ls(page, 'rentScenario3')).rentRow).toBe('none')
-    await expect(card).toContainText('$3,059 going out besides rent')
+    await expectAbout(page, card, '$3,059 going out besides rent')
   })
 
   test('pointing the rent at another row moves that row out of the expenses', async ({ page }) => {
     const card = tool(page, 'rentscenarios')
     await pick(card, page, 'Rent', 'Phone')
     // Phone (65) is now the rent, so Rent (1,850) counts as an expense: 3,059 - 65
-    await expect(card).toContainText('$2,994 going out besides rent')
+    await expectAbout(page, card, '$2,994 going out besides rent')
     await expect(line(card, 1000)).toContainText('← closest to current ($65)')
     expect((await ls(page, 'rentScenario3')).rentRow).toBe('b004')
   })
@@ -1176,10 +1184,10 @@ test.describe('rent scenarios', () => {
     await page.keyboard.press('Enter')
     await expect(card.getByRole('button', { name: 'Frugal' })).toBeVisible()
     await card.getByRole('button', { name: 'Reset to budget defaults' }).click()
-    await expect(card).toContainText('$1,209 going out besides rent')
+    await expectAbout(page, card, '$1,209 going out besides rent')
     await card.getByRole('button', { name: 'Frugal' }).click()
     await page.getByRole('menuitem', { name: 'Frugal' }).click()
-    await expect(card).toContainText('$1,359 going out besides rent')
+    await expectAbout(page, card, '$1,359 going out besides rent')
     // delete asks first
     await card.getByRole('button', { name: 'Frugal' }).click()
     await page.getByRole('button', { name: 'Delete preset "Frugal"' }).click({ force: true })
@@ -1324,7 +1332,7 @@ test.describe('cross-tool links', () => {
   test('Rent scenarios income follows the Take-home tool when the Budget uses it', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: true, amount: 0 } })
     const card = tool(page, 'rentscenarios')
-    await expect(card).toContainText('$5,112 a month coming in')
+    await expectAbout(page, card, '$5,112 a month coming in')
     // 5,112.31 - 1,209 - 1,000
     await expect(card.locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$2,903.31')
   })
@@ -1332,19 +1340,19 @@ test.describe('cross-tool links', () => {
   test('editing the salary updates Rent scenarios live, without a reload', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: true, amount: 0 } })
     await type(field(tool(page, 'takehome'), 'Salary per year'), 120000)
-    await expect(tool(page, 'rentscenarios')).toContainText('$7,353 a month coming in')
+    await expectAbout(page, tool(page, 'rentscenarios'), '$7,353 a month coming in')
     // 7,353.31 - 1,209 - 1,000
     await expect(tool(page, 'rentscenarios').locator('table').last().getByRole('row', { name: /^\$1,000/ })).toContainText('$5,144.31')
   })
 
   test('with statements as the source, the salary does not move Rent scenarios', async ({ page }) => {
     await type(field(tool(page, 'takehome'), 'Salary per year'), 120000)
-    await expect(tool(page, 'rentscenarios')).toContainText('$5,821 a month coming in')
+    await expectAbout(page, tool(page, 'rentscenarios'), '$5,821 a month coming in')
   })
 
   test('a typed Budget income is what the tools plan against', async ({ page }) => {
     await seed(page, { budgetIncomeOverride: { active: 'manual', amount: 4000 } })
-    await expect(tool(page, 'rentscenarios')).toContainText('$4,000 a month coming in')
+    await expectAbout(page, tool(page, 'rentscenarios'), '$4,000 a month coming in')
     await row(tool(page, 'vacation'), 'Months to save').locator('svg').hover()
     // 4,000 - 3,029
     await expect(page.getByRole('tooltip')).toContainText('your Budget tab leaves about $941 a month')

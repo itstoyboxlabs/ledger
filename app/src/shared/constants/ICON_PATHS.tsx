@@ -8,6 +8,18 @@ export const ICON_PATHS = {
     </>
   ),
   chart: <path d="M6 20v-6M12 20V4M18 20V10" />,
+  info: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
+    </>
+  ),
+  'play-circle': (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m10 8 6 4-6 4z" />
+    </>
+  ),
   box: (
     <>
       <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />

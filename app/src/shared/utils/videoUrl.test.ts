@@ -1,5 +1,5 @@
-import { VIDEO_BASE_URL } from '@/screens/marketing/constants/VIDEO_BASE_URL'
-import { videoUrl } from '@/screens/marketing/utils/videoUrl'
+import { VIDEO_BASE_URL } from '@/shared/constants/VIDEO_BASE_URL'
+import { videoUrl } from '@/shared/utils/videoUrl'
 
 describe('videoUrl', () => {
   it('puts the file name under the video store address', () => {
