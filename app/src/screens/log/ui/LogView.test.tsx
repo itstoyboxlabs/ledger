@@ -81,6 +81,24 @@ describe('LogView', () => {
     expect(screen.getByText(/across/)).toHaveTextContent('Logged $47.50 across 3 entries')
   })
 
+  it('changes the amount of an entry and saves it', async () => {
+    const user = await open()
+    await user.click(screen.getByRole('button', { name: 'Change amount: burrito' }))
+    await user.keyboard('20{Enter}')
+    expect(screen.getByText(/across/)).toHaveTextContent('Logged $60.00 across 2 entries')
+    await waitFor(async () => expect((await getLog()).entries.find((e) => e.id === 'l2')?.amount).toBe(20))
+  })
+
+  it('moves an entry to another row and saves it', async () => {
+    const user = await open()
+    const row = screen.getByText('burrito').closest('tr') as HTMLElement
+    const before = (await getLog()).entries.find((e) => e.id === 'l2')?.rowId
+    await user.click(within(row).getAllByRole('button')[0])
+    const items = await screen.findAllByRole('menuitem')
+    await user.click(items[0])
+    await waitFor(async () => expect((await getLog()).entries.find((e) => e.id === 'l2')?.rowId).not.toBe(before))
+  })
+
   it('deletes an entry', async () => {
     const user = await open()
     const row = screen.getByText('burrito').closest('tr')
