@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
+import type { BudgetFile } from '@/shared/types/BudgetFile'
+import type { BudgetPresetData } from '@/shared/types/BudgetPresetData'
 import type { BudgetRow } from '@/shared/types/BudgetRow'
+import { readBudgetPreset } from '@/shared/utils/readBudgetPreset'
+import { usePresets } from '@/shared/hooks/usePresets'
+import { Dropdown } from '@/shared/ui/Dropdown'
 import { getBudget } from '@/shared/utils/getBudget'
 import { budgetEffRows } from '@/shared/utils/budgetEffRows'
 import { normalizeBudgetRow } from '@/shared/utils/normalizeBudgetRow'
@@ -28,19 +33,24 @@ export function CashRangeCalc() {
     toDay: 15,
     cashOnHand: 0, // legacy plain number, seeds cashExpr until the field is first edited
     cashExpr: '', // running-total string, e.g. "3200 checking + 4315 paycheck"
+    budget: '', // '' is today's Budget, otherwise a saved Budget's id
   })
-  const [budgetRows, setBudgetRows] = useState<BudgetRow[] | null>(null)
+  const [file, setFile] = useState<BudgetFile | null>(null)
+  const { presets } = usePresets<BudgetPresetData | BudgetRow[]>('expenses', { ids: true })
   useEffect(() => {
     getBudget()
-      // read the rows the way the Budget page does, so live-only, dismissed and annual
-      // subscriptions and live subscription amounts match it
-      .then((d) =>
-        setBudgetRows(
-          budgetEffRows(d.rows.map(normalizeBudgetRow), d.dismissedSubs).filter((r) => !r.hidden && !isBudgetRowHidden(r)),
-        ),
-      )
+      .then(setFile)
       .catch(() => {})
   }, [])
+  const budgetOptions = [{ value: 'today', label: "Today's Budget" }, ...presets.filter((p) => p.id).map((p) => ({ value: p.id as string, label: p.name }))]
+  const picked = c.budget ? readBudgetPreset(presets.find((p) => p.id === c.budget)?.data) : null
+  // read the rows the way the Budget page does, so live-only, dismissed and annual
+  // subscriptions and live subscription amounts match it; a saved Budget brings its own
+  const budgetRows = file
+    ? budgetEffRows((picked ? picked.rows : file.rows).map(normalizeBudgetRow), picked?.dismissedSubs ?? file.dismissedSubs).filter(
+        (r) => !r.hidden && !isBudgetRowHidden(r),
+      )
+    : null
 
   const now = new Date()
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -73,7 +83,7 @@ export function CashRangeCalc() {
         See how much of your budget comes due between two days of the month, so you know how much
         cash you need to cover it. For example, to see what's due from the 1st to the 15th, enter
         1 and 15. Then put what you'll have in Cash on hand, like a $3,000 paycheck plus $500 from
-        a sale, to see what's left. Bills come from the Budget tab by their billing day.
+        a sale, to see what's left. Bills come from the Budget you pick, by their billing day.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" size="sm"
@@ -87,6 +97,19 @@ export function CashRangeCalc() {
           16th → end of month
         </Button>
       </div>
+      <Label className="mt-4 block max-w-xs">
+        <span className="text-[12px] text-[var(--text-muted)]">Which Budget</span>
+        <div className="mt-1">
+          <Dropdown
+            label="Budget"
+            hideLabel
+            value={c.budget && budgetOptions.some((o) => o.value === c.budget) ? c.budget : 'today'}
+            onChange={(v: string) => setC({ ...c, budget: v === 'today' ? '' : v })}
+            className="h-9 w-full justify-between rounded-lg bg-[var(--surface-1)] px-3 shadow-xs"
+            options={budgetOptions}
+          />
+        </div>
+      </Label>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <ToolField label="From day" value={c.fromDay} onChange={(v: number) => setC({ ...c, fromDay: v })} />
         <ToolField label="To day" value={c.toDay} onChange={(v: number) => setC({ ...c, toDay: v })} />
