@@ -14,6 +14,11 @@ export default async function handler(req, res) {
   const country = String(req.headers['x-vercel-ip-country'] || '').slice(0, 2).toUpperCase()
   const region = String(req.headers['x-vercel-ip-country-region'] || '').slice(0, 3).toUpperCase()
   if (!/^[A-Z]{2}$/.test(country) || !/^[A-Z0-9]{0,3}$/.test(region)) return res.status(204).end()
+  // TEMPORARY: find out who keeps visiting from Virginia. Logged to Vercel's own short-lived runtime logs only,
+  // never stored. No IP. Remove after one day.
+  if (region === 'VA') {
+    console.log('[probe-va]', JSON.stringify({ ua: ua.slice(0, 160), city: req.headers['x-vercel-ip-city'], lang: req.headers['accept-language'], ref: req.headers.referer }))
+  }
   try {
     await fetch(`${url}/rest/v1/rpc/record_visit`, {
       method: 'POST',
